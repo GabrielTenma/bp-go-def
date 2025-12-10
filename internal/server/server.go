@@ -3,6 +3,7 @@ package server
 import (
 	"test-go/config"
 	"test-go/internal/middleware"
+	"test-go/internal/monitoring"
 	"test-go/internal/services"
 	"test-go/internal/services/modules"
 	"test-go/pkg/infrastructure"
@@ -18,9 +19,10 @@ type Server struct {
 	redisManager    *infrastructure.RedisManager
 	kafkaManager    *infrastructure.KafkaManager
 	postgresManager *infrastructure.PostgresManager
+	broadcaster     *monitoring.LogBroadcaster
 }
 
-func New(cfg *config.Config, l *logger.Logger) *Server {
+func New(cfg *config.Config, l *logger.Logger, b *monitoring.LogBroadcaster) *Server {
 	e := echo.New()
 	e.HideBanner = true
 	e.HidePort = true
@@ -32,9 +34,10 @@ func New(cfg *config.Config, l *logger.Logger) *Server {
 	}
 
 	return &Server{
-		echo:   e,
-		config: cfg,
-		logger: l,
+		echo:        e,
+		config:      cfg,
+		logger:      l,
+		broadcaster: b,
 	}
 }
 
@@ -95,11 +98,35 @@ func (s *Server) Start() error {
 
 	registry.Boot(s.echo)
 
-	// 4. Start Server
+	// 4. Start Monitoring (if enabled)
+	if s.config.Monitoring.Enabled {
+		go monitoring.Start(s.config.Monitoring, s.config, s, s.broadcaster)
+		s.logger.Info("Monitoring interface started", "port", s.config.Monitoring.Port)
+	}
+
+	// 5. Start Server
 	port := s.config.Server.Port
 	s.logger.Info("Server is ready to handle requests", "port", port, "env", s.config.App.Env)
 
 	// Create a channel to listen for OS signals (graceful shutdown could be added here)
 
 	return s.echo.Start(":" + port)
+}
+
+// GetStatus satisfies monitoring.StatusProvider
+func (s *Server) GetStatus() map[string]interface{} {
+	return map[string]interface{}{
+		"version": "1.0.0",
+		"services": map[string]bool{
+			"service_a": s.config.Services.EnableServiceA,
+			"service_b": s.config.Services.EnableServiceB,
+			"service_c": s.config.Services.EnableServiceC,
+			"service_d": s.config.Services.EnableServiceD,
+		},
+		"infrastructure": map[string]bool{
+			"redis":    s.config.Redis.Enabled && s.redisManager != nil,
+			"kafka":    s.config.Kafka.Enabled && s.kafkaManager != nil,
+			"postgres": s.config.Postgres.Enabled && s.postgresManager != nil,
+		},
+	}
 }

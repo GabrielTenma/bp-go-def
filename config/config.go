@@ -7,13 +7,20 @@ import (
 )
 
 type Config struct {
-	App      AppConfig      `mapstructure:"app"`
-	Server   ServerConfig   `mapstructure:"server"`
-	Services ServicesConfig `mapstructure:"services"`
-	Auth     AuthConfig     `mapstructure:"auth"`
-	Redis    RedisConfig    `mapstructure:"redis"`
-	Kafka    KafkaConfig    `mapstructure:"kafka"`
-	Postgres PostgresConfig `mapstructure:"postgres"`
+	App        AppConfig        `mapstructure:"app"`
+	Server     ServerConfig     `mapstructure:"server"`
+	Services   ServicesConfig   `mapstructure:"services"`
+	Auth       AuthConfig       `mapstructure:"auth"`
+	Redis      RedisConfig      `mapstructure:"redis"`
+	Kafka      KafkaConfig      `mapstructure:"kafka"`
+	Postgres   PostgresConfig   `mapstructure:"postgres"`
+	Monitoring MonitoringConfig `mapstructure:"monitoring"`
+}
+
+type MonitoringConfig struct {
+	Enabled  bool   `mapstructure:"enabled"`
+	Port     string `mapstructure:"port"`
+	Password string `mapstructure:"password"`
 }
 
 type AppConfig struct {

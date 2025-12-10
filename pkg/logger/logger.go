@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"time"
@@ -15,11 +16,12 @@ type Logger struct {
 }
 
 // New creates a new fancy logger
-func New(debug bool) *Logger {
+func New(debug bool, broadcaster io.Writer) *Logger {
 	zerolog.TimeFieldFormat = time.RFC3339
 
-	output := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: "15:04:05"}
-	output.FormatLevel = func(i interface{}) string {
+	// Console Output (Fancy)
+	consoleOutput := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: "15:04:05"}
+	consoleOutput.FormatLevel = func(i interface{}) string {
 		var l string
 		if ll, ok := i.(string); ok {
 			switch ll {
@@ -47,8 +49,33 @@ func New(debug bool) *Logger {
 		}
 		return l
 	}
-	output.FormatMessage = func(i interface{}) string {
+	consoleOutput.FormatMessage = func(i interface{}) string {
 		return fmt.Sprintf("\x1b[1m%s\x1b[0m", i)
+	}
+
+	var multi zerolog.LevelWriter
+	if broadcaster != nil {
+		// Broadcast Output (JSON)
+		// We can't easily mix console writer and json writer in same stream if we want different formats
+		// But zerolog.MultiLevelWriter allows writing to multiple writers.
+		// However, zerolog writes the SAME bytes to all.
+		// Trick: Use the console writer for console, and a separate logger for broadcast?
+		// Actually, simpler: Let's make the main logger write JSON, and have the ConsoleWriter wrap the JSON? No.
+		// Let's stick to ConsoleWriter for stdout.
+		// For broadcast, we ideally want JSON.
+		// To keep it simple: We will pipe the ConsoleWriter output to broadcast which is NOT JSON, but colored text.
+		// Wait, user wants "live logs", usually implies reading them easily.
+		// If we send colored text to web, we need to parse ANSI.
+		// Better approach: Configure zerolog to write JSON to the broadcaster, and ConsoleWriter to stdout.
+		// But MultiLevelWriter writes the SAME bytes.
+		// Solution: Create a MultiWriter that satisfies LevelWriter, but that's complex.
+
+		// Alternative: Just pipe the colored output to the broadcaster too. The UI can display it in a pre tag.
+		// It preserves the "fancy" look in the web console too (if we strip or render ansi).
+		// Let's do that for now to avoid duplicate loggers.
+		multi = zerolog.MultiLevelWriter(consoleOutput, broadcaster)
+	} else {
+		multi = zerolog.MultiLevelWriter(consoleOutput)
 	}
 
 	logLevel := zerolog.InfoLevel
@@ -56,7 +83,7 @@ func New(debug bool) *Logger {
 		logLevel = zerolog.DebugLevel
 	}
 
-	z := zerolog.New(output).Level(logLevel).With().Timestamp().Logger()
+	z := zerolog.New(multi).Level(logLevel).With().Timestamp().Logger()
 
 	return &Logger{z: z}
 }

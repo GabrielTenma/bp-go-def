@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"test-go/config"
+	"test-go/internal/monitoring"
 	"test-go/internal/server"
 	"test-go/pkg/logger"
 )
@@ -16,8 +17,12 @@ func main() {
 		panic("Failed to load config: " + err.Error())
 	}
 
-	// 2. Init Logger
-	l := logger.New(cfg.App.Debug)
+	// 2. Init Broadcaster (for monitoring)
+	// We init this early so logger can use it
+	broadcaster := monitoring.NewLogBroadcaster()
+
+	// 3. Init Logger (pass broadcaster)
+	l := logger.New(cfg.App.Debug, broadcaster)
 
 	// Print Banner
 	if cfg.App.BannerPath != "" {
@@ -31,8 +36,8 @@ func main() {
 
 	l.Info("Starting Application", "name", cfg.App.Name)
 
-	// 3. Init & Start Server
-	srv := server.New(cfg, l)
+	// 4. Init & Start Server (pass broadcaster)
+	srv := server.New(cfg, l, broadcaster)
 	if err := srv.Start(); err != nil {
 		l.Fatal("Server shutdown abruptly", err)
 	}
