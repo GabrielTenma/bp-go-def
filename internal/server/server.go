@@ -5,15 +5,19 @@ import (
 	"test-go/internal/middleware"
 	"test-go/internal/services"
 	"test-go/internal/services/modules"
+	"test-go/pkg/infrastructure"
 	"test-go/pkg/logger"
 
 	"github.com/labstack/echo/v4"
 )
 
 type Server struct {
-	echo   *echo.Echo
-	config *config.Config
-	logger *logger.Logger
+	echo            *echo.Echo
+	config          *config.Config
+	logger          *logger.Logger
+	redisManager    *infrastructure.RedisManager
+	kafkaManager    *infrastructure.KafkaManager
+	postgresManager *infrastructure.PostgresManager
 }
 
 func New(cfg *config.Config, l *logger.Logger) *Server {
@@ -35,14 +39,51 @@ func New(cfg *config.Config, l *logger.Logger) *Server {
 }
 
 func (s *Server) Start() error {
-	// 1. Init Middleware
+	// 1. Init Infrastructure
+	s.logger.Info("Initializing Infrastructure...")
+
+	// Redis
+	if s.config.Redis.Enabled {
+		rdb, err := infrastructure.NewRedisClient(s.config.Redis)
+		if err != nil {
+			s.logger.Error("Failed to initialize Redis", err)
+		} else {
+			s.redisManager = rdb
+			s.logger.Info("Redis initialized")
+		}
+	}
+
+	// Kafka
+	if s.config.Kafka.Enabled {
+		// Note: NewKafkaManager replaces NewKafkaProducer
+		km, err := infrastructure.NewKafkaManager(s.config.Kafka)
+		if err != nil {
+			s.logger.Error("Failed to initialize Kafka", err)
+		} else {
+			s.kafkaManager = km
+			s.logger.Info("Kafka initialized")
+		}
+	}
+
+	// Postgres
+	if s.config.Postgres.Enabled {
+		db, err := infrastructure.NewPostgresDB(s.config.Postgres)
+		if err != nil {
+			s.logger.Error("Failed to initialize Postgres", err)
+		} else {
+			s.postgresManager = db
+			s.logger.Info("Postgres initialized")
+		}
+	}
+
+	// 2. Init Middleware
 	s.logger.Info("Initializing Middleware...")
 	middleware.InitMiddlewares(s.echo, middleware.Config{
 		AuthType: s.config.Auth.Type,
 		Logger:   s.logger,
 	})
 
-	// 2. Init Services
+	// 3. Init Services
 	s.logger.Info("Booting Services...")
 	registry := services.NewRegistry(s.logger)
 
@@ -53,7 +94,7 @@ func (s *Server) Start() error {
 
 	registry.Boot(s.echo)
 
-	// 3. Start Server
+	// 4. Start Server
 	port := s.config.Server.Port
 	s.logger.Info("Server is ready to handle requests", "port", port, "env", s.config.App.Env)
 

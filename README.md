@@ -35,6 +35,12 @@ A robust, production-ready Go application boilerplate built with [Echo](https://
     -   Loads ASCII art from `banner.txt` at startup.
     -   Make your terminal startup fun!
 
+-   **🏭 Infrastructure Ready**:
+    -   **Redis**: Integrated with `go-redis` (v9). Includes helpers for `Set`, `Get`, `Delete`, `Replace`, `GetInfo`.
+    -   **Kafka**: Integrated with `sarama` (Consumer & Producer). Includes `Consume` helper.
+    -   **Postgres**: Integrated with `pgx` (v5). Includes `Select`, `Insert`, `Update`, `Delete` helpers.
+    -   All infrastructure is optional and disabled by default.
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -45,8 +51,8 @@ A robust, production-ready Go application boilerplate built with [Echo](https://
 
 1.  **Clone the repository**:
     ```bash
-    git clone https://github.com/yourusername/go-echo-boilerplate.git
-    cd go-echo-boilerplate
+    git clone https://github.com/GabrielTenma/bp-go-def.git
+    cd bp-go-def
     ```
 
 2.  **Install dependencies**:
@@ -71,6 +77,29 @@ services:
   enable_service_a: true  # Users
   enable_service_b: false # Products
   enable_service_c: true  # Cache
+
+# Infrastructure (Disabled by default)
+redis:
+  enabled: false
+  address: "localhost:6379"
+  password: ""
+  db: 0
+
+kafka:
+  enabled: false
+  brokers: 
+    - "localhost:9092"
+  topic: "my-topic"
+  group_id: "my-group"
+
+postgres:
+  enabled: false
+  host: "localhost"
+  port: 5432
+  user: "postgres"
+  password: "password"
+  dbname: "mydb"
+  sslmode: "disable"
 ```
 
 ## 📚 API Endpoints
@@ -96,6 +125,7 @@ services:
 │       └── registry    # Service Registration logic
 ├── pkg/
 │   ├── cache/          # Generic In-Memory Cache
+│   ├── infrastructure/ # External Infrastructure (Redis, Kafka, Postgres)
 │   └── logger/         # Custom Logger wrapper
 └── docs/               # Architecture documentation
 ```

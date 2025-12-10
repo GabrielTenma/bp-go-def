@@ -15,3 +15,25 @@ services:
 auth:
   type: "apikey"
   secret: "super-secret-key"
+
+redis:
+  enabled: false
+  address: "localhost:6379"
+  password: ""
+  db: 0
+
+kafka:
+  enabled: false
+  brokers: 
+    - "localhost:9092"
+  topic: "my-topic"
+  group_id: "my-group"
+
+postgres:
+  enabled: false
+  host: "localhost"
+  port: 5432
+  user: "postgres"
+  password: "password"
+  dbname: "mydb"
+  sslmode: "disable"

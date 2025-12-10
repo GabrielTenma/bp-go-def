@@ -11,6 +11,9 @@ type Config struct {
 	Server   ServerConfig   `mapstructure:"server"`
 	Services ServicesConfig `mapstructure:"services"`
 	Auth     AuthConfig     `mapstructure:"auth"`
+	Redis    RedisConfig    `mapstructure:"redis"`
+	Kafka    KafkaConfig    `mapstructure:"kafka"`
+	Postgres PostgresConfig `mapstructure:"postgres"`
 }
 
 type AppConfig struct {
@@ -35,6 +38,30 @@ type AuthConfig struct {
 	Secret string `mapstructure:"secret"`
 }
 
+type RedisConfig struct {
+	Enabled  bool   `mapstructure:"enabled"`
+	Address  string `mapstructure:"address"`
+	Password string `mapstructure:"password"`
+	DB       int    `mapstructure:"db"`
+}
+
+type KafkaConfig struct {
+	Enabled bool     `mapstructure:"enabled"`
+	Brokers []string `mapstructure:"brokers"`
+	Topic   string   `mapstructure:"topic"`
+	GroupID string   `mapstructure:"group_id"`
+}
+
+type PostgresConfig struct {
+	Enabled  bool   `mapstructure:"enabled"`
+	Host     string `mapstructure:"host"`
+	Port     int    `mapstructure:"port"`
+	User     string `mapstructure:"user"`
+	Password string `mapstructure:"password"`
+	DBName   string `mapstructure:"dbname"`
+	SSLMode  string `mapstructure:"sslmode"`
+}
+
 func LoadConfig() (*Config, error) {
 	viper.SetConfigName("config") // name of config file (without extension)
 	viper.SetConfigType("yaml")   // REQUIRED if the config file does not have the extension in the name
@@ -53,6 +80,10 @@ func LoadConfig() (*Config, error) {
 	viper.SetDefault("services.enable_service_a", true)
 	viper.SetDefault("services.enable_service_b", true)
 	viper.SetDefault("services.enable_service_c", true)
+
+	viper.SetDefault("redis.enabled", false)
+	viper.SetDefault("kafka.enabled", false)
+	viper.SetDefault("postgres.enabled", false)
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
