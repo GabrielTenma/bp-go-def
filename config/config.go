@@ -19,9 +19,13 @@ type Config struct {
 }
 
 type MonitoringConfig struct {
-	Enabled  bool   `mapstructure:"enabled"`
-	Port     string `mapstructure:"port"`
-	Password string `mapstructure:"password"`
+	Enabled        bool   `mapstructure:"enabled"`
+	Port           string `mapstructure:"port"`
+	Password       string `mapstructure:"password"`
+	Title          string `mapstructure:"title"`
+	Subtitle       string `mapstructure:"subtitle"`
+	MaxPhotoSizeMB int    `mapstructure:"max_photo_size_mb"`
+	UploadDir      string `mapstructure:"upload_dir"`
 }
 
 type CronConfig struct {

@@ -104,9 +104,10 @@
         }
     </style>
     <link rel="stylesheet" href="assets/css/style.css">
-    <!-- Font Inter -->
+    <!-- Font Lexend (Google's geometric sans-serif, similar to Google Sans) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600&display=swap" rel="stylesheet">
     <script>
         // Check theme immediately to prevent FOUC
         if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -118,12 +119,40 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
     <style>
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Lexend', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-weight: 400;
         }
 
         button:active {
             transform: scale(0.95);
             transition: transform 0.1s;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: hsl(var(--muted-foreground) / 0.2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: hsl(var(--muted-foreground) / 0.3);
+        }
+
+        .dark ::-webkit-scrollbar-thumb {
+            background: hsl(var(--muted-foreground) / 0.3);
+        }
+
+        .dark ::-webkit-scrollbar-thumb:hover {
+            background: hsl(var(--muted-foreground) / 0.4);
         }
     </style>
 </head>
@@ -134,30 +163,52 @@
         <!-- Sidebar -->
         <aside :class="sidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full'"
             class="fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-card transition-all duration-300 md:relative md:translate-x-0">
-            <div class="flex h-14 items-center border-b px-6">
+            <div class="flex h-14 lg:h-[60px] items-center border-b px-4 sm:px-6">
                 <a class="flex items-center gap-2 font-semibold" href="#">
-                    <div class="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                    <div
+                        class="flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="h-3 w-3 sm:h-4 sm:w-4">
                             <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
                         </svg>
                     </div>
                     <div class="flex flex-col">
-                        <span class="leading-none">GoBP Admin</span>
-                        <span class="text-[10px] font-normal text-muted-foreground leading-none mt-0.5">Go Echo
-                            Boilerplate</span>
+                        <span class="text-sm sm:text-base leading-none" x-text="monitoringConfig.title"></span>
+                        <span class="text-[9px] sm:text-[10px] font-normal text-muted-foreground leading-none mt-0.5"
+                            x-text="monitoringConfig.subtitle"></span>
                     </div>
                 </a>
             </div>
             <div class="flex-1 overflow-auto py-4">
-                <nav class="grid items-start px-4 text-sm font-medium space-y-1">
-                    <template x-for="tab in tabs" :key="tab.id">
-                        <button @click="activeTab = tab.id"
-                            :class="activeTab === tab.id ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'"
-                            class="flex items-center gap-3 rounded-md px-3 py-2 transition-all">
-                            <span class="[&>svg]:h-4 [&>svg]:w-4" x-html="tab.icon"></span>
-                            <span x-text="tab.label"></span>
-                        </button>
+                <nav class="grid items-start px-4 text-sm font-medium">
+                    <template x-for="category in menuCategories" :key="category.name">
+                        <div class="pb-4">
+                            <!-- Category Header -->
+                            <h3 class="mb-2 px-3 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider"
+                                x-text="category.name"></h3>
+                            <!-- Category Items -->
+                            <div class="space-y-1">
+                                <template x-for="item in category.items" :key="item.id">
+                                    <button @click="activeTab = item.id"
+                                        :class="activeTab === item.id ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'"
+                                        class="w-full flex items-center gap-3 rounded-md px-3 py-2 transition-all">
+                                        <span class="[&>svg]:h-4 [&>svg]:w-4" x-html="item.icon"></span>
+                                        <span class="flex-1 text-left" x-text="item.label"></span>
+                                        <!-- Badge for Endpoints -->
+                                        <span x-show="item.id === 'endpoints' && activeEndpointsCount > 0"
+                                            class="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold"
+                                            :class="activeTab === item.id ? 'bg-primary-foreground text-primary' : ''"
+                                            x-text="activeEndpointsCount"></span>
+                                        <!-- Badge for Cron Jobs -->
+                                        <span x-show="item.id === 'cron' && activeCronCount > 0"
+                                            class="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold"
+                                            :class="activeTab === item.id ? 'bg-primary-foreground text-primary' : ''"
+                                            x-text="activeCronCount"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
                     </template>
                 </nav>
             </div>
@@ -193,7 +244,7 @@
                     </svg>
                 </button>
                 <div class="w-full flex-1">
-                    <h1 class="text-lg font-semibold md:text-xl" x-text="activeTabLabel"></h1>
+                    <h1 class="text-base sm:text-lg md:text-xl font-semibold" x-text="activeTabLabel"></h1>
                 </div>
 
                 <div class="flex items-center gap-4">
@@ -222,18 +273,28 @@
                     <div class="relative" x-data="{ open: false }">
                         <button @click="open = !open"
                             class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-secondary-foreground border border-input shadow-sm hover:bg-accent/50 overflow-hidden">
-                            <img src="https://ui.shadcn.com/avatars/01.png" alt="Avatar"
-                                class="h-full w-full object-cover">
+                            <template x-if="userSettings.photoPath">
+                                <img :src="'/api/user/photos/' + userSettings.photoPath" alt="Profile"
+                                    class="h-full w-full object-cover">
+                            </template>
+                            <template x-if="!userSettings.photoPath">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                            </template>
                         </button>
                         <div x-show="open" @click.outside="open = false"
                             class="absolute right-0 mt-2 w-56 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in fade-in-80 zoom-in-95 z-50 p-1"
                             style="display: none;">
-                            <div class="px-2 py-1.5 text-sm font-semibold">My Account</div>
+                            <div class="px-2 py-1.5 text-sm font-semibold"
+                                x-text="userSettings.username || 'My Account'"></div>
                             <div class="h-px bg-muted my-1"></div>
-                            <div
+                            <div @click="activeTab = 'settings'; open = false"
                                 class="px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer rounded-sm">
                                 Profile</div>
-                            <div
+                            <div @click="activeTab = 'settings'; open = false"
                                 class="px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer rounded-sm">
                                 Settings</div>
                             <div class="h-px bg-muted my-1"></div>
@@ -245,7 +306,7 @@
                 </div>
             </header>
 
-            <main class="flex-1 h-full overflow-y-auto p-4 lg:p-6 bg-muted/40" style="padding-top: 110px;">
+            <main class="flex-1 h-full overflow-y-auto p-4 lg:p-6 bg-muted/40" style="padding-top: 100px;">
                 <!-- Dashboard Tab -->
                 <div x-show="activeTab === 'dashboard'" class="space-y-6"
                     x-transition:enter="transition ease-out duration-300"
@@ -353,18 +414,19 @@
                             </div>
                             <div class="flex items-center gap-2">
                                 <button @click="toggleDummyLog()"
-                                    class="h-6 px-2 text-[10px] font-medium rounded transition-colors border"
-                                    :class="dummyLogActive ? 'bg-green-100 text-green-700 border-green-200 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800' : 'bg-background text-muted-foreground border-input hover:bg-accent hover:text-accent-foreground'">
+                                    :class="dummyLogActive ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-primary text-primary-foreground hover:bg-primary/90'"
+                                    class="h-8 px-3 text-xs rounded-md transition-colors font-medium">
                                     <span x-text="dummyLogActive ? 'Disable Dummy Logs' : 'Enable Dummy Logs'"></span>
                                 </button>
                                 <button @click="logs = []"
-                                    class="text-xs text-muted-foreground hover:text-foreground">Clear Console</button>
+                                    class="h-8 px-3 text-xs bg-secondary hover:bg-secondary/80 rounded-md transition-colors">Clear
+                                    Console</button>
                             </div>
                         </div>
-                        <div class="flex-1 bg-[#0a0a0a] p-4 overflow-y-auto font-mono text-xs text-gray-300"
+                        <div class="flex-1 bg-[#0a0a0a] px-6 py-4 overflow-y-auto font-mono text-xs text-gray-300"
                             id="logs-box">
                             <template x-for="log in logs">
-                                <div class="mb-1 border-b border-white/5 pb-1 break-all flex hover:bg-white/5 transition-colors"
+                                <div class="mb-1 border-b border-white/5 pb-1 break-all hover:bg-white/5 transition-colors"
                                     x-html="formatLog(log)"></div>
                             </template>
                         </div>
@@ -495,50 +557,77 @@
                     x-transition:enter="transition ease-out duration-300"
                     x-transition:enter-start="opacity-0 translate-y-4"
                     x-transition:enter-end="opacity-100 translate-y-0">
-                    <div class="grid gap-4 md:grid-cols-2">
-                        <div class="p-6 rounded-xl border bg-card shadow-sm">
-                            <h3 class="font-semibold mb-2">DB Info</h3>
-                            <div x-text="pgInfo.version" class="text-xs text-muted-foreground mb-1"></div>
-                            <div class="text-2xl font-bold" x-text="pgInfo.size || 'Unknown'"></div>
+
+                    <!-- Connected View -->
+                    <div x-show="infraStatus.postgres">
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div class="p-6 rounded-xl border bg-card shadow-sm">
+                                <h3 class="font-semibold mb-2">DB Info</h3>
+                                <div x-text="pgInfo.version" class="text-xs text-muted-foreground mb-1"></div>
+                                <div class="text-2xl font-bold" x-text="pgInfo.size || 'Unknown'"></div>
+                            </div>
+                            <div class="p-6 rounded-xl border bg-card shadow-sm">
+                                <h3 class="font-semibold mb-2">Active Sessions</h3>
+                                <div class="text-2xl font-bold" x-text="pgInfo.sessions || 0"></div>
+                            </div>
                         </div>
-                        <div class="p-6 rounded-xl border bg-card shadow-sm">
-                            <h3 class="font-semibold mb-2">Active Sessions</h3>
-                            <div class="text-2xl font-bold" x-text="pgInfo.sessions || 0"></div>
+
+                        <div class="rounded-md border bg-card">
+                            <div class="p-4 border-b flex justify-between items-center">
+                                <h3 class="font-bold">Running Queries (Top 50)</h3>
+                                <button @click="fetchPgQueries()"
+                                    class="text-xs text-primary hover:underline">Refresh</button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full caption-bottom text-sm">
+                                    <thead class="[&_tr]:border-b">
+                                        <tr class="border-b">
+                                            <th class="h-12 px-4 text-left align-middle font-medium">PID</th>
+                                            <th class="h-12 px-4 text-left align-middle font-medium">State</th>
+                                            <th class="h-12 px-4 text-left align-middle font-medium">Duration</th>
+                                            <th class="h-12 px-4 text-left align-middle font-medium">Query</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template x-for="q in pgQueries">
+                                            <tr class="border-b hover:bg-muted/50">
+                                                <td class="p-4 font-mono text-xs" x-text="q.pid"></td>
+                                                <td class="p-4"><span
+                                                        class="px-2 py-1 rounded text-[10px] uppercase font-bold"
+                                                        :class="q.state === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'"
+                                                        x-text="q.state"></span></td>
+                                                <td class="p-4 font-mono text-xs" x-text="q.duration"></td>
+                                                <td class="p-4 truncate max-w-md font-mono text-xs text-muted-foreground"
+                                                    x-text="q.query"></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="rounded-md border bg-card">
-                        <div class="p-4 border-b flex justify-between items-center">
-                            <h3 class="font-bold">Running Queries (Top 50)</h3>
-                            <button @click="fetchPgQueries()"
-                                class="text-xs text-primary hover:underline">Refresh</button>
+                    <!-- Disconnected View -->
+                    <div x-show="!infraStatus.postgres"
+                        class="flex flex-col items-center justify-center py-16 text-center">
+                        <div
+                            class="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path
+                                    d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                                </path>
+                                <line x1="12" y1="9" x2="12" y2="13"></line>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
                         </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full caption-bottom text-sm">
-                                <thead class="[&_tr]:border-b">
-                                    <tr class="border-b">
-                                        <th class="h-12 px-4 text-left align-middle font-medium">PID</th>
-                                        <th class="h-12 px-4 text-left align-middle font-medium">State</th>
-                                        <th class="h-12 px-4 text-left align-middle font-medium">Duration</th>
-                                        <th class="h-12 px-4 text-left align-middle font-medium">Query</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <template x-for="q in pgQueries">
-                                        <tr class="border-b hover:bg-muted/50">
-                                            <td class="p-4 font-mono text-xs" x-text="q.pid"></td>
-                                            <td class="p-4"><span
-                                                    class="px-2 py-1 rounded text-[10px] uppercase font-bold"
-                                                    :class="q.state === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'"
-                                                    x-text="q.state"></span></td>
-                                            <td class="p-4 font-mono text-xs" x-text="q.duration"></td>
-                                            <td class="p-4 truncate max-w-md font-mono text-xs text-muted-foreground"
-                                                x-text="q.query"></td>
-                                        </tr>
-                                    </template>
-                                </tbody>
-                            </table>
-                        </div>
+                        <h3 class="text-xl font-bold mb-2">Postgres Not Connected</h3>
+                        <p class="text-muted-foreground max-w-sm">
+                            The Postgres connection is currently disabled or failed to establish.
+                            Check your <code class="bg-muted px-1 py-0.5 rounded text-xs">config.yaml</code> and ensure
+                            Postgres is enabled and running.
+                        </p>
                     </div>
                 </div>
 
@@ -661,6 +750,87 @@
                             <textarea x-model="bannerContent"
                                 class="w-full h-[500px] p-4 bg-muted/20 font-mono text-xs resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
                                 spellcheck="false"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Settings Tab -->
+                <div x-show="activeTab === 'settings'" class="space-y-6"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 translate-y-4"
+                    x-transition:enter-end="opacity-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100 translate-y-0"
+                    x-transition:leave-end="opacity-0 translate-y-4">
+                    <div class="rounded-md border bg-card shadow-sm">
+                        <div class="flex items-center justify-between border-b p-6">
+                            <div>
+                                <h2 class="text-xl font-semibold">User Settings</h2>
+                                <p class="text-sm text-muted-foreground mt-1">Manage your profile and security settings
+                                </p>
+                            </div>
+                        </div>
+                        <div class="p-6 space-y-6">
+                            <!-- Profile Photo Section -->
+                            <div class="space-y-4">
+                                <h3 class="text-sm font-semibold">Profile Photo</h3>
+                                <div class="flex items-center gap-4">
+                                    <div
+                                        class="h-24 w-24 rounded-full bg-muted flex items-center justify-center overflow-hidden border-2 border-border">
+                                        <template x-if="userSettings.photoPath">
+                                            <img :src="'/api/user/photos/' + userSettings.photoPath" alt="Profile"
+                                                class="h-full w-full object-cover">
+                                        </template>
+                                        <template x-if="!userSettings.photoPath">
+                                            <svg xmlns="http://www.w3.org/2000/svg"
+                                                class="h-12 w-12 text-muted-foreground" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2">
+                                                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                                                <circle cx="12" cy="7" r="4"></circle>
+                                            </svg>
+                                        </template>
+                                    </div>
+                                    <div class="flex-1 space-y-2">
+                                        <input type="file" @change="uploadPhoto" accept="image/jpeg,image/png,image/gif"
+                                            class="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 cursor-pointer">
+                                        <p class="text-xs text-muted-foreground">JPG, PNG or GIF (max 2MB)</p>
+                                        <button x-show="userSettings.photoPath" @click="deletePhoto"
+                                            class="text-xs text-destructive hover:underline">Delete Photo</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="border-t"></div>
+
+                            <!-- Username Section -->
+                            <div class="space-y-4">
+                                <h3 class="text-sm font-semibold">Display Name</h3>
+                                <div class="flex gap-2">
+                                    <input type="text" x-model="userSettings.username" placeholder="Username"
+                                        class="flex-1 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
+                                    <button @click="updateUsername"
+                                        class="h-10 px-4 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-md font-medium">Save</button>
+                                </div>
+                            </div>
+
+                            <div class="border-t"></div>
+
+                            <!-- Password Section -->
+                            <div class="space-y-4">
+                                <h3 class="text-sm font-semibold">Change Password</h3>
+                                <div class="space-y-3">
+                                    <input type="password" x-model="passwordForm.current" placeholder="Current Password"
+                                        class="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
+                                    <input type="password" x-model="passwordForm.new" placeholder="New Password"
+                                        class="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
+                                    <input type="password" x-model="passwordForm.confirm"
+                                        placeholder="Confirm New Password"
+                                        class="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
+                                    <button @click="changePassword"
+                                        class="h-10 px-4 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-md font-medium">Change
+                                        Password</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

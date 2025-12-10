@@ -1,132 +1,214 @@
 # Go Echo Boilerplate 🚀
 
-A robust, production-ready Go application boilerplate built with [Echo](https://echo.labstack.com/). Designed for modularity, developer experience, and extensibility.
+A robust, production-ready Go application boilerplate built with [Echo](https://echo.labstack.com/). Designed for modularity, developer experience, and comprehensive monitoring with user management.
 
 ## ✨ Features
 
--   **Modular Service Architecture**:
-    -   Easily add new services in `internal/services/modules`.
-    -   Enable/Disable services via `config.yaml` or Environment variables.
-    -   Pre-loaded with multiple examples:
-        -   `Service A`: User management demo.
-        -   `Service B`: Product management demo (Disabled by default).
-        -   `Service C`: In-Memory Cache demo.
-        -   `Service D`: Task management using **GORM** (SQLite/Postgres).
+### Core Application
+-   **Modular Service Architecture**: Easy service extension with selective enable/disable
+-   **Configurable Authentication**: API key-based auth with permission controls
+-   **Fancy Logger**: Rich console output with colors, emojis, and structured logging (Zerolog)
+-   **Custom ASCII Banner**: Configurable startup banner
+-   **In-Memory Cache**: Thread-safe, generic KV store with TTL support
+-   **Hot Configuration**: Update config without restart
 
--   **Advanced Monitoring Dashboard 📊** (New!):
-    -   **Web UI**: Built with Shadcn-Admin style (TailwindCSS + Alpine.js).
-    -   **Dashboard**: Live traffic logs (colorful!), Service count, Infrastructure health.
-    -   **Infrastructure Stats**: Real-time status of Redis, Kafka, Postgres, Cron.
-    -   **System Info**: Hostname, IP, Disk Usage.
-    -   **Endpoints**: List all registered API endpoints.
-    -   **Cron Jobs**: View scheduled jobs and their execution times.
-    -   **Config Viewer**: Inspect running configuration.
-    -   **Tools**: Redis Key Scanner, Postgres Query Monitor, Kafka Topic Debugger.
-    -   **Banner Editor**: Edit the startup ASCII art from the browser.
+### Infrastructure Support
+-   **Redis**: Key-value store integration
+-   **PostgreSQL**: SQL database with GORM
+-   **Kafka**: Message queue integration
+-   **Cron Jobs**: Scheduled task execution
 
--   **💎 Fancy Logger**:
-    -   Built on [Zerolog](https://github.com/rs/zerolog).
-    -   Rich console output with colors and emojis for better DX.
-    -   Structured JSON logging ready for production.
-
--   **🛡️ Robust Middleware**:
-    -   **Permission Guard**: Demonstration of strict permission blocking (e.g., Block all `DELETE` requests).
-    -   **Request Logger**: Beautiful HTTP request logging with latency and status codes.
-
--   **🧠 In-Memory Cache**:
-    -   Thread-safe, generic Key-Value store (`pkg/cache`).
-    -   Built-in TTL (Time-To-Live) support.
-
--   **⏰ Cron Jobs**:
-    -   Integrated `robfig/cron`.
-    -   Configurable via `config.yaml`.
-
--   **🏭 Infrastructure Ready**:
-    -   **Redis**: Integrated with `go-redis`.
-    -   **Kafka**: Integrated with `sarama`.
-    -   **Postgres**: Integrated with `pgx` and `GORM`.
+### Monitoring Dashboard (Shadcn-Admin Style)
+-   **Modern UI**: Beautiful shadcn-inspired design with Lexend font
+-   **Dark Mode**: Full light/dark theme support with persistent storage
+-   **Custom Login**: Shadcn-admin styled login page with HTTP Basic Auth
+-   **👤 User Settings**: Profile customization, photo upload, password management
+-   **� Live Metrics**: Real-time system stats (CPU, memory, disk, network)
+-   **📝 Live Logs**: SSE-based log streaming with color-coded levels
+-   **🔧 Config Editor**: In-browser YAML editing with backup/restore
+-   **🎯 Service Manager**: View all endpoints with active status badges
+-   **🗄️ Infrastructure Tools**: Redis browser, Postgres monitor, Kafka debugger
+-   **⏰ Cron Monitor**: View scheduled jobs and execution status
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-
--   Go 1.22+
+- Go 1.21+
+- (Optional) Redis, PostgreSQL, Kafka
 
 ### Installation
 
-1.  **Clone the repository**:
-    ```bash
-    git clone https://github.com/GabrielTenma/bp-go-def.git
-    cd bp-go-def
-    ```
+```bash
+# Clone the repository
+git clone <repository-url>
+cd bp-go-def
 
-2.  **Install dependencies**:
-    ```bash
-    go mod tidy
-    ```
+# Install dependencies
+go mod download
 
-3.  **Run the application**:
-    ```bash
-    go run cmd/app/main.go
-    ```
+# Run the application
+go run cmd/app/main.go
+```
 
-4.  **Access Monitoring**:
-    Open `http://localhost:9090` (Default password: `admin`).
+### First Access
 
-### Configuration (`config.yaml`)
+1. Start application
+2. Open `http://localhost:9090`
+3. Login with default password: `admin`
+4. **Important**: Change password via User Settings immediately!
+
+## 📊 Monitoring Dashboard
+
+### Login Page
+- Custom shadcn-admin styled design
+- HTTP Basic Auth integration
+- Dark mode support
+- Responsive layout
+
+### User Settings
+- **Profile Photo**: Upload JPG/PNG/GIF (max 2MB)
+- **Display Name**: Custom username
+- **Password Management**: Change monitoring password
+- **SQLite Storage**: Secure local database
+
+### Dashboard Features
+- Service overview with live counts
+- Infrastructure status indicators
+- System information (hostname, IP, disk usage)
+- Live log streaming
+- Categorized sidebar navigation
+
+### Tools
+- **Config Editor**: Edit YAML, backup, restore
+- **Redis Browser**: Scan keys, view values
+- **Postgres Monitor**: Active sessions, top queries
+- **Kafka Debugger**: Topic inspection
+- **Banner Editor**: Update ASCII art
+
+## ⚙️ Configuration
+
+Edit `config.yaml`:
 
 ```yaml
 app:
   name: "My Fancy Go App"
   debug: true
+  env: "development"
   banner_path: "banner.txt"
 
-monitoring:
-  enabled: true
-  port: "9090"
-  password: "admin"
-  username: "admin"
-
-cron:
-  enabled: true
-  jobs:
-    health_check: "*/10 * * * * *"
+server:
+  port: "8080"
 
 services:
   enable_service_a: true
   enable_service_b: false
   enable_service_c: true
-  enable_service_d: true # Task Service (GORM)
+  enable_service_d: false
+
+auth:
+  type: "apikey"
+  secret: "super-secret-key"
+
+monitoring:
+  enabled: true
+  port: "9090"
+  password: "admin"  # Initial password (change via UI!)
+  title: "GoBP Admin"
+  subtitle: "My Custom Subtitle"
+  max_photo_size_mb: 2
+  upload_dir: "web/monitoring/uploads"
+
+redis:
+  enabled: false
+  address: "localhost:6379"
+
+postgres:
+  enabled: false
+  host: "localhost"
+  port: 5432
+
+kafka:
+  enabled: false
+  brokers: ["localhost:9092"]
+
+cron:
+  enabled: true
+  jobs:
+    log_cleanup: "0 0 * * *"
+    health_check: "*/10 * * * * *"
 ```
 
-## 📚 API Endpoints
-
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| **GET** | `/api/v1/users` | (Service A) Get dummy users |
-| **GET** | `/api/v1/products`| (Service B) Get dummy products |
-| **GET** | `/api/v1/cache/:key` | (Service C) Get cached value |
-| **POST** | `/tasks` | (Service D) Create task |
-| **GET** | `/tasks` | (Service D) List tasks |
-
-## 🛠️ Project Structure
+## 🏗️ Project Structure
 
 ```
-├── cmd/
-│   └── app/            # Main entry point
-├── config/             # Configuration logic (Viper)
+.
+├── cmd/app/              # Application entry point
+├── config/               # Configuration logic
 ├── internal/
-│   ├── middleware/     # Custom middlewares
-│   ├── monitoring/     # Monitoring Server & Handlers
-│   ├── server/         # Server entry, DI, and startup logic
-│   └── services/       # Business Logic
-│       ├── modules/    # Individual service implementations
-│       └── registry/   # Service Registration logic
+│   ├── middleware/       # Auth & permission middleware
+│   ├── monitoring/       # Monitoring dashboard
+│   │   ├── database/     # SQLite user management
+│   │   ├── handlers.go   # API endpoints
+│   │   └── server.go     # Monitoring server
+│   ├── server/           # Main server logic
+│   └── services/         # Service implementations
 ├── pkg/
-│   ├── cache/          # Generic In-Memory Cache
-│   ├── infrastructure/ # External Infrastructure (Redis, Kafka, Postgres, Cron)
-│   ├── logger/         # Custom Logger wrapper
-│   └── utils/          # System utilities
-└── web/
-    └── monitoring/     # Frontend assets for Monitoring Dashboard
+│   ├── infrastructure/   # Redis, Postgres, Kafka, Cron
+│   ├── logger/           # Rich console logger
+│   └── utils/            # System utilities
+├── web/monitoring/       # Monitoring UI
+│   ├── assets/          # CSS, JS
+│   ├── login.html       # Login page
+│   ├── index.html       # Dashboard
+│   └── uploads/         # User files
+└── config.yaml          # Main configuration
 ```
+
+## 🔌 API Endpoints
+
+### Main Application
+- `GET /health` - Health check
+- `GET /api/service-a` - Service A
+- `GET /api/service-c` - Service C
+- `DELETE /api/*` - Blocked by middleware
+
+### Monitoring APIs (Protected)
+- `GET /api/status` - System status
+- `GET /api/endpoints` - List services
+- `GET /api/config` - Get config
+- `POST /api/config` - Update config
+- `GET /api/user/settings` - User profile
+- `POST /api/user/password` - Change password
+- `POST /api/user/photo` - Upload photo
+
+## 🔒 Security
+
+- HTTP Basic Auth for monitoring
+- BCrypt password hashing
+- SQLite user database
+- File upload size limits
+- API key authentication
+- Permission-based access control
+
+## 🛠️ Development
+
+### Adding a Service
+
+1. Create in `internal/services/`
+2. Add config flag in `config.yaml`
+3. Register in `internal/server/server.go`
+4. Auto-appears in monitoring!
+
+### Database
+
+- User settings: `monitoring_users.db` (auto-created)
+- Default user from `config.yaml` password
+- Change password via UI
+
+## 📝 License
+
+MIT
+
+---
+
+**Built with ❤️ using Go, Echo, Alpine.js, Tailwind CSS**

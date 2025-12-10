@@ -4,6 +4,39 @@ function app() {
         sidebarOpen: true,
         isDark: false, // synced in init
 
+        menuCategories: [
+            {
+                name: 'General',
+                items: [
+                    { id: 'dashboard', label: 'Dashboard', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>' },
+                    { id: 'endpoints', label: 'Endpoints', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>' }
+                ]
+            },
+            {
+                name: 'Infrastructure',
+                items: [
+                    { id: 'redis', label: 'Redis', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>' },
+                    { id: 'postgres', label: 'Postgres', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20"></path><path d="M12 2v20"></path><path d="M20 20a1 1 0 1 0 2 0a1 1 0 1 0-2 0"></path><path d="M4 20a1 1 0 1 0 2 0a1 1 0 1 0-2 0"></path><path d="M20 4a1 1 0 1 0 2 0a1 1 0 1 0-2 0"></path><path d="M4 4a1 1 0 1 0 2 0a1 1 0 1 0-2 0"></path></svg>' },
+                    { id: 'kafka', label: 'Kafka', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>' }
+                ]
+            },
+            {
+                name: 'Periodic',
+                items: [
+                    { id: 'cron', label: 'Cron Jobs', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>' }
+                ]
+            },
+            {
+                name: 'Other',
+                items: [
+                    { id: 'config', label: 'Config', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>' },
+                    { id: 'banner', label: 'Banner', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg>' },
+                    { id: 'settings', label: 'User Settings', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>' }
+                ]
+            }
+        ],
+
+        // Flat tabs array for backward compatibility
         tabs: [
             { id: 'dashboard', label: 'Dashboard', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>' },
             { id: 'endpoints', label: 'Endpoints', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>' },
@@ -12,7 +45,8 @@ function app() {
             { id: 'kafka', label: 'Kafka', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>' },
             { id: 'cron', label: 'Cron Jobs', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>' },
             { id: 'config', label: 'Config', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>' },
-            { id: 'banner', label: 'Banner', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg>' }
+            { id: 'banner', label: 'Banner', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg>' },
+            { id: 'settings', label: 'User Settings', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>' }
         ],
 
         // Dashboard Data
@@ -27,6 +61,11 @@ function app() {
         appConfig: {},
         configContent: '', // New
         bannerContent: '',
+        monitoringConfig: { title: 'GoBP Admin', subtitle: 'Go Echo Boilerplate' }, // New
+
+        // User Settings
+        userSettings: { username: '', photoPath: '' },
+        passwordForm: { current: '', new: '', confirm: '' },
 
         // System Data
         infraStats: { total: 0, active: 0, items: [] },
@@ -64,7 +103,13 @@ function app() {
             // Periodic
             this.fetchStatus();
             this.fetchDummyStatus();
+            this.fetchMonitoringConfig();
+            this.fetchUserSettings(); // Load user settings for header
             setInterval(() => this.fetchStatus(), 5000);
+
+            // Load data for badges
+            this.fetchEndpoints();
+            this.fetchCronJobs();
 
             // Watch tab changes to load data
             this.$watch('activeTab', (val) => {
@@ -75,11 +120,33 @@ function app() {
                 if (val === 'cron') this.fetchCronJobs();
                 if (val === 'config') this.fetchConfig();
                 if (val === 'banner') this.fetchBanner();
+                if (val === 'settings') this.fetchUserSettings();
             });
         },
 
+
         get activeTabLabel() {
             return this.tabs.find(t => t.id === this.activeTab).label;
+        },
+
+        get activeEndpointsCount() {
+            return this.endpoints.filter(e => e.active).length;
+        },
+
+        get activeCronCount() {
+            return this.cronJobs.length;
+        },
+
+        logout() {
+            // Force browser to clear cached credentials by sending wrong auth to logout endpoint
+            fetch('/logout', {
+                headers: {
+                    'Authorization': 'Basic ' + btoa('logout:logout')
+                }
+            }).finally(() => {
+                // Redirect to login page
+                window.location.href = '/';
+            });
         },
 
         toggleTheme() {
@@ -200,6 +267,16 @@ function app() {
                 this.dummyLogActive = data.active;
             } catch (e) { }
         },
+
+        async fetchMonitoringConfig() {
+            try {
+                const res = await fetch('/api/monitoring/config');
+                const data = await res.json();
+                if (data.title) this.monitoringConfig.title = data.title;
+                if (data.subtitle) this.monitoringConfig.subtitle = data.subtitle;
+            } catch (e) { }
+        },
+
 
         async toggleDummyLog() {
             try {
@@ -331,6 +408,96 @@ function app() {
                 const data = await res.json();
                 this.kafkaMsg = JSON.stringify(data, null, 2);
             } catch (e) { }
+        },
+
+        // User Settings Methods
+        async fetchUserSettings() {
+            try {
+                const res = await fetch('/api/user/settings');
+                const data = await res.json();
+                this.userSettings.username = data.username || 'Admin';
+                this.userSettings.photoPath = data.photo_path || '';
+            } catch (e) { }
+        },
+
+        async updateUsername() {
+            try {
+                const res = await fetch('/api/user/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: this.userSettings.username })
+                });
+                const data = await res.json();
+                alert(data.message || 'Username updated');
+            } catch (e) {
+                alert('Failed to update username');
+            }
+        },
+
+        async changePassword() {
+            if (this.passwordForm.new !== this.passwordForm.confirm) {
+                alert('New passwords do not match');
+                return;
+            }
+            try {
+                const res = await fetch('/api/user/password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        current_password: this.passwordForm.current,
+                        new_password: this.passwordForm.new
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message || 'Password changed');
+                    this.passwordForm = { current: '', new: '', confirm: '' };
+                } else {
+                    alert(data.error || 'Failed to change password');
+                }
+            } catch (e) {
+                alert('Failed to change password');
+            }
+        },
+
+        async uploadPhoto(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('photo', file);
+
+            try {
+                const res = await fetch('/api/user/photo', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    this.userSettings.photoPath = data.photo_path;
+                    alert(data.message || 'Photo uploaded');
+                } else {
+                    alert(data.error || 'Upload failed');
+                }
+            } catch (e) {
+                alert('Upload failed');
+            }
+        },
+
+        async deletePhoto() {
+            if (!confirm('Delete profile photo?')) return;
+            try {
+                const res = await fetch('/api/user/photo', { method: 'DELETE' });
+                const data = await res.json();
+                if (res.ok) {
+                    this.userSettings.photoPath = '';
+                    alert(data.message || 'Photo deleted');
+                } else {
+                    alert(data.error || 'Delete failed');
+                }
+            } catch (e) {
+                alert('Delete failed');
+            }
         }
     }
 }

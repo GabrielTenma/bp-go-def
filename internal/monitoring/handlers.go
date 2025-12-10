@@ -31,33 +31,42 @@ type Handler struct {
 	dummyStop   chan struct{}
 }
 
-func (h *Handler) RegisterRoutes(e *echo.Echo) {
+func (h *Handler) RegisterRoutes(g *echo.Group) {
 	// e.GET("/", h.serveUI) // handled by static now
-	e.GET("/api/status", h.getStatus)
-	e.GET("/api/config", h.getConfig)
-	e.GET("/api/config/raw", h.getRawConfig)     // New
-	e.POST("/api/config", h.saveConfig)          // New
-	e.POST("/api/config/backup", h.backupConfig) // New
-	e.GET("/api/logs", h.streamLogs)
-	e.GET("/api/cpu", h.streamCPU)
-	e.GET("/api/endpoints", h.getEndpoints)
-	e.GET("/api/cron", h.getCronJobs)
+	g.GET("/api/status", h.getStatus)
+	g.GET("/api/monitoring/config", h.getMonitoringConfig) // New
+	g.GET("/api/config", h.getConfig)
+	g.GET("/api/config/raw", h.getRawConfig)     // New
+	g.POST("/api/config", h.saveConfig)          // New
+	g.POST("/api/config/backup", h.backupConfig) // New
+	g.GET("/api/logs", h.streamLogs)
+	g.GET("/api/cpu", h.streamCPU)
+	g.GET("/api/endpoints", h.getEndpoints)
+	g.GET("/api/cron", h.getCronJobs)
 
 	// Utils
-	e.GET("/api/logs/dummy/status", h.getDummyStatus)
-	e.POST("/api/logs/dummy", h.toggleDummyLogs)
+	g.GET("/api/logs/dummy/status", h.getDummyStatus)
+	g.POST("/api/logs/dummy", h.toggleDummyLogs)
 
 	// Banner
-	e.GET("/api/banner", h.getBanner)
-	e.POST("/api/banner", h.saveBanner)
+	g.GET("/api/banner", h.getBanner)
+	g.POST("/api/banner", h.saveBanner)
+
+	// User Settings
+	g.GET("/api/user/settings", h.getUserSettings)
+	g.POST("/api/user/settings", h.updateUserSettings)
+	g.POST("/api/user/password", h.changePassword)
+	g.POST("/api/user/photo", h.uploadPhoto)
+	g.DELETE("/api/user/photo", h.deleteUserPhoto)
+	// Note: Static route for photos is registered in server.go
 
 	// New Endpoints
-	e.GET("/api/redis/keys", h.getRedisKeys)
-	e.GET("/api/redis/key/:key", h.getRedisValue)
-	e.GET("/api/postgres/queries", h.getPostgresQueries)
-	e.GET("/api/postgres/info", h.getPostgresInfo)
-	e.GET("/api/kafka/topics", h.getKafkaTopics)
-	e.POST("/api/logs/dummy", h.toggleDummyLogs)
+	g.GET("/api/redis/keys", h.getRedisKeys)
+	g.GET("/api/redis/key/:key", h.getRedisValue)
+	g.GET("/api/postgres/queries", h.getPostgresQueries)
+	g.GET("/api/postgres/info", h.getPostgresInfo)
+	g.GET("/api/kafka/topics", h.getKafkaTopics)
+	g.POST("/api/logs/dummy", h.toggleDummyLogs)
 }
 
 func (h *Handler) getDummyStatus(c echo.Context) error {
@@ -94,6 +103,13 @@ func (h *Handler) toggleDummyLogs(c echo.Context) error {
 		close(h.dummyStop)
 		return c.JSON(http.StatusOK, map[string]string{"message": "Dummy logs disabled"})
 	}
+}
+
+func (h *Handler) getMonitoringConfig(c echo.Context) error {
+	return c.JSON(http.StatusOK, map[string]string{
+		"title":    h.config.Monitoring.Title,
+		"subtitle": h.config.Monitoring.Subtitle,
+	})
 }
 
 func (h *Handler) runDummyLogs(stop chan struct{}) {

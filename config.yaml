@@ -43,6 +43,10 @@ monitoring:
   enabled: true
   port: "9090"
   password: "admin"
+  title: "GoBP Admin"
+  subtitle: "My Kisah Emuach"
+  max_photo_size_mb: 2
+  upload_dir: "web/monitoring/uploads"
 
 cron:
   enabled: true
