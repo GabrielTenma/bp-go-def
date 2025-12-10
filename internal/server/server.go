@@ -91,6 +91,7 @@ func (s *Server) Start() error {
 	registry.Register(modules.NewServiceA(s.config.Services.EnableServiceA))
 	registry.Register(modules.NewServiceB(s.config.Services.EnableServiceB))
 	registry.Register(modules.NewServiceC(s.config.Services.EnableServiceC))
+	registry.Register(modules.NewServiceD(s.postgresManager, s.config.Services.EnableServiceD))
 
 	registry.Boot(s.echo)
 

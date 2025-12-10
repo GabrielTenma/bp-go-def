@@ -31,6 +31,7 @@ type ServicesConfig struct {
 	EnableServiceA bool `mapstructure:"enable_service_a"`
 	EnableServiceB bool `mapstructure:"enable_service_b"`
 	EnableServiceC bool `mapstructure:"enable_service_c"`
+	EnableServiceD bool `mapstructure:"enable_service_d"`
 }
 
 type AuthConfig struct {
@@ -80,6 +81,7 @@ func LoadConfig() (*Config, error) {
 	viper.SetDefault("services.enable_service_a", true)
 	viper.SetDefault("services.enable_service_b", true)
 	viper.SetDefault("services.enable_service_c", true)
+	viper.SetDefault("services.enable_service_d", true)
 
 	viper.SetDefault("redis.enabled", false)
 	viper.SetDefault("kafka.enabled", false)

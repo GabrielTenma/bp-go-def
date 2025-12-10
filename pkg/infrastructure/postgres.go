@@ -7,10 +7,13 @@ import (
 	"test-go/config"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 type PostgresManager struct {
-	DB *sql.DB
+	DB  *sql.DB
+	ORM *gorm.DB
 }
 
 func NewPostgresDB(cfg config.PostgresConfig) (*PostgresManager, error) {
@@ -21,16 +24,28 @@ func NewPostgresDB(cfg config.PostgresConfig) (*PostgresManager, error) {
 	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
 		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName, cfg.SSLMode)
 
-	db, err := sql.Open("pgx", dsn)
+	// Open raw SQL connection
+	sqlDB, err := sql.Open("pgx", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open postgres connection: %w", err)
 	}
 
-	if err := db.Ping(); err != nil {
+	if err := sqlDB.Ping(); err != nil {
 		return nil, fmt.Errorf("failed to connect to postgres: %w", err)
 	}
 
-	return &PostgresManager{DB: db}, nil
+	// Initialize GORM with the existing SQL connection
+	gormDB, err := gorm.Open(postgres.New(postgres.Config{
+		Conn: sqlDB,
+	}), &gorm.Config{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize GORM: %w", err)
+	}
+
+	return &PostgresManager{
+		DB:  sqlDB,
+		ORM: gormDB,
+	}, nil
 }
 
 // Query executes a query that returns rows, typically a SELECT.
