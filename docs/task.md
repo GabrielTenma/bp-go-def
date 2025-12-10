@@ -1,0 +1,23 @@
+# Task List
+
+- [x] Planning <!-- id: 0 -->
+    - [x] Create implementation plan <!-- id: 1 -->
+    - [x] Review plan with user <!-- id: 2 -->
+- [/] Core Setup <!-- id: 3 -->
+    - [x] Initialize Go module <!-- id: 4 -->
+    - [x] Setup Project Structure (`cmd`, `internal`, `pkg`, `config`) <!-- id: 5 -->
+    - [x] Implement Configuration System (Viper or clean env) <!-- id: 6 -->
+- [x] Fancy Logger & Utilities <!-- id: 7 -->
+    - [x] Implement rich console logger (colors, icons) <!-- id: 8 -->
+- [/] Architecture Implementation <!-- id: 9 -->
+    - [x] Create middleware configurations (Auth, etc.) - *Block DELETE* <!-- id: 10 -->
+    - [x] Define Service/Usecase interfaces <!-- id: 11 -->
+    - [x] Implement Service Registry/Startup Logic (Selective Service Loading) <!-- id: 12 -->
+- [x] Example Implementation <!-- id: 13 -->
+    - [x] Create dummy services (Service A, Service B) <!-- id: 14 -->
+    - [x] Create HTTP Handlers/Routes <!-- id: 15 -->
+- [x] Verification <!-- id: 16 -->
+    - [x] Run application and verify console output <!-- id: 17 -->
+    - [x] Test service enabling/disabling <!-- id: 18 -->
+- [ ] Utilities <!-- id: 19 -->
+    - [x] Implement customizable ASCII banner (Rabbit) <!-- id: 20 -->
