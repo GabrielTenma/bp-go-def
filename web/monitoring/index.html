@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Monitor</title>
+    <!-- Tailwind via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        border: "hsl(var(--border))",
+                        input: "hsl(var(--input))",
+                        ring: "hsl(var(--ring))",
+                        background: "hsl(var(--background))",
+                        foreground: "hsl(var(--foreground))",
+                        primary: {
+                            DEFAULT: "hsl(var(--primary))",
+                            foreground: "hsl(var(--primary-foreground))",
+                        },
+                        secondary: {
+                            DEFAULT: "hsl(var(--secondary))",
+                            foreground: "hsl(var(--secondary-foreground))",
+                        },
+                        destructive: {
+                            DEFAULT: "hsl(var(--destructive))",
+                            foreground: "hsl(var(--destructive-foreground))",
+                        },
+                        muted: {
+                            DEFAULT: "hsl(var(--muted))",
+                            foreground: "hsl(var(--muted-foreground))",
+                        },
+                        accent: {
+                            DEFAULT: "hsl(var(--accent))",
+                            foreground: "hsl(var(--accent-foreground))",
+                        },
+                        popover: {
+                            DEFAULT: "hsl(var(--popover))",
+                            foreground: "hsl(var(--popover-foreground))",
+                        },
+                        card: {
+                            DEFAULT: "hsl(var(--card))",
+                            foreground: "hsl(var(--card-foreground))",
+                        },
+                    },
+                    borderRadius: {
+                        lg: "var(--radius)",
+                        md: "calc(var(--radius) - 2px)",
+                        sm: "calc(var(--radius) - 4px)",
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer base {
+          :root {
+            --background: 0 0% 100%;
+            --foreground: 240 10% 3.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 240 10% 3.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 240 10% 3.9%;
+            --primary: 240 5.9% 10%;
+            --primary-foreground: 0 0% 98%;
+            --secondary: 240 4.8% 95.9%;
+            --secondary-foreground: 240 5.9% 10%;
+            --muted: 240 4.8% 95.9%;
+            --muted-foreground: 240 3.8% 46.1%;
+            --accent: 240 4.8% 95.9%;
+            --accent-foreground: 240 5.9% 10%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 0 0% 98%;
+            --border: 240 5.9% 90%;
+            --input: 240 5.9% 90%;
+            --ring: 240 10% 3.9%;
+            --radius: 0.5rem;
+          }
+          .dark {
+            --background: 240 10% 3.9%;
+            --foreground: 0 0% 98%;
+            --card: 240 10% 3.9%;
+            --card-foreground: 0 0% 98%;
+            --popover: 240 10% 3.9%;
+            --popover-foreground: 0 0% 98%;
+            --primary: 0 0% 98%;
+            --primary-foreground: 240 5.9% 10%;
+            --secondary: 240 3.7% 15.9%;
+            --secondary-foreground: 0 0% 98%;
+            --muted: 240 3.7% 15.9%;
+            --muted-foreground: 240 5% 64.9%;
+            --accent: 240 3.7% 15.9%;
+            --accent-foreground: 0 0% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 0 0% 98%;
+            --border: 240 3.7% 15.9%;
+            --input: 240 3.7% 15.9%;
+            --ring: 240 4.9% 83.9%;
+          }
+        }
+    </style>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <!-- Font Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <script>
+        // Check theme immediately to prevent FOUC
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        button:active {
+            transform: scale(0.95);
+            transition: transform 0.1s;
+        }
+    </style>
+</head>
+
+<body class="bg-background text-foreground antialiased" x-data="app()">
+
+    <div class="flex h-screen overflow-hidden bg-background">
+        <!-- Sidebar -->
+        <aside :class="sidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full'"
+            class="fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-card transition-all duration-300 md:relative md:translate-x-0">
+            <div class="flex h-14 items-center border-b px-6">
+                <a class="flex items-center gap-2 font-semibold" href="#">
+                    <div class="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
+                            <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
+                        </svg>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="leading-none">GoBP Admin</span>
+                        <span class="text-[10px] font-normal text-muted-foreground leading-none mt-0.5">Go Echo
+                            Boilerplate</span>
+                    </div>
+                </a>
+            </div>
+            <div class="flex-1 overflow-auto py-4">
+                <nav class="grid items-start px-4 text-sm font-medium space-y-1">
+                    <template x-for="tab in tabs" :key="tab.id">
+                        <button @click="activeTab = tab.id"
+                            :class="activeTab === tab.id ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'"
+                            class="flex items-center gap-3 rounded-md px-3 py-2 transition-all">
+                            <span class="[&>svg]:h-4 [&>svg]:w-4" x-html="tab.icon"></span>
+                            <span x-text="tab.label"></span>
+                        </button>
+                    </template>
+                </nav>
+            </div>
+            <div class="border-t p-4">
+                <div class="flex items-center gap-3 rounded-lg border bg-muted/50 p-3 shadow-sm">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-sm bg-background">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="h-4 w-4 text-green-500">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                    </div>
+                    <div class="flex flex-col gap-0.5 text-xs">
+                        <span class="font-medium text-foreground">System Healthy</span>
+                        <span class="text-muted-foreground">All systems go</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex flex-1 flex-col overflow-hidden relative">
+            <!-- Header -->
+            <header
+                class="absolute top-0 left-0 right-0 z-20 flex h-14 items-center justify-between gap-4 border-b bg-background/80 backdrop-blur-md px-6 lg:h-[60px] transition-all">
+                <button @click="sidebarOpen = !sidebarOpen" class="md:hidden text-muted-foreground">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="w-full flex-1">
+                    <h1 class="text-lg font-semibold md:text-xl" x-text="activeTabLabel"></h1>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <button @click="toggleTheme()"
+                        class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground">
+                        <svg x-show="!isDark" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <line x1="12" y1="1" x2="12" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="23"></line>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                            <line x1="1" y1="12" x2="3" y2="12"></line>
+                            <line x1="21" y1="12" x2="23" y2="12"></line>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                        </svg>
+                        <svg x-show="isDark" style="display:none" xmlns="http://www.w3.org/2000/svg" width="18"
+                            height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                    </button>
+
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open"
+                            class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-secondary-foreground border border-input shadow-sm hover:bg-accent/50 overflow-hidden">
+                            <img src="https://ui.shadcn.com/avatars/01.png" alt="Avatar"
+                                class="h-full w-full object-cover">
+                        </button>
+                        <div x-show="open" @click.outside="open = false"
+                            class="absolute right-0 mt-2 w-56 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in fade-in-80 zoom-in-95 z-50 p-1"
+                            style="display: none;">
+                            <div class="px-2 py-1.5 text-sm font-semibold">My Account</div>
+                            <div class="h-px bg-muted my-1"></div>
+                            <div
+                                class="px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer rounded-sm">
+                                Profile</div>
+                            <div
+                                class="px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer rounded-sm">
+                                Settings</div>
+                            <div class="h-px bg-muted my-1"></div>
+                            <button @click="logout()"
+                                class="w-full text-left px-2 py-1.5 text-sm text-red-500 outline-none transition-colors hover:bg-red-100 dark:hover:bg-red-900/20 cursor-pointer rounded-sm">Log
+                                out</button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-1 h-full overflow-y-auto p-4 lg:p-6 bg-muted/40" style="padding-top: 110px;">
+                <!-- Dashboard Tab -->
+                <div x-show="activeTab === 'dashboard'" class="space-y-6"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-4"
+                    x-transition:enter-end="opacity-100 translate-y-0">
+                    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                        <!-- Stats Cards -->
+                        <div class="p-6 rounded-xl border bg-card text-card-foreground shadow-sm">
+                            <div class="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <h3 class="tracking-tight text-sm font-medium">Total Services</h3>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="text-muted-foreground">
+                                    <rect x="3" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="14" width="7" height="7"></rect>
+                                    <rect x="3" y="14" width="7" height="7"></rect>
+                                </svg>
+                            </div>
+                            <div class="text-2xl font-bold" x-text="serviceCount">0</div>
+                            <div class="text-xs text-muted-foreground flex items-center gap-1">
+                                <span class="w-2 h-2 rounded-full bg-green-500"></span> Active
+                            </div>
+                        </div>
+
+                        <!-- Infra Stats -->
+                        <div class="p-6 rounded-xl border bg-card text-card-foreground shadow-sm">
+                            <div class="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <h3 class="tracking-tight text-sm font-medium">Infrastructure</h3>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="text-muted-foreground">
+                                    <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
+                                    <path d="M12 12v9"></path>
+                                    <path d="m8 17 4 4 4-4"></path>
+                                </svg>
+                            </div>
+                            <div class="text-2xl font-bold">
+                                <span x-text="infraStats.active">0</span>/<span x-text="infraStats.total">0</span>
+                            </div>
+                            <div class="text-xs text-muted-foreground flex gap-1 flex-wrap mt-1">
+                                <template x-for="item in infraStats.items">
+                                    <span class="px-1 py-0.5 rounded text-[10px]"
+                                        :class="item.active ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-500'"
+                                        x-text="item.name"></span>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- System Info -->
+                        <div class="p-6 rounded-xl border bg-card text-card-foreground shadow-sm">
+                            <div class="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <h3 class="tracking-tight text-sm font-medium">Server Info</h3>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="text-muted-foreground">
+                                    <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                                    <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                                    <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                                    <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                                </svg>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <div class="text-sm font-medium truncate" x-text="sysInfo.hostname || '...'"></div>
+                                <div class="text-xs text-muted-foreground font-mono" x-text="sysInfo.ip || '...'"></div>
+                            </div>
+                        </div>
+
+                        <!-- Disk Usage -->
+                        <div class="p-6 rounded-xl border bg-card text-card-foreground shadow-sm">
+                            <div class="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <h3 class="tracking-tight text-sm font-medium">Disk Usage</h3>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="text-muted-foreground">
+                                    <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                                    <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+                                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+                                </svg>
+                            </div>
+                            <div class="text-2xl font-bold">
+                                <span x-text="Math.round(sysInfo.disk.used_percent || 0)">0</span>%
+                            </div>
+                            <p class="text-xs text-muted-foreground">
+                                <span x-text="sysInfo.disk.used_gb || 0">0</span>GB / <span
+                                    x-text="sysInfo.disk.total_gb || 0">0</span>GB
+                            </p>
+                            <div class="w-full bg-secondary h-1.5 mt-2 rounded-full overflow-hidden">
+                                <div class="bg-primary h-full transition-all duration-500"
+                                    :style="`width: ${sysInfo.disk.used_percent || 0}%`"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Endpoints Tab -->
+                    <!-- Live Logs -->
+                    <div class="rounded-xl border bg-card text-card-foreground shadow-sm flex flex-col h-[500px]">
+                        <div
+                            class="p-6 flex justify-between items-center border-b border-gray-100 dark:border-gray-800">
+                            <div class="flex items-center gap-2">
+                                <h3 class="font-semibold">Live Logs</h3>
+                                <div
+                                    class="px-2 py-0.5 rounded text-[10px] bg-yellow-500/10 text-yellow-500 font-medium">
+                                    Throttled 1s</div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button @click="toggleDummyLog()"
+                                    class="h-6 px-2 text-[10px] font-medium rounded transition-colors border"
+                                    :class="dummyLogActive ? 'bg-green-100 text-green-700 border-green-200 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800' : 'bg-background text-muted-foreground border-input hover:bg-accent hover:text-accent-foreground'">
+                                    <span x-text="dummyLogActive ? 'Disable Dummy Logs' : 'Enable Dummy Logs'"></span>
+                                </button>
+                                <button @click="logs = []"
+                                    class="text-xs text-muted-foreground hover:text-foreground">Clear Console</button>
+                            </div>
+                        </div>
+                        <div class="flex-1 bg-[#0a0a0a] p-4 overflow-y-auto font-mono text-xs text-gray-300"
+                            id="logs-box">
+                            <template x-for="log in logs">
+                                <div class="mb-1 border-b border-white/5 pb-1 break-all flex hover:bg-white/5 transition-colors"
+                                    x-html="formatLog(log)"></div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Endpoints Tab -->
+                <div x-show="activeTab === 'endpoints'" class="space-y-6"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-4"
+                    x-transition:enter-end="opacity-100 translate-y-0">
+                    <div class="rounded-md border bg-card">
+                        <table class="w-full caption-bottom text-sm">
+                            <thead class="[&_tr]:border-b">
+                                <tr class="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                                    <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                                        Service Name</th>
+                                    <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                                        Endpoint</th>
+                                    <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                                        Status</th>
+                                    <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                                        Struct/Class</th>
+                                </tr>
+                            </thead>
+                            <tbody class="[&_tr:last-child]:border-0">
+                                <template x-for="svc in endpoints">
+                                    <tr class="border-b transition-colors hover:bg-muted/50">
+                                        <td class="p-4 align-middle font-medium" x-text="svc.name"></td>
+                                        <td class="p-4 align-middle text-muted-foreground" x-text="svc.endpoint"></td>
+                                        <td class="p-4 align-middle">
+                                            <span
+                                                class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                                :class="svc.active ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'">
+                                                <span x-text="svc.active ? 'Active' : 'Inactive'"></span>
+                                            </span>
+                                        </td>
+                                        <td class="p-4 align-middle font-mono text-xs" x-text="svc.struct_name"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Redis Tab -->
+                <div x-show="activeTab === 'redis'" class="space-y-6"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-4"
+                    x-transition:enter-end="opacity-100 translate-y-0">
+                    <!-- Connected View -->
+                    <div x-show="infraStatus.redis">
+                        <div class="flex gap-4 mb-6">
+                            <div class="flex-1 relative">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="absolute left-3 top-3 text-muted-foreground">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                                <input type="text" x-model="redisPattern" placeholder="Search keys (e.g. user:*)..."
+                                    class="flex h-10 w-full rounded-md border border-input bg-background pl-10 pr-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                            </div>
+                            <button @click="fetchRedisKeys()"
+                                class="h-10 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors">Scan
+                                Keys</button>
+                        </div>
+
+                        <div class="rounded-md border bg-card">
+                            <table class="w-full caption-bottom text-sm">
+                                <thead class="[&_tr]:border-b">
+                                    <tr
+                                        class="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                                            Key
+                                            Name</th>
+                                        <th class="h-12 px-4 text-right align-middle font-medium text-muted-foreground">
+                                            Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="[&_tr:last-child]:border-0">
+                                    <template x-for="key in redisKeys">
+                                        <tr class="border-b transition-colors hover:bg-muted/50">
+                                            <td class="p-4 align-middle font-mono text-xs" x-text="key"></td>
+                                            <td class="p-4 align-middle text-right">
+                                                <button @click="viewRedisValue(key)"
+                                                    class="text-primary hover:underline text-xs font-medium">View
+                                                    Value</button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                    <tr x-show="redisKeys.length === 0">
+                                        <td colspan="2" class="p-8 text-center text-muted-foreground">No keys found. Try
+                                            scanning with *.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Disconnected View -->
+                    <div x-show="!infraStatus.redis"
+                        class="flex flex-col items-center justify-center py-16 text-center">
+                        <div
+                            class="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path
+                                    d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                                </path>
+                                <line x1="12" y1="9" x2="12" y2="13"></line>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Redis Not Connected</h3>
+                        <p class="text-muted-foreground max-w-sm">
+                            The Redis connection is currently disabled or failed to establish.
+                            Check your <code class="bg-muted px-1 py-0.5 rounded text-xs">config.yaml</code> and ensure
+                            Redis is enabled and running.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Postgres Tab & Kafka Tab (Simplified for brevity, structure remains similar to previous but wrapped in p-8 container) -->
+                <!-- Postgres Tab -->
+                <div x-show="activeTab === 'postgres'" class="space-y-6"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-4"
+                    x-transition:enter-end="opacity-100 translate-y-0">
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div class="p-6 rounded-xl border bg-card shadow-sm">
+                            <h3 class="font-semibold mb-2">DB Info</h3>
+                            <div x-text="pgInfo.version" class="text-xs text-muted-foreground mb-1"></div>
+                            <div class="text-2xl font-bold" x-text="pgInfo.size || 'Unknown'"></div>
+                        </div>
+                        <div class="p-6 rounded-xl border bg-card shadow-sm">
+                            <h3 class="font-semibold mb-2">Active Sessions</h3>
+                            <div class="text-2xl font-bold" x-text="pgInfo.sessions || 0"></div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-md border bg-card">
+                        <div class="p-4 border-b flex justify-between items-center">
+                            <h3 class="font-bold">Running Queries (Top 50)</h3>
+                            <button @click="fetchPgQueries()"
+                                class="text-xs text-primary hover:underline">Refresh</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full caption-bottom text-sm">
+                                <thead class="[&_tr]:border-b">
+                                    <tr class="border-b">
+                                        <th class="h-12 px-4 text-left align-middle font-medium">PID</th>
+                                        <th class="h-12 px-4 text-left align-middle font-medium">State</th>
+                                        <th class="h-12 px-4 text-left align-middle font-medium">Duration</th>
+                                        <th class="h-12 px-4 text-left align-middle font-medium">Query</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="q in pgQueries">
+                                        <tr class="border-b hover:bg-muted/50">
+                                            <td class="p-4 font-mono text-xs" x-text="q.pid"></td>
+                                            <td class="p-4"><span
+                                                    class="px-2 py-1 rounded text-[10px] uppercase font-bold"
+                                                    :class="q.state === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'"
+                                                    x-text="q.state"></span></td>
+                                            <td class="p-4 font-mono text-xs" x-text="q.duration"></td>
+                                            <td class="p-4 truncate max-w-md font-mono text-xs text-muted-foreground"
+                                                x-text="q.query"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kafka Tab -->
+                <div x-show="activeTab === 'kafka'" class="space-y-6"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-4"
+                    x-transition:enter-end="opacity-100 translate-y-0">
+                    <div class="p-6 rounded-xl border bg-card shadow-sm text-center">
+                        <div class="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Kafka Debugger</h3>
+                        <p class="text-muted-foreground">Inspect topics, consumer groups, and stream messages.</p>
+                        <div class="mt-8 bg-muted p-4 rounded-md text-left font-mono text-sm overflow-auto max-h-64">
+                            <pre x-text="kafkaMsg || 'No active connection...'"></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cron Tab -->
+                <div x-show="activeTab === 'cron'" class="space-y-6"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-4"
+                    x-transition:enter-end="opacity-100 translate-y-0">
+                    <div class="rounded-md border bg-card">
+                        <table class="w-full caption-bottom text-sm">
+                            <thead class="[&_tr]:border-b">
+                                <tr class="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                                    <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Job
+                                        Name</th>
+                                    <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                                        Schedule</th>
+                                    <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Last
+                                        Run</th>
+                                    <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Next
+                                        Run</th>
+                                </tr>
+                            </thead>
+                            <tbody class="[&_tr:last-child]:border-0">
+                                <template x-for="job in cronJobs">
+                                    <tr class="border-b transition-colors hover:bg-muted/50">
+                                        <td class="p-4 align-middle font-medium" x-text="job.name"></td>
+                                        <td class="p-4 align-middle font-mono text-xs" x-text="job.schedule"></td>
+                                        <td class="p-4 align-middle text-muted-foreground"
+                                            x-text="job.last_run.startsWith('0001') ? 'Never' : new Date(job.last_run).toLocaleString()">
+                                        </td>
+                                        <td class="p-4 align-middle text-muted-foreground"
+                                            x-text="new Date(job.next_run).toLocaleString()"></td>
+                                    </tr>
+                                </template>
+                                <tr x-show="cronJobs.length === 0">
+                                    <td colspan="4" class="p-4 text-center text-muted-foreground">No cron jobs
+                                        configured.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Config Tab -->
+                <div x-show="activeTab === 'config'" class="space-y-6"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-4"
+                    x-transition:enter-end="opacity-100 translate-y-0">
+                    <div class="p-6 rounded-xl border bg-card shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-xl font-bold">App Configuration</h3>
+                                <p class="text-muted-foreground text-sm">Edit <code>config.yaml</code> directly.</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button @click="backupConfig()"
+                                    class="h-8 px-3 text-xs bg-yellow-500 hover:bg-yellow-600 text-white rounded-md transition-colors font-medium">Backup
+                                    Config</button>
+                                <button @click="fetchConfig()"
+                                    class="h-8 px-3 text-xs bg-secondary hover:bg-secondary/80 rounded-md transition-colors">Reset</button>
+                                <button @click="saveConfigText()"
+                                    class="h-8 px-3 text-xs bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors font-medium">Save
+                                    Changes</button>
+                            </div>
+                        </div>
+                        <div class="rounded-md border border-input shadow-sm">
+                            <textarea x-model="configContent"
+                                class="w-full h-[600px] p-4 bg-[#1a1b26] text-[#a9b1d6] font-mono text-xs resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                spellcheck="false"></textarea>
+                        </div>
+                        <p class="text-xs text-muted-foreground mt-2">Note: Changes require a server restart to take
+                            effect.</p>
+                    </div>
+                </div>
+
+                <!-- Banner Tab -->
+                <div x-show="activeTab === 'banner'" class="space-y-6"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-4"
+                    x-transition:enter-end="opacity-100 translate-y-0">
+                    <div class="p-6 rounded-xl border bg-card shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-xl font-bold">Banner Editor</h3>
+                                <p class="text-muted-foreground text-sm">Edit the startup banner (ASCII Art supported)
+                                </p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button @click="fetchBanner()"
+                                    class="h-8 px-3 text-xs bg-secondary hover:bg-secondary/80 rounded-md transition-colors">Reset</button>
+                                <button @click="saveBanner()"
+                                    class="h-8 px-3 text-xs bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors font-medium">Save
+                                    Changes</button>
+                            </div>
+                        </div>
+                        <div class="rounded-md border border-input shadow-sm">
+                            <textarea x-model="bannerContent"
+                                class="w-full h-[500px] p-4 bg-muted/20 font-mono text-xs resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
+                                spellcheck="false"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div x-show="redisModalOpen"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm" style="display: none;">
+        <div
+            class="bg-card w-full max-w-lg p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 text-card-foreground">
+            <h3 class="text-lg font-bold mb-4">Value: <span class="font-mono text-primary"
+                    x-text="selectedRedisKey"></span></h3>
+            <div class="bg-muted p-4 rounded-md overflow-x-auto text-xs font-mono max-h-[300px] mb-4">
+                <span x-text="selectedRedisValue"></span>
+            </div>
+            <button @click="redisModalOpen = false"
+                class="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 rounded-md font-medium">Close</button>
+        </div>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+</body>
+
+</html>

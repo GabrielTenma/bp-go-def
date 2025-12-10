@@ -43,3 +43,9 @@ monitoring:
   enabled: true
   port: "9090"
   password: "admin"
+
+cron:
+  enabled: true
+  jobs:
+    log_cleanup: "0 0 * * *"
+    health_check: "*/10 * * * * *" # Every 10 seconds

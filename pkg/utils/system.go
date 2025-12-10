@@ -2,11 +2,13 @@ package utils
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"runtime"
 	"time"
 
 	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/shirou/gopsutil/v3/process"
 )
@@ -61,4 +63,64 @@ func GetProcessInfo() (map[string]interface{}, error) {
 	}
 
 	return info, nil
+}
+
+// GetDiskUsage gathers disk usage info for root path.
+func GetDiskUsage() (map[string]interface{}, error) {
+	parts, err := disk.Partitions(false)
+	if err != nil {
+		return nil, err
+	}
+
+	// Just check the first partition or root usually
+	var usage *disk.UsageStat
+	if runtime.GOOS == "windows" {
+		usage, err = disk.Usage("C:\\")
+	} else {
+		usage, err = disk.Usage("/")
+	}
+
+	if err != nil {
+		// Fallback to first partition if C:\ or / fails?
+		if len(parts) > 0 {
+			usage, err = disk.Usage(parts[0].Mountpoint)
+		}
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]interface{}{
+		"path":         usage.Path,
+		"total_gb":     usage.Total / 1024 / 1024 / 1024,
+		"used_gb":      usage.Used / 1024 / 1024 / 1024,
+		"used_percent": usage.UsedPercent,
+	}, nil
+}
+
+// GetNetworkInfo gathers hostname and IP.
+func GetNetworkInfo() (map[string]string, error) {
+	hostname, err := os.Hostname()
+	if err != nil {
+		hostname = "unknown"
+	}
+
+	ip := "unknown"
+	addrs, err := net.InterfaceAddrs()
+	if err == nil {
+		for _, addr := range addrs {
+			if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+				if ipnet.IP.To4() != nil {
+					ip = ipnet.IP.String()
+					break
+				}
+			}
+		}
+	}
+
+	return map[string]string{
+		"hostname": hostname,
+		"ip":       ip,
+	}, nil
 }

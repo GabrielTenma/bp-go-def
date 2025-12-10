@@ -1,0 +1,19 @@
+/* Custom styles */
+body {
+    overflow: hidden;
+    /* Prevent full page scroll, handle in main */
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+}

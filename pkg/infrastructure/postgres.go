@@ -94,3 +94,63 @@ func (p *PostgresManager) Delete(ctx context.Context, query string, args ...inte
 	}
 	return res.RowsAffected()
 }
+
+// Monitoring Helpers
+
+type PGQuery struct {
+	Pid      int    `json:"pid"`
+	User     string `json:"user"`
+	DB       string `json:"db"`
+	State    string `json:"state"`
+	Duration string `json:"duration"`
+	Query    string `json:"query"`
+}
+
+func (p *PostgresManager) GetRunningQueries(ctx context.Context) ([]PGQuery, error) {
+	rows, err := p.DB.QueryContext(ctx, `
+		SELECT pid, usename, datname, state, (now() - query_start) as duration, query 
+		FROM pg_stat_activity 
+		WHERE state != 'idle' AND pid <> pg_backend_pid()
+		ORDER BY duration DESC LIMIT 50;
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var queries []PGQuery
+	for rows.Next() {
+		var q PGQuery
+		var user, db, state, query sql.NullString
+		var duration sql.NullString
+		if err := rows.Scan(&q.Pid, &user, &db, &state, &duration, &query); err != nil {
+			continue
+		}
+		q.User = user.String
+		q.DB = db.String
+		q.State = state.String
+		q.Duration = duration.String
+		q.Query = query.String
+		queries = append(queries, q)
+	}
+	return queries, nil
+}
+
+func (p *PostgresManager) GetSessionCount(ctx context.Context) (int, error) {
+	var count int
+	err := p.DB.QueryRowContext(ctx, "SELECT count(*) FROM pg_stat_activity").Scan(&count)
+	return count, err
+}
+
+func (p *PostgresManager) GetDBInfo(ctx context.Context) (map[string]interface{}, error) {
+	var version string
+	p.DB.QueryRowContext(ctx, "SELECT version()").Scan(&version)
+
+	var size string
+	p.DB.QueryRowContext(ctx, "SELECT pg_size_pretty(pg_database_size(current_database()))").Scan(&size)
+
+	return map[string]interface{}{
+		"version": version,
+		"size":    size,
+	}, nil
+}

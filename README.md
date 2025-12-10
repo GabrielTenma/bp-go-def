@@ -11,11 +11,18 @@ A robust, production-ready Go application boilerplate built with [Echo](https://
         -   `Service A`: User management demo.
         -   `Service B`: Product management demo (Disabled by default).
         -   `Service C`: In-Memory Cache demo.
+        -   `Service D`: Task management using **GORM** (SQLite/Postgres).
 
--   **Advanced Configuration**:
-    -   Powered by [Viper](https://github.com/spf13/viper).
-    -   Supports `config.yaml`, Environment Variables, and defaults.
-    -   Customizable Server Port, Auth secrets, etc.
+-   **Advanced Monitoring Dashboard 📊** (New!):
+    -   **Web UI**: Built with Shadcn-Admin style (TailwindCSS + Alpine.js).
+    -   **Dashboard**: Live traffic logs (colorful!), Service count, Infrastructure health.
+    -   **Infrastructure Stats**: Real-time status of Redis, Kafka, Postgres, Cron.
+    -   **System Info**: Hostname, IP, Disk Usage.
+    -   **Endpoints**: List all registered API endpoints.
+    -   **Cron Jobs**: View scheduled jobs and their execution times.
+    -   **Config Viewer**: Inspect running configuration.
+    -   **Tools**: Redis Key Scanner, Postgres Query Monitor, Kafka Topic Debugger.
+    -   **Banner Editor**: Edit the startup ASCII art from the browser.
 
 -   **💎 Fancy Logger**:
     -   Built on [Zerolog](https://github.com/rs/zerolog).
@@ -29,23 +36,21 @@ A robust, production-ready Go application boilerplate built with [Echo](https://
 -   **🧠 In-Memory Cache**:
     -   Thread-safe, generic Key-Value store (`pkg/cache`).
     -   Built-in TTL (Time-To-Live) support.
-    -   Clean simple API: `Set(key, value, ttl)`, `Get(key)`.
 
--   **🐰 Customizable Banner**:
-    -   Loads ASCII art from `banner.txt` at startup.
-    -   Make your terminal startup fun!
+-   **⏰ Cron Jobs**:
+    -   Integrated `robfig/cron`.
+    -   Configurable via `config.yaml`.
 
 -   **🏭 Infrastructure Ready**:
-    -   **Redis**: Integrated with `go-redis` (v9). Includes helpers for `Set`, `Get`, `Delete`, `Replace`, `GetInfo`.
-    -   **Kafka**: Integrated with `sarama` (Consumer & Producer). Includes `Consume` helper.
-    -   **Postgres**: Integrated with `pgx` (v5). Includes `Select`, `Insert`, `Update`, `Delete` helpers.
-    -   All infrastructure is optional and disabled by default.
+    -   **Redis**: Integrated with `go-redis`.
+    -   **Kafka**: Integrated with `sarama`.
+    -   **Postgres**: Integrated with `pgx` and `GORM`.
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
--   Go 1.20+
+-   Go 1.22+
 
 ### Installation
 
@@ -65,6 +70,9 @@ A robust, production-ready Go application boilerplate built with [Echo](https://
     go run cmd/app/main.go
     ```
 
+4.  **Access Monitoring**:
+    Open `http://localhost:9090` (Default password: `admin`).
+
 ### Configuration (`config.yaml`)
 
 ```yaml
@@ -73,33 +81,22 @@ app:
   debug: true
   banner_path: "banner.txt"
 
+monitoring:
+  enabled: true
+  port: "9090"
+  password: "admin"
+  username: "admin"
+
+cron:
+  enabled: true
+  jobs:
+    health_check: "*/10 * * * * *"
+
 services:
-  enable_service_a: true  # Users
-  enable_service_b: false # Products
-  enable_service_c: true  # Cache
-
-# Infrastructure (Disabled by default)
-redis:
-  enabled: false
-  address: "localhost:6379"
-  password: ""
-  db: 0
-
-kafka:
-  enabled: false
-  brokers: 
-    - "localhost:9092"
-  topic: "my-topic"
-  group_id: "my-group"
-
-postgres:
-  enabled: false
-  host: "localhost"
-  port: 5432
-  user: "postgres"
-  password: "password"
-  dbname: "mydb"
-  sslmode: "disable"
+  enable_service_a: true
+  enable_service_b: false
+  enable_service_c: true
+  enable_service_d: true # Task Service (GORM)
 ```
 
 ## 📚 API Endpoints
@@ -107,9 +104,10 @@ postgres:
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
 | **GET** | `/api/v1/users` | (Service A) Get dummy users |
-| **GET** | `/api/v1/products`| (Service B) Get dummy products (404 if disabled) |
+| **GET** | `/api/v1/products`| (Service B) Get dummy products |
 | **GET** | `/api/v1/cache/:key` | (Service C) Get cached value |
-| **POST** | `/api/v1/cache/:key` | (Service C) Set cached value |
+| **POST** | `/tasks` | (Service D) Create task |
+| **GET** | `/tasks` | (Service D) List tasks |
 
 ## 🛠️ Project Structure
 
@@ -118,14 +116,17 @@ postgres:
 │   └── app/            # Main entry point
 ├── config/             # Configuration logic (Viper)
 ├── internal/
-│   ├── middleware/     # Custom middlewares (Auth, Logger, etc.)
+│   ├── middleware/     # Custom middlewares
+│   ├── monitoring/     # Monitoring Server & Handlers
 │   ├── server/         # Server entry, DI, and startup logic
 │   └── services/       # Business Logic
 │       ├── modules/    # Individual service implementations
-│       └── registry    # Service Registration logic
+│       └── registry/   # Service Registration logic
 ├── pkg/
 │   ├── cache/          # Generic In-Memory Cache
-│   ├── infrastructure/ # External Infrastructure (Redis, Kafka, Postgres)
-│   └── logger/         # Custom Logger wrapper
-└── docs/               # Architecture documentation
+│   ├── infrastructure/ # External Infrastructure (Redis, Kafka, Postgres, Cron)
+│   ├── logger/         # Custom Logger wrapper
+│   └── utils/          # System utilities
+└── web/
+    └── monitoring/     # Frontend assets for Monitoring Dashboard
 ```

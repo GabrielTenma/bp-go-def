@@ -56,3 +56,26 @@ func (r *RedisManager) Replace(ctx context.Context, key string, value interface{
 func (r *RedisManager) GetInfo(ctx context.Context) (string, error) {
 	return r.Client.Info(ctx).Result()
 }
+
+// ScanKeys returns a list of keys matching the pattern. Limit to 100 for safety.
+func (r *RedisManager) ScanKeys(ctx context.Context, pattern string) ([]string, error) {
+	var keys []string
+	iter := r.Client.Scan(ctx, 0, pattern, 100).Iterator()
+	for iter.Next(ctx) {
+		keys = append(keys, iter.Val())
+	}
+	if err := iter.Err(); err != nil {
+		return nil, err
+	}
+	return keys, nil
+}
+
+// GetValue returns the value of a specific key for monitoring.
+// It assumes string for simplicity, but could be extended.
+func (r *RedisManager) GetValue(ctx context.Context, key string) (string, error) {
+	val, err := r.Client.Get(ctx, key).Result()
+	if err != nil {
+		return "", err
+	}
+	return val, nil
+}

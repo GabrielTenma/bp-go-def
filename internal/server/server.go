@@ -8,6 +8,7 @@ import (
 	"test-go/internal/services/modules"
 	"test-go/pkg/infrastructure"
 	"test-go/pkg/logger"
+	"test-go/pkg/utils"
 
 	"github.com/labstack/echo/v4"
 )
@@ -19,6 +20,7 @@ type Server struct {
 	redisManager    *infrastructure.RedisManager
 	kafkaManager    *infrastructure.KafkaManager
 	postgresManager *infrastructure.PostgresManager
+	cronManager     *infrastructure.CronManager
 	broadcaster     *monitoring.LogBroadcaster
 }
 
@@ -79,6 +81,28 @@ func (s *Server) Start() error {
 		}
 	}
 
+	// Cron Jobs
+	if s.config.Cron.Enabled {
+		s.cronManager = infrastructure.NewCronManager()
+		s.logger.Info("Initializing Cron Jobs...")
+
+		for name, schedule := range s.config.Cron.Jobs {
+			// Capture variables
+			jobName := name
+
+			// Dummy action
+			_, err := s.cronManager.AddJob(jobName, schedule, func() {
+				s.logger.Info("Executing Cron Job", "job", jobName)
+			})
+			if err != nil {
+				s.logger.Error("Failed to schedule cron job", err, "job", jobName)
+			} else {
+				s.logger.Info("Scheduled Cron Job", "job", jobName, "schedule", schedule)
+			}
+		}
+		s.cronManager.Start()
+	}
+
 	// 2. Init Middleware
 	s.logger.Info("Initializing Middleware...")
 	middleware.InitMiddlewares(s.echo, middleware.Config{
@@ -100,7 +124,13 @@ func (s *Server) Start() error {
 
 	// 4. Start Monitoring (if enabled)
 	if s.config.Monitoring.Enabled {
-		go monitoring.Start(s.config.Monitoring, s.config, s, s.broadcaster)
+		servicesList := []monitoring.ServiceInfo{
+			{Name: "Service A", StructName: "modules.ServiceA", Active: s.config.Services.EnableServiceA, Endpoint: "/api/v1/service-a"},
+			{Name: "Service B", StructName: "modules.ServiceB", Active: s.config.Services.EnableServiceB, Endpoint: "/api/v1/service-b"},
+			{Name: "Service C", StructName: "modules.ServiceC", Active: s.config.Services.EnableServiceC, Endpoint: "/api/v1/service-c"},
+			{Name: "Service D", StructName: "modules.ServiceD", Active: s.config.Services.EnableServiceD, Endpoint: "/tasks"},
+		}
+		go monitoring.Start(s.config.Monitoring, s.config, s, s.broadcaster, s.redisManager, s.postgresManager, s.kafkaManager, s.cronManager, servicesList)
 		s.logger.Info("Monitoring interface started", "port", s.config.Monitoring.Port)
 	}
 
@@ -115,6 +145,16 @@ func (s *Server) Start() error {
 
 // GetStatus satisfies monitoring.StatusProvider
 func (s *Server) GetStatus() map[string]interface{} {
+	diskStats, _ := utils.GetDiskUsage()
+	netStats, _ := utils.GetNetworkInfo()
+
+	infra := map[string]bool{
+		"redis":    s.config.Redis.Enabled && s.redisManager != nil,
+		"kafka":    s.config.Kafka.Enabled && s.kafkaManager != nil,
+		"postgres": s.config.Postgres.Enabled && s.postgresManager != nil,
+		"cron":     s.config.Cron.Enabled && s.cronManager != nil,
+	}
+
 	return map[string]interface{}{
 		"version": "1.0.0",
 		"services": map[string]bool{
@@ -123,10 +163,10 @@ func (s *Server) GetStatus() map[string]interface{} {
 			"service_c": s.config.Services.EnableServiceC,
 			"service_d": s.config.Services.EnableServiceD,
 		},
-		"infrastructure": map[string]bool{
-			"redis":    s.config.Redis.Enabled && s.redisManager != nil,
-			"kafka":    s.config.Kafka.Enabled && s.kafkaManager != nil,
-			"postgres": s.config.Postgres.Enabled && s.postgresManager != nil,
+		"infrastructure": infra,
+		"system": map[string]interface{}{
+			"disk":    diskStats,
+			"network": netStats,
 		},
 	}
 }

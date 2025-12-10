@@ -15,12 +15,18 @@ type Config struct {
 	Kafka      KafkaConfig      `mapstructure:"kafka"`
 	Postgres   PostgresConfig   `mapstructure:"postgres"`
 	Monitoring MonitoringConfig `mapstructure:"monitoring"`
+	Cron       CronConfig       `mapstructure:"cron"`
 }
 
 type MonitoringConfig struct {
 	Enabled  bool   `mapstructure:"enabled"`
 	Port     string `mapstructure:"port"`
 	Password string `mapstructure:"password"`
+}
+
+type CronConfig struct {
+	Enabled bool              `mapstructure:"enabled"`
+	Jobs    map[string]string `mapstructure:"jobs"`
 }
 
 type AppConfig struct {
