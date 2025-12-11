@@ -31,12 +31,12 @@ kafka:
   group_id: "my-group"
 
 postgres:
-  enabled: false
+  enabled: true
   host: "localhost"
   port: 5432
   user: "postgres"
-  password: "password"
-  dbname: "mydb"
+  password: "Mypostgres01"
+  dbname: "postgres"
   sslmode: "disable"
 
 monitoring:
@@ -47,7 +47,24 @@ monitoring:
   subtitle: "My Kisah Emuach ❤️"
   max_photo_size_mb: 2
   upload_dir: "web/monitoring/uploads"
+  
+  minio:
+    enabled: false
+    endpoint: "localhost:9000"
+    access_key: "minioadmin"
+    secret_key: "minioadmin"
+    use_ssl: false
+    bucket: "test-bucket"
 
+  external:
+    services:
+      - name: "Google"
+        url: "https://google.com"
+      - name: "Soundcloud"
+        url: "https://soundcloud.com"
+      - name: "Local API"
+        url: "http://localhost:8080/health"
+  
 cron:
   enabled: true
   jobs:

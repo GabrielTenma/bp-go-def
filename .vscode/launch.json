@@ -11,6 +11,15 @@
             "mode": "auto",
             "program": "${workspaceFolder}\\cmd\\app\\main.go",
             "output": "${workspaceFolder}\\debug-main.exe"
+        },
+        {
+            "name": "Build & Launch (Dist)",
+            "type": "go",
+            "request": "launch",
+            "mode": "exec",
+            "program": "${workspaceFolder}\\dist\\bp-go-def.exe",
+            "cwd": "${workspaceFolder}\\dist",
+            "preLaunchTask": "Build App"
         }
     ]
 }

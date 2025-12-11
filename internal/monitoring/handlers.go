@@ -37,6 +37,7 @@ type Handler struct {
 func (h *Handler) RegisterRoutes(g *echo.Group) {
 	// e.GET("/", h.serveUI) // handled by static now
 	g.GET("/api/status", h.getStatus)
+	g.POST("/api/restart", h.Restart)                      // Maintenance
 	g.GET("/api/monitoring/config", h.getMonitoringConfig) // New
 	g.GET("/api/config", h.getConfig)
 	g.GET("/api/config/raw", h.getRawConfig)     // New
@@ -46,6 +47,7 @@ func (h *Handler) RegisterRoutes(g *echo.Group) {
 	g.GET("/api/cpu", h.streamCPU)
 	g.GET("/api/endpoints", h.getEndpoints)
 	g.GET("/api/cron", h.getCronJobs)
+	g.POST("/api/postgres/query", h.runPostgresQuery) // New: Raw Query
 
 	// Utils
 	g.GET("/api/logs/dummy/status", h.getDummyStatus)
@@ -200,6 +202,14 @@ func (h *Handler) getRedisKeys(c echo.Context) error {
 	return c.JSON(http.StatusOK, keys)
 }
 
+func (h *Handler) Restart(c echo.Context) error {
+	go func() {
+		time.Sleep(500 * time.Millisecond)
+		os.Exit(1)
+	}()
+	return c.JSON(http.StatusOK, map[string]string{"status": "restarting", "message": "Service is restarting..."})
+}
+
 func (h *Handler) getRedisValue(c echo.Context) error {
 	if h.redis == nil {
 		return c.JSON(http.StatusServiceUnavailable, map[string]string{"error": "Redis not enabled"})
@@ -236,6 +246,36 @@ func (h *Handler) getPostgresInfo(c echo.Context) error {
 	info["sessions"] = count
 
 	return c.JSON(http.StatusOK, info)
+}
+
+func (h *Handler) runPostgresQuery(c echo.Context) error {
+	if h.postgres == nil {
+		return c.JSON(http.StatusServiceUnavailable, map[string]string{"error": "Postgres not enabled"})
+	}
+
+	type QueryReq struct {
+		Query string `json:"query"`
+	}
+	var req QueryReq
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request"})
+	}
+
+	if req.Query == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Query cannot be empty"})
+	}
+
+	// Safety check: Basic prevention of destructive queries (optional, mainly for safety demo)
+	// if !strings.HasPrefix(strings.ToUpper(strings.TrimSpace(req.Query)), "SELECT") {
+	// 	 return c.JSON(http.StatusForbidden, map[string]string{"error": "Only SELECT queries are allowed in this demo"})
+	// }
+
+	results, err := h.postgres.ExecuteRawQuery(c.Request().Context(), req.Query)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, results)
 }
 
 func (h *Handler) getKafkaTopics(c echo.Context) error {

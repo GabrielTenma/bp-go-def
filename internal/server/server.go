@@ -1,6 +1,7 @@
 package server
 
 import (
+	"os"
 	"test-go/config"
 	"test-go/internal/middleware"
 	"test-go/internal/monitoring"
@@ -9,6 +10,7 @@ import (
 	"test-go/pkg/infrastructure"
 	"test-go/pkg/logger"
 	"test-go/pkg/utils"
+	"time"
 
 	"github.com/labstack/echo/v4"
 )
@@ -113,6 +115,20 @@ func (s *Server) Start() error {
 	// 3. Init Services
 	s.logger.Info("Booting Services...")
 	registry := services.NewRegistry(s.logger)
+
+	// Health Check Endpoint
+	s.echo.GET("/health", func(c echo.Context) error {
+		return c.JSON(200, map[string]string{"status": "ok"})
+	})
+
+	// Restart Endpoint (Maintenance)
+	s.echo.POST("/restart", func(c echo.Context) error {
+		go func() {
+			time.Sleep(500 * time.Millisecond)
+			os.Exit(1)
+		}()
+		return c.JSON(200, map[string]string{"status": "restarting", "message": "Service is restarting..."})
+	})
 
 	// Add Services here
 	registry.Register(modules.NewServiceA(s.config.Services.EnableServiceA))

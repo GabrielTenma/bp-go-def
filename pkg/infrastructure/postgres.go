@@ -98,6 +98,55 @@ func (p *PostgresManager) Insert(ctx context.Context, query string, args ...inte
 	return res.RowsAffected()
 }
 
+// ExecuteRawQuery executes a raw SQL query and returns the results as a slice of maps
+func (p *PostgresManager) ExecuteRawQuery(ctx context.Context, query string) ([]map[string]interface{}, error) {
+	if p.DB == nil {
+		return nil, fmt.Errorf("database connection is nil")
+	}
+
+	rows, err := p.DB.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	columns, err := rows.Columns()
+	if err != nil {
+		return nil, err
+	}
+
+	var results []map[string]interface{}
+
+	for rows.Next() {
+		// Create a slice of interface{} to hold values
+		values := make([]interface{}, len(columns))
+		valuePtrs := make([]interface{}, len(columns))
+		for i := range columns {
+			valuePtrs[i] = &values[i]
+		}
+
+		if err := rows.Scan(valuePtrs...); err != nil {
+			return nil, err
+		}
+
+		// Create a map for the current row
+		rowMap := make(map[string]interface{})
+		for i, col := range columns {
+			val := values[i]
+
+			// Handle byte arrays (common for strings in some drivers)
+			if b, ok := val.([]byte); ok {
+				rowMap[col] = string(b)
+			} else {
+				rowMap[col] = val
+			}
+		}
+		results = append(results, rowMap)
+	}
+
+	return results, nil
+}
+
 // Update executes an UPDATE statement and returns the number of rows affected.
 func (p *PostgresManager) Update(ctx context.Context, query string, args ...interface{}) (int64, error) {
 	res, err := p.Exec(ctx, query, args...)
@@ -164,14 +213,41 @@ func (p *PostgresManager) GetSessionCount(ctx context.Context) (int, error) {
 }
 
 func (p *PostgresManager) GetDBInfo(ctx context.Context) (map[string]interface{}, error) {
-	var version string
-	p.DB.QueryRowContext(ctx, "SELECT version()").Scan(&version)
+	var version, dbName, user, sslMode string
 
+	// Fetch Version
+	if err := p.DB.QueryRowContext(ctx, "SELECT version()").Scan(&version); err != nil {
+		return nil, err
+	}
+
+	// Fetch DB Size (formatted)
 	var size string
-	p.DB.QueryRowContext(ctx, "SELECT pg_size_pretty(pg_database_size(current_database()))").Scan(&size)
+	if err := p.DB.QueryRowContext(ctx, "SELECT pg_size_pretty(pg_database_size(current_database()))").Scan(&size); err != nil {
+		return nil, err
+	}
+
+	// Fetch DB Name
+	if err := p.DB.QueryRowContext(ctx, "SELECT current_database()").Scan(&dbName); err != nil {
+		return nil, err
+	}
+
+	// Fetch Current User
+	if err := p.DB.QueryRowContext(ctx, "SELECT current_user").Scan(&user); err != nil {
+		return nil, err
+	}
+
+	// Fetch SSL Status
+	// Note: checks if usage of SSL is active for this backend
+	err := p.DB.QueryRowContext(ctx, "SELECT COALESCE((SELECT 'enable' FROM pg_stat_ssl WHERE pid = pg_backend_pid() AND ssl = true), 'disable')").Scan(&sslMode)
+	if err != nil {
+		sslMode = "unknown"
+	}
 
 	return map[string]interface{}{
-		"version": version,
-		"size":    size,
+		"version":  version,
+		"size":     size,
+		"db_name":  dbName,
+		"user":     user,
+		"ssl_mode": sslMode,
 	}, nil
 }

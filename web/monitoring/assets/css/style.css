@@ -17,3 +17,8 @@ body {
     background: #555;
     border-radius: 4px;
 }
+
+/* Enable momentum scrolling on iOS */
+.overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
+}

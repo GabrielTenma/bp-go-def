@@ -64,7 +64,8 @@ function app() {
                 items: [
                     { id: 'config', label: 'Config', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>' },
                     { id: 'banner', label: 'Banner', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg>' },
-                    { id: 'settings', label: 'User Settings', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>' }
+                    { id: 'settings', label: 'User Settings', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>' },
+                    { id: 'maintenance', label: 'Maintenance', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>' }
                 ]
             }
         ],
@@ -123,6 +124,11 @@ function app() {
         // Infrastructure Data
         redis: {},
         postgres: {},
+        pgQueries: [],
+        sqlQuery: "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public';",
+        queryResults: null,
+        queryError: null,
+        isQueryRunning: false,
         kafka: {},
         cronJobs: [],
 
@@ -145,7 +151,10 @@ function app() {
 
         // Notyf instance (Moved to window.notyf)
 
-        init() {
+        // CodeMirror Instances
+        cmInstances: {},
+
+        async init() {
             // Theme init
             this.isDark = localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
             if (this.isDark) {
@@ -154,30 +163,67 @@ function app() {
                 document.documentElement.classList.remove('dark');
             }
 
-            // SSE
-            this.connectLogs();
+            console.log("Dashboard App Initialized");
 
-            // Periodic
-            this.fetchStatus();
-            this.fetchDummyStatus();
-            this.fetchMonitoringConfig();
-            this.fetchUserSettings(); // Load user settings for header
-            setInterval(() => this.fetchStatus(), 5000);
+            // Initialize CodeMirror after Alpine mounts
+            this.$nextTick(async () => {
+                this.initCodeMirror('configEditor', 'yaml', 'configContent');
+                this.initCodeMirror('bannerEditor', 'shell', 'bannerContent');
+                this.initCodeMirror('sqlEditor', 'sql', 'sqlQuery');
 
-            // Load data for badges
-            this.fetchEndpoints();
-            this.fetchCronJobs();
+                // Watchers to sync API data -> CodeMirror (Async Fetch)
+                this.$watch('configContent', (val) => {
+                    const cm = this.cmInstances['configEditor'];
+                    if (cm && cm.getValue() !== val) cm.setValue(val);
+                });
+                this.$watch('bannerContent', (val) => {
+                    const cm = this.cmInstances['bannerEditor'];
+                    if (cm && cm.getValue() !== val) cm.setValue(val);
+                });
+                this.$watch('sqlQuery', (val) => {
+                    const cm = this.cmInstances['sqlEditor'];
+                    if (cm && cm.getValue() !== val) cm.setValue(val);
+                });
 
-            // Watch tab changes to load data
-            this.$watch('activeTab', (val) => {
-                if (val === 'endpoints') this.fetchEndpoints();
-                if (val === 'redis') this.fetchRedisKeys();
-                if (val === 'postgres') { this.fetchPgQueries(); this.fetchPgInfo(); }
-                if (val === 'kafka') this.fetchKafka();
-                if (val === 'cron') this.fetchCronJobs();
-                if (val === 'config') this.fetchConfig();
-                if (val === 'banner') this.fetchBanner();
-                if (val === 'settings') this.fetchUserSettings();
+                // SSE
+                this.connectLogs();
+
+                // Periodic
+                await this.fetchStatus();
+                this.fetchDummyStatus();
+                this.fetchMonitoringConfig();
+                this.fetchUserSettings(); // Load user settings for header
+                setInterval(() => this.fetchStatus(), 5000);
+
+                // Load data for badges
+                this.fetchEndpoints();
+                this.fetchCronJobs();
+
+                // Watch tab changes to load data & refresh CodeMirror
+                this.$watch('activeTab', (val) => {
+                    // CodeMirror Refresh
+                    this.$nextTick(() => {
+                        if (val === 'config' && this.cmInstances['configEditor']) {
+                            this.cmInstances['configEditor'].refresh();
+                        }
+                        if (val === 'banner' && this.cmInstances['bannerEditor']) {
+                            this.cmInstances['bannerEditor'].refresh();
+                        }
+                        if (val === 'postgres' && this.cmInstances['sqlEditor']) {
+                            this.cmInstances['sqlEditor'].refresh();
+                        }
+                    });
+
+                    // Data Load
+                    if (val === 'endpoints') this.fetchEndpoints();
+                    if (val === 'redis') this.fetchRedisKeys();
+                    if (val === 'postgres') { this.fetchPgQueries(); this.fetchPgInfo(); }
+                    if (val === 'kafka') this.fetchKafka();
+                    if (val === 'cron') this.fetchCronJobs();
+                    if (val === 'config') this.fetchConfig();
+                    if (val === 'banner') this.fetchBanner();
+                    if (val === 'settings') this.fetchUserSettings();
+                });
             });
         },
 
@@ -205,6 +251,54 @@ function app() {
             } finally {
                 // Always redirect to login page (replace history to prevent back button)
                 window.location.replace('/');
+            }
+        },
+
+        async runQuery() {
+            this.isQueryRunning = true;
+            this.queryError = null;
+            this.queryResults = null;
+
+            try {
+                const res = await fetch('/api/postgres/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: this.sqlQuery })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    this.queryError = data.error || 'Query failed';
+                } else {
+                    this.queryResults = data;
+                    if (Array.isArray(data) && data.length === 0) {
+                        this.queryError = "No results found.";
+                    }
+                }
+            } catch (err) {
+                this.queryError = "Network error: " + err.message;
+            } finally {
+                this.isQueryRunning = false;
+            }
+        },
+
+        async restartService() {
+            if (!confirm('Are you sure you want to restart the service? This will briefly interrupt availability.')) return;
+
+            try {
+                const res = await fetch('/api/restart', { method: 'POST' });
+                if (res.ok) {
+                    this.showToast('Service is restarting...', 'success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 3000);
+                } else {
+                    this.showToast('Failed to restart service', 'error');
+                }
+            } catch (err) {
+                console.error("Restart error:", err);
+                this.showToast('Failed to connect to server', 'error');
             }
         },
 
@@ -326,7 +420,7 @@ function app() {
                     postgres: data.postgres && data.postgres.connected,
                     kafka: data.kafka && data.kafka.connected,
                     minio: data.storage && data.storage.connected,
-                    external: data.external && data.external.active // External is list? Check backend
+                    external: data.external && data.external.length > 0
                 };
 
                 // data.external is likely a map or list? 
@@ -352,7 +446,7 @@ function app() {
                 this.postgres = data.postgres || {};
                 this.kafka = data.kafka || {};
                 this.storage = data.storage || {};
-                this.external = data.external?.services || []; // Check HttpManager return structure
+                this.external = data.external || [];
 
                 // System Graphs Data
                 if (data.system) {
@@ -621,6 +715,33 @@ function app() {
             } catch (e) {
                 this.showToast('Delete failed', 'error', 'Error');
             }
+        },
+
+        initCodeMirror(id, mode, model) {
+            const el = document.getElementById(id);
+            if (!el) return;
+
+            // Prevent double init
+            if (this.cmInstances[id]) return;
+
+            const cm = CodeMirror.fromTextArea(el, {
+                mode: mode,
+                theme: 'dracula',
+                lineNumbers: true,
+                lineWrapping: true
+            });
+
+            // Two-way binding: Update Alpine data on change
+            cm.on('change', () => {
+                this[model] = cm.getValue();
+            });
+
+            // Set initial value from Alpine data
+            if (this[model]) {
+                cm.setValue(this[model]);
+            }
+
+            this.cmInstances[id] = cm;
         }
     }
 }

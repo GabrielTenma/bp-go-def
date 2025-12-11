@@ -20,7 +20,7 @@ go.work.sum
 .env.local
 
 # IDE
-.vscode/
+# # .vscode/
 .idea/
 *.swp
 *.swo
