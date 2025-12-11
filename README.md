@@ -59,7 +59,9 @@ go run cmd/app/main.go
 
 ## 🎬 Demo
 
-![Demo GIF](https://s6.imgcdn.dev/YTovOt.gif)
+<p>
+    <img src="https://s6.imgcdn.dev/YTovOt.gif" width="60%" alt="Demo">
+</p>
 
 ## 📊 Monitoring Dashboard
 
