@@ -80,7 +80,7 @@ go run cmd/app/main.go
 ## 📚 Documentation
 
 ### Complete Guides
-For detailed developer documentation, visit the [docs folder](https://github.com/GabrielTenma/bp-go-def/tree/main/docs):
+For detailed developer documentation, visit the [docs_wiki folder](https://github.com/GabrielTenma/bp-go-def/tree/main/docs_wiki):
 - **Integration Guide** - How to use Redis, PostgreSQL, Kafka, Cron
 - **Architecture Diagrams** - System flow and architecture diagrams
 - **API Response Structure** - Complete response pattern documentation
@@ -263,7 +263,7 @@ Contributions are very welcome! Please create an issue or pull request.
 
 - **GitHub Repository**: [https://github.com/GabrielTenma/bp-go-def](https://github.com/GabrielTenma/bp-go-def)
 - **Documentation**: [https://gabrieltenma.github.io/bp-go-def/](https://gabrieltenma.github.io/bp-go-def/)
-- **Developer Docs**: [/docs](https://github.com/GabrielTenma/bp-go-def/tree/main/docs)
+- **Developer Docs**: [/docs_wiki](https://github.com/GabrielTenma/bp-go-def/tree/main/docs_wiki)
 
 ---
 

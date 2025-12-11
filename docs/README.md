@@ -2,10 +2,10 @@
 
 ## 📦 Files Created
 
-The GitHub Pages site is located in the `docs_github` folder, separate from developer documentation in `docs`:
+The GitHub Pages site is located in the `docs` folder:
 
 ```
-docs_github/
+docs/
 ├── index.md                    # Main landing page (English)
 ├── _config.yml                 # Jekyll configuration
 └── assets/
@@ -22,10 +22,10 @@ docs_github/
 cd "c:\Users\Tzadkiel\Documents\Development\Git\Own Repos\GabrielTenma\bp-go-def"
 
 # Add all files
-git add docs_github/
+git add docs/
 
 # Commit changes
-git commit -m "Add GitHub Pages site in docs_github folder"
+git commit -m "Add GitHub Pages site"
 
 # Push to GitHub
 git push origin main
@@ -39,7 +39,7 @@ git push origin main
 4. Under **Source**:
    - Select **Deploy from a branch**
    - Branch: `main` (or your default branch)
-   - Folder: `/docs_github`
+   - Folder: `/docs`
    - Click **Save**
 
 ### 3. Wait for Deployment
@@ -86,20 +86,20 @@ Modern, professional design with:
 
 ## 📁 Folder Structure
 
-The project now has two separate documentation folders:
+The project has two separate documentation folders:
 
-### `docs/` - Developer Documentation
+### `docs/` - GitHub Pages (Public Site)
+- Public-facing landing page
+- Feature showcase
+- Getting started guide
+- Links to developer documentation
+
+### `docs_wiki/` - Developer Documentation
 - Integration guides
 - Architecture diagrams
 - API documentation
 - Request/Response structure
 - Internal development notes
-
-### `docs_github/` - GitHub Pages (Public Site)
-- Public-facing landing page
-- Links to developer documentation
-- Feature showcase
-- Getting started guide
 
 ---
 
@@ -115,8 +115,8 @@ If you want to preview the site locally before pushing:
 # Install Bundler
 gem install bundler
 
-# Navigate to docs_github folder
-cd docs_github
+# Navigate to docs folder
+cd docs
 
 # Create Gemfile
 @"
@@ -131,7 +131,7 @@ bundle install
 
 ### Run Local Server
 ```powershell
-cd docs_github
+cd docs
 bundle exec jekyll serve
 ```
 
@@ -145,8 +145,8 @@ Press `Ctrl+C` to stop the server.
 
 - The theme used is **jekyll-theme-cayman** (GitHub's official theme)
 - All content is in English
-- Developer documentation remains in the `docs/` folder
-- GitHub Pages content is in the `docs_github/` folder
+- Developer documentation remains in the `docs_wiki/` folder
+- GitHub Pages content is in the `docs/` folder
 - The site is fully responsive (mobile, tablet, desktop)
 
 ---
@@ -154,7 +154,7 @@ Press `Ctrl+C` to stop the server.
 ## 🎯 Next Steps
 
 1. Push the changes to GitHub
-2. Enable GitHub Pages in repository settings (select `/docs_github` folder)
+2. Enable GitHub Pages in repository settings (select `/docs` folder)
 3. Wait for deployment (1-3 minutes)
 4. Visit your site at https://gabrieltenma.github.io/bp-go-def/
 5. Share the link!
@@ -164,7 +164,7 @@ Press `Ctrl+C` to stop the server.
 ## 🔄 Updating Content
 
 To update the site in the future:
-1. Edit files in the `docs_github/` folder
+1. Edit files in the `docs/` folder
 2. Commit and push changes
 3. GitHub Pages will automatically rebuild and deploy
 
@@ -173,6 +173,6 @@ To update the site in the future:
 ## ✨ Customization
 
 You can customize further by editing:
-- `docs_github/_config.yml` - Site metadata and settings
-- `docs_github/assets/css/style.scss` - Styling and colors
-- `docs_github/index.md` - Main page content
+- `docs/_config.yml` - Site metadata and settings
+- `docs/assets/css/style.scss` - Styling and colors
+- `docs/index.md` - Main page content
