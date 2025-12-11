@@ -1,0 +1,72 @@
+app:
+  name: "My Fancy Go App"
+  debug: true
+  env: "development"
+  banner_path: "banner.txt"
+
+server:
+  port: "8080"
+
+services:
+  enable_service_a: true
+  enable_service_b: false
+  enable_service_c: true
+  enable_service_d: false
+
+auth:
+  type: "apikey"
+  secret: "super-secret-key"
+
+redis:
+  enabled: false
+  address: "localhost:6379"
+  password: ""
+  db: 0
+
+kafka:
+  enabled: false
+  brokers: 
+    - "localhost:9092"
+  topic: "my-topic"
+  group_id: "my-group"
+
+postgres:
+  enabled: true
+  host: "localhost"
+  port: 5432
+  user: "postgres"
+  password: "Mypostgres01"
+  dbname: "postgres"
+  sslmode: "disable"
+
+monitoring:
+  enabled: true
+  port: "9090"
+  password: "admin"
+  title: "GoBP Admin"
+  subtitle: "My Kisah Emuach ❤️"
+  max_photo_size_mb: 2
+  upload_dir: "web/monitoring/uploads"
+  
+  minio:
+    enabled: false
+    endpoint: "localhost:9000"
+    access_key: "minioadmin"
+    secret_key: "minioadmin"
+    use_ssl: false
+    bucket: "test-bucket"
+
+  external:
+    services:
+      - name: "Google"
+        url: "https://google.com"
+      - name: "Soundcloud"
+        url: "https://soundcloud.com"
+      - name: "Local API"
+        url: "http://localhost:8080/health"
+  
+cron:
+  enabled: true
+  jobs:
+    log_cleanup: "0 0 * * *"
+    health_check: "*/10 * * * * *" # Every 10 seconds
