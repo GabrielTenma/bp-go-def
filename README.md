@@ -57,6 +57,10 @@ go run cmd/app/main.go
 3. Login with default password: `admin`
 4. **Important**: Change password via User Settings immediately!
 
+## 🎬 Demo
+
+![Demo GIF](https://s6.imgcdn.dev/YTovOt.gif)
+
 ## 📊 Monitoring Dashboard
 
 ![Monitoring Dashboard](https://s6.imgcdn.dev/YToc5C.png)
