@@ -125,6 +125,9 @@ function app() {
         redis: {},
         postgres: {},
         pgQueries: [],
+        pgRefreshInterval: 5000, // Default 5s for running queries refresh
+        pgRefreshActive: false,
+        pgRefreshTimer: null,
         sqlQuery: "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public';",
         queryResults: null,
         queryError: null,
@@ -169,7 +172,7 @@ function app() {
             this.$nextTick(async () => {
                 this.initCodeMirror('configEditor', 'yaml', 'configContent');
                 this.initCodeMirror('bannerEditor', 'shell', 'bannerContent');
-                this.initCodeMirror('sqlEditor', 'sql', 'sqlQuery');
+                // SQL editor will be initialized when postgres tab is opened
 
                 // Watchers to sync API data -> CodeMirror (Async Fetch)
                 this.$watch('configContent', (val) => {
@@ -183,6 +186,21 @@ function app() {
                 this.$watch('sqlQuery', (val) => {
                     const cm = this.cmInstances['sqlEditor'];
                     if (cm && cm.getValue() !== val) cm.setValue(val);
+                });
+
+                // Watch for postgres reconnection
+                this.$watch('infraStatus.postgres', (isConnected) => {
+                    if (isConnected && this.activeTab === 'postgres') {
+                        // Database reconnected while on postgres tab
+                        // Wait for DOM to update, then re-init CodeMirror
+                        this.$nextTick(() => {
+                            setTimeout(() => {
+                                if (!this.cmInstances['sqlEditor']) {
+                                    this.initCodeMirror('sqlEditor', 'sql', 'sqlQuery');
+                                }
+                            }, 200);
+                        });
+                    }
                 });
 
                 // SSE
@@ -209,15 +227,34 @@ function app() {
                         if (val === 'banner' && this.cmInstances['bannerEditor']) {
                             this.cmInstances['bannerEditor'].refresh();
                         }
-                        if (val === 'postgres' && this.cmInstances['sqlEditor']) {
-                            this.cmInstances['sqlEditor'].refresh();
+                        if (val === 'postgres') {
+                            // Initialize SQL editor if not already initialized
+                            // Wait for DOM to be ready
+                            setTimeout(() => {
+                                if (!this.cmInstances['sqlEditor']) {
+                                    this.initCodeMirror('sqlEditor', 'sql', 'sqlQuery');
+                                }
+                                // Refresh if already exists
+                                if (this.cmInstances['sqlEditor']) {
+                                    this.cmInstances['sqlEditor'].refresh();
+                                }
+                            }, 100);
                         }
                     });
 
                     // Data Load
                     if (val === 'endpoints') this.fetchEndpoints();
                     if (val === 'redis') this.fetchRedisKeys();
-                    if (val === 'postgres') { this.fetchPgQueries(); this.fetchPgInfo(); }
+                    if (val === 'postgres') {
+                        this.fetchPgQueries();
+                        this.fetchPgInfo();
+                    } else {
+                        // Stop auto-refresh when leaving postgres tab
+                        if (this.pgRefreshActive) {
+                            this.stopPgRefresh();
+                            this.pgRefreshActive = false;
+                        }
+                    }
                     if (val === 'kafka') this.fetchKafka();
                     if (val === 'cron') this.fetchCronJobs();
                     if (val === 'config') this.fetchConfig();
@@ -255,6 +292,10 @@ function app() {
         },
 
         async runQuery() {
+            console.log('🔍 DEBUG: runQuery called');
+            console.log('📝 Current sqlQuery value:', this.sqlQuery);
+            console.log('📝 CodeMirror value:', this.cmInstances['sqlEditor']?.getValue());
+
             this.isQueryRunning = true;
             this.queryError = null;
             this.queryResults = null;
@@ -266,14 +307,17 @@ function app() {
                     body: JSON.stringify({ query: this.sqlQuery })
                 });
 
+                console.log('📡 Response status:', res.status);
                 const data = await res.json();
+                console.log('📊 Response data:', data);
 
                 if (!res.ok) {
                     this.queryError = data.error || 'Query failed';
                 } else {
                     this.queryResults = data;
+                    // Show toast for empty results
                     if (Array.isArray(data) && data.length === 0) {
-                        this.queryError = "No results found.";
+                        this.showToast('Query executed successfully, but returned no rows.', 'info');
                     }
                 }
             } catch (err) {
@@ -612,6 +656,37 @@ function app() {
             } catch (e) { this.pgQueries = []; }
         },
 
+        togglePgRefresh() {
+            this.pgRefreshActive = !this.pgRefreshActive;
+            if (this.pgRefreshActive) {
+                this.startPgRefresh();
+            } else {
+                this.stopPgRefresh();
+            }
+        },
+
+        startPgRefresh() {
+            this.stopPgRefresh(); // Clear any existing timer
+            this.pgRefreshTimer = setInterval(() => {
+                if (this.activeTab === 'postgres') {
+                    this.fetchPgQueries();
+                }
+            }, this.pgRefreshInterval);
+        },
+
+        stopPgRefresh() {
+            if (this.pgRefreshTimer) {
+                clearInterval(this.pgRefreshTimer);
+                this.pgRefreshTimer = null;
+            }
+        },
+
+        updatePgRefreshInterval() {
+            if (this.pgRefreshActive) {
+                this.startPgRefresh(); // Restart with new interval
+            }
+        },
+
         async fetchPgInfo() {
             try {
                 const res = await fetch('/api/postgres/info');
@@ -719,29 +794,52 @@ function app() {
 
         initCodeMirror(id, mode, model) {
             const el = document.getElementById(id);
-            if (!el) return;
-
-            // Prevent double init
-            if (this.cmInstances[id]) return;
-
-            const cm = CodeMirror.fromTextArea(el, {
-                mode: mode,
-                theme: 'dracula',
-                lineNumbers: true,
-                lineWrapping: true
-            });
-
-            // Two-way binding: Update Alpine data on change
-            cm.on('change', () => {
-                this[model] = cm.getValue();
-            });
-
-            // Set initial value from Alpine data
-            if (this[model]) {
-                cm.setValue(this[model]);
+            if (!el) {
+                console.warn(`CodeMirror: Element #${id} not found in DOM`);
+                return;
             }
 
-            this.cmInstances[id] = cm;
+            // Check if this textarea has already been converted to CodeMirror
+            // CodeMirror adds a .CodeMirror div as next sibling
+            if (el.nextSibling && el.nextSibling.classList && el.nextSibling.classList.contains('CodeMirror')) {
+                console.log(`CodeMirror: #${id} already initialized (detected via DOM)`);
+                if (this.cmInstances[id]) {
+                    this.cmInstances[id].refresh();
+                }
+                return;
+            }
+
+            // Prevent double init - check instance registry
+            if (this.cmInstances[id]) {
+                console.log(`CodeMirror: #${id} already in registry, refreshing`);
+                this.cmInstances[id].refresh();
+                return;
+            }
+
+            try {
+                console.log(`🚀 Creating new CodeMirror for #${id}`);
+                const cm = CodeMirror.fromTextArea(el, {
+                    mode: mode,
+                    theme: 'dracula',
+                    lineNumbers: true,
+                    lineWrapping: true
+                });
+
+                // Two-way binding: Update Alpine data on change
+                cm.on('change', () => {
+                    this[model] = cm.getValue();
+                });
+
+                // Set initial value from Alpine data
+                if (this[model]) {
+                    cm.setValue(this[model]);
+                }
+
+                this.cmInstances[id] = cm;
+                console.log(`✅ CodeMirror initialized for #${id}`);
+            } catch (error) {
+                console.error(`❌ CodeMirror initialization failed for #${id}:`, error);
+            }
         }
     }
 }

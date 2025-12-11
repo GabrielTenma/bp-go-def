@@ -129,6 +129,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/yaml/yaml.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/shell/shell.min.js"></script>
+    <script src="/assets/vendor/codemirror-sql.min.js"></script>
     <style>
         .CodeMirror {
             height: 600px !important;
@@ -136,6 +137,16 @@
             /* rounded-md */
             font-family: 'JetBrains Mono', 'Fira Code', monospace;
             font-size: 13px;
+        }
+
+        /* Add padding to CodeMirror content */
+        .CodeMirror-lines {
+            padding: 8px 0 !important;
+        }
+
+        .CodeMirror pre.CodeMirror-line,
+        .CodeMirror pre.CodeMirror-line-like {
+            padding-left: 12px !important;
         }
 
         /* Override for SQL Editor to not be too huge */
@@ -1080,8 +1091,67 @@
 
                             <!-- Running Queries -->
                             <div class="rounded-md border bg-card shadow-sm">
-                                <div class="border-b p-4">
+                                <div class="border-b p-4 flex items-center justify-between">
                                     <h3 class="font-medium">Running Queries</h3>
+
+                                    <div class="flex items-center gap-2">
+                                        <!-- Refresh Interval Dropdown -->
+                                        <div class="relative" x-data="{ open: false }">
+                                            <button @click="open = !open" @click.outside="open = false"
+                                                class="flex items-center gap-2 h-8 px-3 text-xs font-medium border rounded-md bg-background hover:bg-accent hover:text-accent-foreground transition-colors focus:outline-none focus:ring-1 focus:ring-ring">
+                                                <span class="text-muted-foreground mr-1">Interval:</span>
+                                                <span
+                                                    x-text="pgRefreshInterval == 2000 ? '2s' : (pgRefreshInterval == 5000 ? '5s' : (pgRefreshInterval == 10000 ? '10s' : '30s'))"></span>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="opacity-50">
+                                                    <path d="m6 9 6 6 6-6" />
+                                                </svg>
+                                            </button>
+                                            <div x-show="open" x-transition:enter="transition ease-out duration-100"
+                                                x-transition:enter-start="opacity-0 scale-95"
+                                                x-transition:enter-end="opacity-100 scale-100"
+                                                x-transition:leave="transition ease-in duration-75"
+                                                x-transition:leave-start="opacity-100 scale-100"
+                                                x-transition:leave-end="opacity-0 scale-95"
+                                                class="absolute top-full right-0 mt-1 w-32 rounded-md border bg-popover text-popover-foreground shadow-md z-[100] p-1"
+                                                style="display: none;">
+                                                <div @click="pgRefreshInterval = 2000; updatePgRefreshInterval(); open = false"
+                                                    class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-xs outline-none hover:bg-accent hover:text-accent-foreground">
+                                                    <span x-show="pgRefreshInterval == 2000"
+                                                        class="absolute right-2 text-xs">✓</span>
+                                                    2s
+                                                </div>
+                                                <div @click="pgRefreshInterval = 5000; updatePgRefreshInterval(); open = false"
+                                                    class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-xs outline-none hover:bg-accent hover:text-accent-foreground">
+                                                    <span x-show="pgRefreshInterval == 5000"
+                                                        class="absolute right-2 text-xs">✓</span>
+                                                    5s
+                                                </div>
+                                                <div @click="pgRefreshInterval = 10000; updatePgRefreshInterval(); open = false"
+                                                    class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-xs outline-none hover:bg-accent hover:text-accent-foreground">
+                                                    <span x-show="pgRefreshInterval == 10000"
+                                                        class="absolute right-2 text-xs">✓</span>
+                                                    10s
+                                                </div>
+                                                <div @click="pgRefreshInterval = 30000; updatePgRefreshInterval(); open = false"
+                                                    class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-xs outline-none hover:bg-accent hover:text-accent-foreground">
+                                                    <span x-show="pgRefreshInterval == 30000"
+                                                        class="absolute right-2 text-xs">✓</span>
+                                                    30s
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Toggle Auto-Refresh Button -->
+                                        <button @click="togglePgRefresh()"
+                                            :class="pgRefreshActive ? 'bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-200' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'"
+                                            class="h-8 px-3 text-xs rounded-md transition-colors font-medium border border-transparent">
+                                            <span
+                                                x-text="pgRefreshActive ? 'Auto-Refresh: ON' : 'Enable Auto-Refresh'"></span>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="overflow-x-auto">
                                     <table class="w-full text-sm">

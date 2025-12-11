@@ -115,7 +115,8 @@ func (p *PostgresManager) ExecuteRawQuery(ctx context.Context, query string) ([]
 		return nil, err
 	}
 
-	var results []map[string]interface{}
+	// Initialize with make to ensure empty slice [] instead of nil
+	results := make([]map[string]interface{}, 0)
 
 	for rows.Next() {
 		// Create a slice of interface{} to hold values
