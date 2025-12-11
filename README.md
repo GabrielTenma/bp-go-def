@@ -59,6 +59,8 @@ go run cmd/app/main.go
 
 ## 📊 Monitoring Dashboard
 
+![Monitoring Dashboard](https://s6.imgcdn.dev/YToc5C.png)
+
 ### Login Page
 - Custom shadcn-admin styled design
 - HTTP Basic Auth integration

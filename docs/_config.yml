@@ -1,0 +1,51 @@
+# Site settings
+title: Go Echo Boilerplate
+description: Production-ready Go boilerplate with Echo framework, monitoring dashboard, and complete infrastructure integrations
+url: "https://gabrieltenma.github.io"
+baseurl: "/bp-go-def"
+
+# Author
+author:
+  name: GabrielTenma
+  email: your-email@example.com
+  github: GabrielTenma
+
+# Build settings
+markdown: kramdown
+theme: jekyll-theme-cayman
+
+# Enable Mermaid diagrams
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: true
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+
+# GitHub
+repository: GabrielTenma/bp-go-def
+github_username: GabrielTenma
+
+# Social links
+social_links:
+  - title: GitHub
+    url: https://github.com/GabrielTenma/bp-go-def
+  - title: Documentation
+    url: https://github.com/GabrielTenma/bp-go-def/tree/main/docs
+
+# Exclude from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+  - README.md
+
+# Include
+include:
+  - _config.yml
