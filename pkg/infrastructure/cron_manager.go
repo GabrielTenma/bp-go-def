@@ -82,3 +82,12 @@ func (c *CronManager) GetJobs() []CronJob {
 	}
 	return list
 }
+func (c *CronManager) GetStatus() map[string]interface{} {
+	if c == nil {
+		return map[string]interface{}{"active": false, "jobs": []interface{}{}}
+	}
+	return map[string]interface{}{
+		"active": true, // Always true if manager exists
+		"jobs":   c.GetJobs(),
+	}
+}

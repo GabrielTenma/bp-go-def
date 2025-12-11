@@ -5,7 +5,9 @@ import (
 	"net/http"
 	"test-go/config"
 	"test-go/internal/monitoring/database"
+	"test-go/internal/monitoring/session"
 	"test-go/pkg/infrastructure"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -59,6 +61,20 @@ func Start(
 		}
 	}
 
+	// Initialize Infrastructure Managers
+	minioMgr, err := infrastructure.NewMinIOManager(appConfig.Monitoring.MinIO)
+	if err != nil {
+		fmt.Printf("⚠️  Warning: Failed to connect to MinIO: %v\n", err)
+	} else {
+		fmt.Println("✅ MinIO Manager initialized")
+	}
+
+	systemMgr := infrastructure.NewSystemManager()
+	httpMgr := infrastructure.NewHttpManager(appConfig.Monitoring.External)
+
+	// Initialize session manager
+	sessionManager := session.NewManager(24 * time.Hour)
+
 	e := echo.New()
 	e.HideBanner = true
 	e.HidePort = true
@@ -67,30 +83,19 @@ func Start(
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS()) // Enable CORS for development convenience
 
-	// Serve login page (no auth required)
+	// Public routes (no auth required)
 	e.GET("/", func(c echo.Context) error {
 		return c.File("web/monitoring/login.html")
 	})
-
-	// Logout endpoint - returns 401 to clear cached credentials
-	e.GET("/logout", func(c echo.Context) error {
-		c.Response().Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
-		return c.String(http.StatusUnauthorized, "Logged out")
-	})
-
-	// Static assets (no auth required)
 	e.Static("/assets", "web/monitoring/assets")
 
-	// Protected routes group
+	// Auth endpoints
+	e.POST("/login", handleLogin(sessionManager))
+	e.POST("/logout", handleLogout(sessionManager))
+
+	// Protected routes group (require session)
 	protected := e.Group("")
-	protected.Use(middleware.BasicAuth(func(username, password string, c echo.Context) (bool, error) {
-		// Check database password
-		err := database.VerifyPassword(password)
-		if err == nil {
-			return true, nil
-		}
-		return false, nil
-	}))
+	protected.Use(session.Middleware(sessionManager))
 
 	// Dashboard and API routes (protected)
 	protected.GET("/dashboard", func(c echo.Context) error {
@@ -98,7 +103,7 @@ func Start(
 	})
 	protected.Static("/api/user/photos", appConfig.Monitoring.UploadDir+"/profiles")
 
-	// Register Handlers
+	// Register API Handlers
 	h := &Handler{
 		config:         appConfig,
 		statusProvider: statusProvider,
@@ -108,6 +113,9 @@ func Start(
 		kafka:          kafka,
 		cron:           cron,
 		services:       services,
+		minio:          minioMgr,
+		system:         systemMgr,
+		http:           httpMgr,
 	}
 	h.RegisterRoutes(protected)
 

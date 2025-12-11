@@ -169,29 +169,40 @@
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const errorMsg = document.getElementById('errorMessage');
+            const submitBtn = event.target.querySelector('button[type="submit"]');
 
             // Clear previous error
             errorMsg.classList.add('hidden');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Signing in...';
 
             try {
-                // Make request with Basic Auth
-                const response = await fetch('/dashboard', {
+                // POST credentials to /login
+                const response = await fetch('/login', {
+                    method: 'POST',
                     headers: {
-                        'Authorization': 'Basic ' + btoa(username + ':' + password)
-                    }
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
                 });
 
-                if (response.ok) {
+                const data = await response.json();
+
+                if (response.ok && data.success) {
                     // Success - redirect to dashboard
                     window.location.href = '/dashboard';
                 } else {
                     // Failed
-                    errorMsg.textContent = 'Invalid username or password';
+                    errorMsg.textContent = data.message || 'Invalid username or password';
                     errorMsg.classList.remove('hidden');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Sign In';
                 }
             } catch (error) {
                 errorMsg.textContent = 'An error occurred. Please try again.';
                 errorMsg.classList.remove('hidden');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Sign In';
             }
         }
     </script>

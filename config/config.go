@@ -2,6 +2,7 @@ package config
 
 import (
 	"strings"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -19,13 +20,33 @@ type Config struct {
 }
 
 type MonitoringConfig struct {
-	Enabled        bool   `mapstructure:"enabled"`
-	Port           string `mapstructure:"port"`
-	Password       string `mapstructure:"password"`
-	Title          string `mapstructure:"title"`
-	Subtitle       string `mapstructure:"subtitle"`
-	MaxPhotoSizeMB int    `mapstructure:"max_photo_size_mb"`
-	UploadDir      string `mapstructure:"upload_dir"`
+	Port           string         `mapstructure:"port"`
+	UpdatePeriod   time.Duration  `mapstructure:"update_period"`
+	Enabled        bool           `mapstructure:"enabled"`
+	UploadDir      string         `mapstructure:"upload_dir"`
+	Password       string         `mapstructure:"password"`
+	Title          string         `mapstructure:"title"`
+	Subtitle       string         `mapstructure:"subtitle"`
+	MaxPhotoSizeMB int            `mapstructure:"max_photo_size_mb"`
+	MinIO          MinIOConfig    `mapstructure:"minio"`
+	External       ExternalConfig `mapstructure:"external"`
+}
+
+type MinIOConfig struct {
+	Endpoint        string `mapstructure:"endpoint"`
+	AccessKeyID     string `mapstructure:"access_key_id"`
+	SecretAccessKey string `mapstructure:"secret_access_key"`
+	UseSSL          bool   `mapstructure:"use_ssl"`
+	BucketName      string `mapstructure:"bucket_name"`
+}
+
+type ExternalConfig struct {
+	Services []ExternalService `mapstructure:"services"`
+}
+
+type ExternalService struct {
+	Name string `mapstructure:"name"`
+	URL  string `mapstructure:"url"`
 }
 
 type CronConfig struct {

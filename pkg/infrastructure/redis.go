@@ -52,6 +52,30 @@ func (r *RedisManager) Replace(ctx context.Context, key string, value interface{
 	return r.Client.SetXX(ctx, key, value, ttl).Err()
 }
 
+func (r *RedisManager) GetStatus() map[string]interface{} {
+	stats := make(map[string]interface{})
+	if r == nil || r.Client == nil {
+		stats["connected"] = false
+		return stats
+	}
+
+	pong, err := r.Client.Ping(context.Background()).Result()
+	stats["connected"] = err == nil
+	stats["ping"] = pong
+	stats["addr"] = r.Client.Options().Addr
+	stats["db"] = r.Client.Options().DB
+
+	// Add pool stats
+	pool := r.Client.PoolStats()
+	stats["pool_hits"] = pool.Hits
+	stats["pool_misses"] = pool.Misses
+	stats["pool_timeouts"] = pool.Timeouts
+	stats["pool_total_conns"] = pool.TotalConns
+	stats["pool_idle_conns"] = pool.IdleConns
+
+	return stats
+}
+
 // GetInfo retrieves Redis server info.
 func (r *RedisManager) GetInfo(ctx context.Context) (string, error) {
 	return r.Client.Info(ctx).Result()

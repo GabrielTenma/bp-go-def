@@ -37,6 +37,25 @@ func NewKafkaManager(cfg config.KafkaConfig) (*KafkaManager, error) {
 	}, nil
 }
 
+func (k *KafkaManager) GetStatus() map[string]interface{} {
+	stats := make(map[string]interface{})
+	if k == nil {
+		stats["connected"] = false
+		return stats
+	}
+
+	if k.Producer == nil && len(k.Brokers) == 0 {
+
+		stats["connected"] = false
+		return stats
+	}
+
+	stats["connected"] = true // Assuming connected if initialized for now, complex to check liveness without producing
+	stats["brokers"] = k.Brokers
+	stats["group_id"] = k.GroupID
+	return stats
+}
+
 // Consume starts a consumer group for the given topic.
 // NOTE: This blocks the calling goroutine. Run in a separate goroutine.
 func (k *KafkaManager) Consume(ctx context.Context, topic string, handler func(key, value []byte) error) error {

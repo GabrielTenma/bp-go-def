@@ -48,6 +48,27 @@ func NewPostgresDB(cfg config.PostgresConfig) (*PostgresManager, error) {
 	}, nil
 }
 
+func (p *PostgresManager) GetStatus() map[string]interface{} {
+	stats := make(map[string]interface{})
+	if p == nil || p.DB == nil {
+		stats["connected"] = false
+		return stats
+	}
+
+	err := p.DB.Ping()
+	stats["connected"] = err == nil
+
+	// DB Stats
+	dbStats := p.DB.Stats()
+	stats["open_connections"] = dbStats.OpenConnections
+	stats["in_use"] = dbStats.InUse
+	stats["idle"] = dbStats.Idle
+	stats["wait_count"] = dbStats.WaitCount
+	stats["wait_duration_ms"] = dbStats.WaitDuration.Milliseconds()
+
+	return stats
+}
+
 // Query executes a query that returns rows, typically a SELECT.
 func (p *PostgresManager) Query(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
 	return p.DB.QueryContext(ctx, query, args...)

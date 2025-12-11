@@ -23,6 +23,9 @@ type Handler struct {
 	postgres       *infrastructure.PostgresManager
 	kafka          *infrastructure.KafkaManager
 	cron           *infrastructure.CronManager
+	minio          *infrastructure.MinIOManager
+	system         *infrastructure.SystemManager
+	http           *infrastructure.HttpManager
 	services       []ServiceInfo
 
 	// Dummy Logs
@@ -155,7 +158,21 @@ func (h *Handler) runDummyLogs(stop chan struct{}) {
 }
 
 func (h *Handler) getStatus(c echo.Context) error {
-	return c.JSON(http.StatusOK, h.statusProvider.GetStatus())
+	// Collect status from all sources
+	status := h.statusProvider.GetStatus()
+	status["redis"] = h.redis.GetStatus()
+	status["postgres"] = h.postgres.GetStatus()
+	status["kafka"] = h.kafka.GetStatus()
+	status["cron"] = h.cron.GetStatus()
+
+	// New Infrastructure
+	status["storage"] = h.minio.GetStatus()
+	status["system"] = h.system.GetStats()
+	status["system_info"] = h.system.GetHostInfo()
+	status["external"] = h.http.GetStatus()
+
+	status["services"] = h.services
+	return c.JSON(http.StatusOK, status)
 }
 
 func (h *Handler) getConfig(c echo.Context) error {
