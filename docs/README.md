@@ -1,6 +1,6 @@
 # GitHub Pages Setup Instructions
 
-## 📦 Files Created
+## Files Created
 
 The GitHub Pages site is located in the `docs` folder:
 
@@ -13,7 +13,7 @@ docs/
         └── style.scss          # Custom styling
 ```
 
-## 🚀 How to Enable GitHub Pages
+## How to Enable GitHub Pages
 
 ### 1. Push Changes to GitHub
 
@@ -58,7 +58,7 @@ Your GitHub Pages site will be available at:
 
 ---
 
-## 🎨 Features Included
+## Features Included
 
 ### Main Landing Page (`index.md`)
 - Beautiful feature showcase in English
@@ -84,7 +84,7 @@ Modern, professional design with:
 
 ---
 
-## 📁 Folder Structure
+## Folder Structure
 
 The project has two separate documentation folders:
 
@@ -103,7 +103,7 @@ The project has two separate documentation folders:
 
 ---
 
-## 🔧 Testing Locally (Optional)
+## Testing Locally (Optional)
 
 If you want to preview the site locally before pushing:
 
@@ -141,7 +141,7 @@ Press `Ctrl+C` to stop the server.
 
 ---
 
-## 📝 Notes
+## Notes
 
 - The theme used is **jekyll-theme-cayman** (GitHub's official theme)
 - All content is in English
@@ -151,7 +151,7 @@ Press `Ctrl+C` to stop the server.
 
 ---
 
-## 🎯 Next Steps
+## Next Steps
 
 1. Push the changes to GitHub
 2. Enable GitHub Pages in repository settings (select `/docs` folder)
@@ -161,7 +161,7 @@ Press `Ctrl+C` to stop the server.
 
 ---
 
-## 🔄 Updating Content
+## Updating Content
 
 To update the site in the future:
 1. Edit files in the `docs/` folder
@@ -170,7 +170,7 @@ To update the site in the future:
 
 ---
 
-## ✨ Customization
+## Customization
 
 You can customize further by editing:
 - `docs/_config.yml` - Site metadata and settings

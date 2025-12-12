@@ -5,11 +5,11 @@ package monitoring
 import (
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"test-go/internal/monitoring/database"
+	"test-go/pkg/response"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -19,16 +19,16 @@ import (
 func (h *Handler) getUserSettings(c echo.Context) error {
 	settings, err := database.GetUserSettings()
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return response.InternalServerError(c, err.Error())
 	}
 	if settings == nil {
-		return c.JSON(http.StatusOK, map[string]string{
+		return response.Success(c, map[string]string{
 			"username":   "Admin",
 			"photo_path": "",
 		})
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{
+	return response.Success(c, map[string]string{
 		"username":   settings.Username,
 		"photo_path": settings.PhotoPath,
 	})
@@ -42,18 +42,18 @@ func (h *Handler) updateUserSettings(c echo.Context) error {
 
 	var req Request
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request"})
+		return response.BadRequest(c, "Invalid request")
 	}
 
 	if req.Username == "" {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Username cannot be empty"})
+		return response.BadRequest(c, "Username cannot be empty")
 	}
 
 	if err := database.UpdateUsername(req.Username); err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return response.InternalServerError(c, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{"message": "Username updated successfully"})
+	return response.Success(c, nil, "Username updated successfully")
 }
 
 // changePassword changes the user password
@@ -65,25 +65,25 @@ func (h *Handler) changePassword(c echo.Context) error {
 
 	var req Request
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request"})
+		return response.BadRequest(c, "Invalid request")
 	}
 
 	if req.CurrentPassword == "" || req.NewPassword == "" {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Both current and new password are required"})
+		return response.BadRequest(c, "Both current and new password are required")
 	}
 
 	if len(req.NewPassword) < 4 {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "New password must be at least 4 characters"})
+		return response.BadRequest(c, "New password must be at least 4 characters")
 	}
 
 	if err := database.UpdatePassword(req.CurrentPassword, req.NewPassword); err != nil {
 		if strings.Contains(err.Error(), "incorrect") {
-			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Current password is incorrect"})
+			return response.Unauthorized(c, "Current password is incorrect")
 		}
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return response.InternalServerError(c, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{"message": "Password changed successfully"})
+	return response.Success(c, nil, "Password changed successfully")
 }
 
 // uploadPhoto handles profile photo upload
@@ -91,7 +91,7 @@ func (h *Handler) uploadPhoto(c echo.Context) error {
 	// Get file from request
 	file, err := c.FormFile("photo")
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "No file uploaded"})
+		return response.BadRequest(c, "No file uploaded")
 	}
 
 	// Check file size (2MB default)
@@ -100,23 +100,19 @@ func (h *Handler) uploadPhoto(c echo.Context) error {
 		maxSize = 2 * 1024 * 1024 // Default 2MB
 	}
 	if file.Size > maxSize {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": fmt.Sprintf("File size exceeds %dMB limit", h.config.Monitoring.MaxPhotoSizeMB),
-		})
+		return response.BadRequest(c, fmt.Sprintf("File size exceeds %dMB limit", h.config.Monitoring.MaxPhotoSizeMB))
 	}
 
 	// Check file extension
 	ext := strings.ToLower(filepath.Ext(file.Filename))
 	if ext != ".jpg" && ext != ".jpeg" && ext != ".png" && ext != ".gif" {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Only JPG, PNG, and GIF files are allowed",
-		})
+		return response.BadRequest(c, "Only JPG, PNG, and GIF files are allowed")
 	}
 
 	// Open uploaded file
 	src, err := file.Open()
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to read file"})
+		return response.InternalServerError(c, "Failed to read file")
 	}
 	defer src.Close()
 
@@ -131,20 +127,20 @@ func (h *Handler) uploadPhoto(c echo.Context) error {
 
 	// Ensure directory exists
 	if err := os.MkdirAll(profilesDir, 0755); err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to create upload directory"})
+		return response.InternalServerError(c, "Failed to create upload directory")
 	}
 
 	// Create destination file
 	dstPath := filepath.Join(profilesDir, filename)
 	dst, err := os.Create(dstPath)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to save file"})
+		return response.InternalServerError(c, "Failed to save file")
 	}
 	defer dst.Close()
 
 	// Copy file
 	if _, err = io.Copy(dst, src); err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to save file"})
+		return response.InternalServerError(c, "Failed to save file")
 	}
 
 	// Delete old photo if exists
@@ -157,10 +153,10 @@ func (h *Handler) uploadPhoto(c echo.Context) error {
 	// Update database
 	photoPath := filename
 	if err := database.UpdatePhotoPath(photoPath); err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to update database"})
+		return response.InternalServerError(c, "Failed to update database")
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{
+	return response.Success(c, map[string]string{
 		"message":    "Photo uploaded successfully",
 		"photo_path": photoPath,
 	})
@@ -170,7 +166,7 @@ func (h *Handler) uploadPhoto(c echo.Context) error {
 func (h *Handler) deleteUserPhoto(c echo.Context) error {
 	settings, err := database.GetUserSettings()
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return response.InternalServerError(c, err.Error())
 	}
 
 	if settings != nil && settings.PhotoPath != "" {
@@ -185,8 +181,8 @@ func (h *Handler) deleteUserPhoto(c echo.Context) error {
 
 	// Update database
 	if err := database.DeletePhoto(); err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return response.InternalServerError(c, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{"message": "Photo deleted successfully"})
+	return response.Success(c, nil, "Photo deleted successfully")
 }

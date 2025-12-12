@@ -2,9 +2,9 @@ package modules
 
 import (
 	"fmt"
-	"net/http"
 	"strconv"
 	"test-go/pkg/infrastructure"
+	"test-go/pkg/response"
 
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
@@ -54,43 +54,43 @@ func (s *ServiceD) listTasks(c echo.Context) error {
 	var tasks []Task
 	result := s.db.ORM.Find(&tasks)
 	if result.Error != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": result.Error.Error()})
+		return response.InternalServerError(c, result.Error.Error())
 	}
-	return c.JSON(http.StatusOK, tasks)
+	return response.Success(c, tasks)
 }
 
 func (s *ServiceD) createTask(c echo.Context) error {
 	task := new(Task)
 	if err := c.Bind(task); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid input"})
+		return response.BadRequest(c, "Invalid input")
 	}
 
 	if result := s.db.ORM.Create(task); result.Error != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": result.Error.Error()})
+		return response.InternalServerError(c, result.Error.Error())
 	}
 
-	return c.JSON(http.StatusCreated, task)
+	return response.Created(c, task)
 }
 
 func (s *ServiceD) updateTask(c echo.Context) error {
 	id, _ := strconv.Atoi(c.Param("id"))
 	var task Task
 	if result := s.db.ORM.First(&task, id); result.Error != nil {
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "Task not found"})
+		return response.NotFound(c, "Task not found")
 	}
 
 	if err := c.Bind(&task); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid input"})
+		return response.BadRequest(c, "Invalid input")
 	}
 
 	s.db.ORM.Save(&task)
-	return c.JSON(http.StatusOK, task)
+	return response.Success(c, task)
 }
 
 func (s *ServiceD) deleteTask(c echo.Context) error {
 	id, _ := strconv.Atoi(c.Param("id"))
 	if result := s.db.ORM.Delete(&Task{}, id); result.Error != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": result.Error.Error()})
+		return response.InternalServerError(c, result.Error.Error())
 	}
-	return c.JSON(http.StatusOK, map[string]string{"message": "Task deleted"})
+	return response.Success(c, nil, "Task deleted")
 }

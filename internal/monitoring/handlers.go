@@ -2,11 +2,11 @@ package monitoring
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 	"sync"
 	"test-go/config"
 	"test-go/pkg/infrastructure"
+	"test-go/pkg/response"
 	"test-go/pkg/utils"
 	"time"
 
@@ -77,7 +77,7 @@ func (h *Handler) RegisterRoutes(g *echo.Group) {
 func (h *Handler) getDummyStatus(c echo.Context) error {
 	h.dummyMu.Lock()
 	defer h.dummyMu.Unlock()
-	return c.JSON(http.StatusOK, map[string]bool{"active": h.dummyActive})
+	return response.Success(c, map[string]bool{"active": h.dummyActive})
 }
 
 func (h *Handler) toggleDummyLogs(c echo.Context) error {
@@ -89,29 +89,29 @@ func (h *Handler) toggleDummyLogs(c echo.Context) error {
 	}
 	var req Req
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request"})
+		return response.BadRequest(c, "Invalid request")
 	}
 
 	if req.Enable {
 		if h.dummyActive {
-			return c.JSON(http.StatusOK, map[string]string{"message": "Already active"})
+			return response.Success(c, nil, "Already active")
 		}
 		h.dummyActive = true
 		h.dummyStop = make(chan struct{})
 		go h.runDummyLogs(h.dummyStop)
-		return c.JSON(http.StatusOK, map[string]string{"message": "Dummy logs enabled"})
+		return response.Success(c, nil, "Dummy logs enabled")
 	} else {
 		if !h.dummyActive {
-			return c.JSON(http.StatusOK, map[string]string{"message": "Already inactive"})
+			return response.Success(c, nil, "Already inactive")
 		}
 		h.dummyActive = false
 		close(h.dummyStop)
-		return c.JSON(http.StatusOK, map[string]string{"message": "Dummy logs disabled"})
+		return response.Success(c, nil, "Dummy logs disabled")
 	}
 }
 
 func (h *Handler) getMonitoringConfig(c echo.Context) error {
-	return c.JSON(http.StatusOK, map[string]string{
+	return response.Success(c, map[string]string{
 		"title":    h.config.Monitoring.Title,
 		"subtitle": h.config.Monitoring.Subtitle,
 	})
@@ -174,22 +174,22 @@ func (h *Handler) getStatus(c echo.Context) error {
 	status["external"] = h.http.GetStatus()
 
 	status["services"] = h.services
-	return c.JSON(http.StatusOK, status)
+	return response.Success(c, status)
 }
 
 func (h *Handler) getConfig(c echo.Context) error {
-	return c.JSON(http.StatusOK, h.config)
+	return response.Success(c, h.config)
 }
 
 func (h *Handler) getEndpoints(c echo.Context) error {
-	return c.JSON(http.StatusOK, h.services)
+	return response.Success(c, h.services)
 }
 
 // ... existing streamLogs and streamCPU ...
 
 func (h *Handler) getRedisKeys(c echo.Context) error {
 	if h.redis == nil {
-		return c.JSON(http.StatusServiceUnavailable, map[string]string{"error": "Redis not enabled"})
+		return response.ServiceUnavailable(c, "Redis not enabled")
 	}
 	pattern := c.QueryParam("pattern")
 	if pattern == "" {
@@ -197,9 +197,9 @@ func (h *Handler) getRedisKeys(c echo.Context) error {
 	}
 	keys, err := h.redis.ScanKeys(c.Request().Context(), pattern)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return response.InternalServerError(c, err.Error())
 	}
-	return c.JSON(http.StatusOK, keys)
+	return response.Success(c, keys)
 }
 
 func (h *Handler) Restart(c echo.Context) error {
@@ -207,50 +207,50 @@ func (h *Handler) Restart(c echo.Context) error {
 		time.Sleep(500 * time.Millisecond)
 		os.Exit(1)
 	}()
-	return c.JSON(http.StatusOK, map[string]string{"status": "restarting", "message": "Service is restarting..."})
+	return response.Success(c, map[string]string{"status": "restarting", "message": "Service is restarting..."})
 }
 
 func (h *Handler) getRedisValue(c echo.Context) error {
 	if h.redis == nil {
-		return c.JSON(http.StatusServiceUnavailable, map[string]string{"error": "Redis not enabled"})
+		return response.ServiceUnavailable(c, "Redis not enabled")
 	}
 	key := c.Param("key")
 	val, err := h.redis.GetValue(c.Request().Context(), key)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return response.InternalServerError(c, err.Error())
 	}
-	return c.JSON(http.StatusOK, map[string]string{"key": key, "value": val})
+	return response.Success(c, map[string]string{"key": key, "value": val})
 }
 
 func (h *Handler) getPostgresQueries(c echo.Context) error {
 	if h.postgres == nil {
-		return c.JSON(http.StatusServiceUnavailable, map[string]string{"error": "Postgres not enabled"})
+		return response.ServiceUnavailable(c, "Postgres not enabled")
 	}
 	queries, err := h.postgres.GetRunningQueries(c.Request().Context())
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return response.InternalServerError(c, err.Error())
 	}
-	return c.JSON(http.StatusOK, queries)
+	return response.Success(c, queries)
 }
 
 func (h *Handler) getPostgresInfo(c echo.Context) error {
 	if h.postgres == nil {
-		return c.JSON(http.StatusServiceUnavailable, map[string]string{"error": "Postgres not enabled"})
+		return response.ServiceUnavailable(c, "Postgres not enabled")
 	}
 	info, err := h.postgres.GetDBInfo(c.Request().Context())
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return response.InternalServerError(c, err.Error())
 	}
 
 	count, _ := h.postgres.GetSessionCount(c.Request().Context())
 	info["sessions"] = count
 
-	return c.JSON(http.StatusOK, info)
+	return response.Success(c, info)
 }
 
 func (h *Handler) runPostgresQuery(c echo.Context) error {
 	if h.postgres == nil {
-		return c.JSON(http.StatusServiceUnavailable, map[string]string{"error": "Postgres not enabled"})
+		return response.ServiceUnavailable(c, "Postgres not enabled")
 	}
 
 	type QueryReq struct {
@@ -258,40 +258,40 @@ func (h *Handler) runPostgresQuery(c echo.Context) error {
 	}
 	var req QueryReq
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request"})
+		return response.BadRequest(c, "Invalid request")
 	}
 
 	if req.Query == "" {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Query cannot be empty"})
+		return response.BadRequest(c, "Query cannot be empty")
 	}
 
 	// Safety check: Basic prevention of destructive queries (optional, mainly for safety demo)
 	// if !strings.HasPrefix(strings.ToUpper(strings.TrimSpace(req.Query)), "SELECT") {
-	// 	 return c.JSON(http.StatusForbidden, map[string]string{"error": "Only SELECT queries are allowed in this demo"})
+	// 	 return response.Forbidden(c, "Only SELECT queries are allowed in this demo")
 	// }
 
 	results, err := h.postgres.ExecuteRawQuery(c.Request().Context(), req.Query)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return response.InternalServerError(c, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, results)
+	return response.Success(c, results)
 }
 
 func (h *Handler) getKafkaTopics(c echo.Context) error {
 	// Placeholder: To implement true Kafka monitoring, we need Admin client in KafkaManager.
 	// For now return dummy or basic status.
 	if h.kafka == nil {
-		return c.JSON(http.StatusServiceUnavailable, map[string]string{"error": "Kafka not enabled"})
+		return response.ServiceUnavailable(c, "Kafka not enabled")
 	}
-	return c.JSON(http.StatusOK, map[string]string{"message": "Kafka monitoring requires Admin API (not implemented yet)"})
+	return response.Success(c, nil, "Kafka monitoring requires Admin API (not implemented yet)")
 }
 
 func (h *Handler) getCronJobs(c echo.Context) error {
 	if h.cron == nil {
-		return c.JSON(http.StatusOK, []interface{}{}) // Return empty if disabled
+		return response.Success(c, []interface{}{}) // Return empty if disabled
 	}
-	return c.JSON(http.StatusOK, h.cron.GetJobs())
+	return response.Success(c, h.cron.GetJobs())
 }
 
 func (h *Handler) getBanner(c echo.Context) error {
@@ -305,12 +305,12 @@ func (h *Handler) getBanner(c echo.Context) error {
 		// If file doesn't exist, return empty string or error?
 		// User might want to create it.
 		if os.IsNotExist(err) {
-			return c.JSON(http.StatusOK, map[string]string{"content": ""})
+			return response.Success(c, map[string]string{"content": ""})
 		}
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return response.InternalServerError(c, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{"content": string(content)})
+	return response.Success(c, map[string]string{"content": string(content)})
 }
 
 func (h *Handler) saveBanner(c echo.Context) error {
@@ -319,7 +319,7 @@ func (h *Handler) saveBanner(c echo.Context) error {
 	}
 	var req Req
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request"})
+		return response.BadRequest(c, "Invalid request")
 	}
 
 	path := h.config.App.BannerPath
@@ -330,19 +330,19 @@ func (h *Handler) saveBanner(c echo.Context) error {
 	// Write file (create if local, 0644)
 	err := os.WriteFile(path, []byte(req.Content), 0644)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to save banner: " + err.Error()})
+		return response.InternalServerError(c, "Failed to save banner: "+err.Error())
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{"message": "Banner saved successfully"})
+	return response.Success(c, nil, "Banner saved successfully")
 }
 
 // Config Handlers
 func (h *Handler) getRawConfig(c echo.Context) error {
 	content, err := os.ReadFile("config.yaml")
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return response.InternalServerError(c, err.Error())
 	}
-	return c.JSON(http.StatusOK, map[string]string{"content": string(content)})
+	return response.Success(c, map[string]string{"content": string(content)})
 }
 
 func (h *Handler) saveConfig(c echo.Context) error {
@@ -351,30 +351,30 @@ func (h *Handler) saveConfig(c echo.Context) error {
 	}
 	var req Req
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request"})
+		return response.BadRequest(c, "Invalid request")
 	}
 
 	err := os.WriteFile("config.yaml", []byte(req.Content), 0644)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to save config: " + err.Error()})
+		return response.InternalServerError(c, "Failed to save config: "+err.Error())
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{"message": "Config saved successfully. Restart required to apply changes."})
+	return response.Success(c, nil, "Config saved successfully. Restart required to apply changes.")
 }
 
 func (h *Handler) backupConfig(c echo.Context) error {
 	input, err := os.ReadFile("config.yaml")
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to read config: " + err.Error()})
+		return response.InternalServerError(c, "Failed to read config: "+err.Error())
 	}
 
 	backupName := fmt.Sprintf("config.yaml.bak.%d", time.Now().Unix())
 	err = os.WriteFile(backupName, input, 0644)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to create backup: " + err.Error()})
+		return response.InternalServerError(c, "Failed to create backup: "+err.Error())
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{"message": "Backup created: " + backupName})
+	return response.Success(c, nil, "Backup created: "+backupName)
 }
 
 func (h *Handler) streamLogs(c echo.Context) error {

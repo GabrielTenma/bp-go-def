@@ -1,18 +1,18 @@
 # Default Request Response Structure for Echo Service
 
-## 📋 Summary
+## Summary
 
 This project now has a structured, clean, and dynamic request/response structure for the Echo service. This system provides:
 
-✅ **Standardized Response** - Consistent format for all API endpoints  
-✅ **Automatic Request Validation** - Input validation with clear error messages  
-✅ **Built-in Pagination** - Pagination support with complete metadata  
-✅ **Comprehensive Error Handling** - Various helper functions for error responses  
-✅ **Type-safe** - Uses structs for request/response  
+**Standardized Response** - Consistent format for all API endpoints  
+**Automatic Request Validation** - Input validation with clear error messages  
+**Built-in Pagination** - Pagination support with complete metadata  
+**Comprehensive Error Handling** - Various helper functions for error responses  
+**Type-safe** - Uses structs for request/response  
 
 ---
 
-## 🗂️ Created Files
+## Created Files
 
 ### 1. **pkg/response/response.go**
 Package for standardizing API responses:
@@ -69,7 +69,7 @@ Updated as reference implementation with:
 
 ---
 
-## 📦 Dependencies
+## Dependencies
 
 Added new dependency:
 ```bash
@@ -78,7 +78,7 @@ go get github.com/go-playground/validator/v10
 
 ---
 
-## 🚀 Usage
+## Usage
 
 ### 1. Success Response
 ```go
@@ -185,7 +185,7 @@ return response.InternalServerError(c, "Database error")
 
 ---
 
-## ✨ Key Features
+## Key Features
 
 ### 1. **Consistent Response Format**
 All responses follow the same structure with fields `success`, `data`, `error`, `meta`, and `timestamp`.
@@ -211,18 +211,18 @@ Uses Go structs for request and response, avoiding manual `map[string]interface{
 
 ---
 
-## 📝 Example Service Implementation
+## Example Service Implementation
 
 See [`service_a.go`](../internal/services/modules/service_a.go) for complete implementation example with:
-- ✅ List with pagination
-- ✅ Get single resource
-- ✅ Create with validation
-- ✅ Update with validation
-- ✅ Delete with proper response
+- List with pagination
+- Get single resource
+- Create with validation
+- Update with validation
+- Delete with proper response
 
 ---
 
-## 📖 Complete Documentation
+## Complete Documentation
 
 See [`API_RESPONSE_STRUCTURE.md`](API_RESPONSE_STRUCTURE.md) for:
 - Complete documentation of all functions
@@ -232,7 +232,7 @@ See [`API_RESPONSE_STRUCTURE.md`](API_RESPONSE_STRUCTURE.md) for:
 
 ---
 
-## 🎯 Next Steps
+## Next Steps
 
 1. **Use response helpers** in all service modules
 2. **Implement validation** for all request structs
@@ -242,13 +242,13 @@ See [`API_RESPONSE_STRUCTURE.md`](API_RESPONSE_STRUCTURE.md) for:
 
 ---
 
-## ✅ Build Status
+## Build Status
 
 ```bash
-✓ Dependencies installed
-✓ go mod tidy completed
-✓ Build successful
-✓ Ready to use!
+- Dependencies installed
+- go mod tidy completed
+- Build successful
+- Ready to use!
 ```
 
 ---

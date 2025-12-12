@@ -28,10 +28,10 @@ The application starts with a custom rabbit banner:
 ```
  (\_/)
  ( •_•)
- / > 🚀  Go Echo App Ready!
+ / >  Go Echo App Ready!
 
-13:17:00 INFO 🚀 Starting Application name="My Fancy Go App"
-13:17:00 INFO 🚀 Initializing Middleware...
+13:17:00 INFO Starting Application name="My Fancy Go App"
+13:17:00 INFO Initializing Middleware...
 ...
 ```
 

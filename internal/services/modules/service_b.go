@@ -1,6 +1,8 @@
 package modules
 
 import (
+	"test-go/pkg/response"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -18,6 +20,6 @@ func (s *ServiceB) Enabled() bool { return s.enabled }
 func (s *ServiceB) RegisterRoutes(g *echo.Group) {
 	sub := g.Group("/products")
 	sub.GET("", func(c echo.Context) error {
-		return c.JSON(200, map[string]string{"message": "Hello from Service B - Products"})
+		return response.Success(c, map[string]string{"message": "Hello from Service B - Products"})
 	})
 }

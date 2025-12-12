@@ -189,11 +189,16 @@
                 const data = await response.json();
 
                 if (response.ok && data.success) {
-                    // Success - redirect to dashboard
+                    // Success - Generate Correlation ID if missing
+                    let correlationId = crypto.randomUUID();
+                    localStorage.setItem('x_correlation_id', correlationId);
+
+                    // Redirect to dashboard
                     window.location.href = '/dashboard';
                 } else {
                     // Failed
-                    errorMsg.textContent = data.message || 'Invalid username or password';
+                    const msg = data.error ? data.error.message : (data.message || 'Invalid username or password');
+                    errorMsg.textContent = msg;
                     errorMsg.classList.remove('hidden');
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Sign In';

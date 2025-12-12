@@ -1,10 +1,10 @@
 package modules
 
 import (
-	"net/http"
 	"time"
 
 	"test-go/pkg/cache"
+	"test-go/pkg/response"
 
 	"github.com/labstack/echo/v4"
 )
@@ -37,9 +37,9 @@ func (s *ServiceC) RegisterRoutes(g *echo.Group) {
 		key := c.Param("key")
 		val, found := s.store.Get(key)
 		if !found {
-			return c.JSON(http.StatusNotFound, map[string]string{"error": "Key not found or expired"})
+			return response.NotFound(c, "Key not found or expired")
 		}
-		return c.JSON(http.StatusOK, map[string]string{"key": key, "value": val})
+		return response.Success(c, map[string]string{"key": key, "value": val})
 	})
 
 	// POST /cache/:key
@@ -47,13 +47,13 @@ func (s *ServiceC) RegisterRoutes(g *echo.Group) {
 		key := c.Param("key")
 		var req CacheRequest
 		if err := c.Bind(&req); err != nil {
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid body"})
+			return response.BadRequest(c, "Invalid body")
 		}
 
 		ttl := time.Duration(req.TTL) * time.Second
 		s.store.Set(key, req.Value, ttl)
 
-		return c.JSON(http.StatusOK, map[string]string{
+		return response.Success(c, map[string]string{
 			"message": "Cached successfully",
 			"key":     key,
 			"ttl":     ttl.String(),

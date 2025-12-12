@@ -4,17 +4,21 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
 // Response represents the standard API response structure
 type Response struct {
-	Success   bool         `json:"success"`
-	Message   string       `json:"message,omitempty"`
-	Data      interface{}  `json:"data,omitempty"`
-	Error     *ErrorDetail `json:"error,omitempty"`
-	Meta      *Meta        `json:"meta,omitempty"`
-	Timestamp int64        `json:"timestamp"`
+	Success       bool         `json:"success"`
+	Status        int          `json:"status"` // HTTP Status Code
+	Message       string       `json:"message,omitempty"`
+	Data          interface{}  `json:"data,omitempty"`
+	Error         *ErrorDetail `json:"error,omitempty"`
+	Meta          *Meta        `json:"meta,omitempty"`
+	Timestamp     int64        `json:"timestamp"`      // Unix Timestamp
+	Datetime      string       `json:"datetime"`       // ISO8601 Datetime
+	CorrelationID string       `json:"correlation_id"` // Request ID for tracking
 }
 
 // ErrorDetail represents detailed error information
@@ -81,10 +85,13 @@ func Success(c echo.Context, data interface{}, message ...string) error {
 	}
 
 	return c.JSON(http.StatusOK, Response{
-		Success:   true,
-		Message:   msg,
-		Data:      data,
-		Timestamp: time.Now().Unix(),
+		Success:       true,
+		Status:        http.StatusOK,
+		Message:       msg,
+		Data:          data,
+		Timestamp:     time.Now().Unix(),
+		Datetime:      time.Now().Format(time.RFC3339),
+		CorrelationID: getCorrelationID(c),
 	})
 }
 
@@ -96,11 +103,14 @@ func SuccessWithMeta(c echo.Context, data interface{}, meta *Meta, message ...st
 	}
 
 	return c.JSON(http.StatusOK, Response{
-		Success:   true,
-		Message:   msg,
-		Data:      data,
-		Meta:      meta,
-		Timestamp: time.Now().Unix(),
+		Success:       true,
+		Status:        http.StatusOK,
+		Message:       msg,
+		Data:          data,
+		Meta:          meta,
+		Timestamp:     time.Now().Unix(),
+		Datetime:      time.Now().Format(time.RFC3339),
+		CorrelationID: getCorrelationID(c),
 	})
 }
 
@@ -112,10 +122,13 @@ func Created(c echo.Context, data interface{}, message ...string) error {
 	}
 
 	return c.JSON(http.StatusCreated, Response{
-		Success:   true,
-		Message:   msg,
-		Data:      data,
-		Timestamp: time.Now().Unix(),
+		Success:       true,
+		Status:        http.StatusCreated,
+		Message:       msg,
+		Data:          data,
+		Timestamp:     time.Now().Unix(),
+		Datetime:      time.Now().Format(time.RFC3339),
+		CorrelationID: getCorrelationID(c),
 	})
 }
 
@@ -198,13 +211,36 @@ func Error(c echo.Context, statusCode int, errorCode string, message string, det
 
 	return c.JSON(statusCode, Response{
 		Success: false,
+		Status:  statusCode,
 		Error: &ErrorDetail{
 			Code:    errorCode,
 			Message: message,
 			Details: errorDetails,
 		},
-		Timestamp: time.Now().Unix(),
+		Timestamp:     time.Now().Unix(),
+		Datetime:      time.Now().Format(time.RFC3339),
+		CorrelationID: getCorrelationID(c),
 	})
+}
+
+// getCorrelationID extracts or generates the correlation ID
+func getCorrelationID(c echo.Context) string {
+	// Try standard Echo request ID
+	id := c.Response().Header().Get(echo.HeaderXRequestID)
+	if id == "" {
+		id = c.Request().Header.Get(echo.HeaderXRequestID)
+	}
+	if id == "" {
+		id = c.Request().Header.Get("X-Correlation-ID")
+	}
+
+	// If still empty, generate a new one
+	if id == "" {
+		id = uuid.New().String()
+		// Ideally we should set it back to response header so client knows it
+		c.Response().Header().Set(echo.HeaderXRequestID, id)
+	}
+	return id
 }
 
 // CalculateMeta creates pagination metadata
