@@ -4,7 +4,7 @@ title: Go Echo Boilerplate - Production-Ready Golang Framework
 description: A powerful Go boilerplate with Echo framework, monitoring dashboard, and complete infrastructure integrations
 ---
 
-# 🚀 Go Echo Boilerplate
+# Go Echo Boilerplate
 
 A robust, production-ready Go application boilerplate built with [Echo](https://echo.labstack.com/). Designed for modularity, exceptional developer experience, and comprehensive monitoring.
 
@@ -14,40 +14,40 @@ A robust, production-ready Go application boilerplate built with [Echo](https://
 
 ---
 
-## ✨ Key Features
+## Key Features
 
-### 🏗️ Modular & Flexible Architecture
+### Modular & Flexible Architecture
 - **Modular Services**: Easily add new services with per-service enable/disable system
 - **Clean Architecture**: Clear separation between handlers, services, and infrastructure layers
 - **Plugin System**: Activate/deactivate features through configuration without code changes
 
-### 📊 Beautiful Monitoring Dashboard
+### Beautiful Monitoring Dashboard
 - **Modern UI**: Shadcn-admin inspired design with Lexend font
 - **Dark Mode**: Light/dark theme support with persistent storage
 - **Real-time Metrics**: Live monitoring of CPU, memory, disk, and network
 - **Live Log Streaming**: Server-Sent Events (SSE) for real-time log streaming
 - **User Management**: Profile customization, photo upload, password management
 
-### 🔧 Complete Infrastructure Integration
+### Complete Infrastructure Integration
 - **Redis**: Key-value store with connection pooling
 - **PostgreSQL**: SQL database with GORM ORM
 - **Kafka**: Message queue for event-driven architecture
 - **Cron Jobs**: Scheduled tasks with monitoring
 - **MinIO**: Object storage for file uploads
 
-### 📦 Standardized Request/Response Patterns
+### Standardized Request/Response Patterns
 - **Consistent API**: Uniform response format across all endpoints
 - **Auto Validation**: Automatic request validation with clear error messages
 - **Built-in Pagination**: Pagination support with complete metadata
 - **Type-Safe**: Uses structs for request/response instead of maps
 
-### 🎨 Premium Developer Experience
+### Premium Developer Experience
 - **Rich Logger**: Console output with colors, emojis, and structure (Zerolog)
 - **Custom ASCII Banner**: Customizable banner on startup
 - **Hot Config Reload**: Update configuration without application restart
 - **Fancy Errors**: Informative and easy-to-debug error messages
 
-### 🔒 Security First
+### Security First
 - **API Key Authentication**: API key-based auth with permission control
 - **HTTP Basic Auth**: For monitoring dashboard
 - **BCrypt Password**: Secure password hashing
@@ -55,7 +55,7 @@ A robust, production-ready Go application boilerplate built with [Echo](https://
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
 # Clone repository
@@ -77,7 +77,7 @@ go run cmd/app/main.go
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 ### Complete Guides
 For detailed developer documentation, visit the [docs_wiki folder](https://github.com/GabrielTenma/bp-go-def/tree/main/docs_wiki):
@@ -88,7 +88,7 @@ For detailed developer documentation, visit the [docs_wiki folder](https://githu
 
 ### Main Features
 
-#### 🎯 Modular Service System
+#### Modular Service System
 Add new services easily:
 ```yaml
 # config.yaml
@@ -99,14 +99,14 @@ services:
 
 Services are automatically registered and appear in the monitoring dashboard!
 
-#### 📊 Monitoring Tools
+#### Monitoring Tools
 - **Config Editor**: Edit YAML, backup, restore
 - **Redis Browser**: Scan keys, view values
 - **Postgres Monitor**: Active sessions, query statistics
 - **Kafka Debugger**: Topic inspection
 - **Cron Monitor**: Job scheduling and execution history
 
-#### 📝 Standardized Response
+#### Standardized Response
 ```go
 // Success
 return response.Success(c, data, "User retrieved")
@@ -121,7 +121,7 @@ return response.NotFound(c, "User not found")
 
 ---
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 .
@@ -144,7 +144,7 @@ return response.NotFound(c, "User not found")
 
 ---
 
-## 🔌 API Endpoints
+## API Endpoints
 
 ### Main Application
 - `GET /health` - Health check
@@ -160,7 +160,7 @@ return response.NotFound(c, "User not found")
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 Edit `config.yaml` to customize the application:
 
@@ -198,26 +198,26 @@ kafka:
 
 ---
 
-## 🎯 Use Cases
+## Use Cases
 
 ### Perfect For:
-- ✅ REST API development with standardized patterns
-- ✅ Microservices with integrated monitoring
-- ✅ Event-driven applications with Kafka
-- ✅ Applications requiring scheduled jobs
-- ✅ Projects with multiple infrastructure dependencies
+- REST API development with standardized patterns
+- Microservices with integrated monitoring
+- Event-driven applications with Kafka
+- Applications requiring scheduled jobs
+- Projects with multiple infrastructure dependencies
 
 ### Production Ready:
-- ✅ Comprehensive error handling
-- ✅ Structured logging
-- ✅ Health checks
-- ✅ Graceful shutdown
-- ✅ Security best practices
-- ✅ Configuration management
+- Comprehensive error handling
+- Structured logging
+- Health checks
+- Graceful shutdown
+- Security best practices
+- Configuration management
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
 ![Monitoring Dashboard](https://s6.imgcdn.dev/YToc5C.png)
 
@@ -225,7 +225,7 @@ kafka:
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 **Backend:**
 - [Echo](https://echo.labstack.com/) - High performance web framework
@@ -247,19 +247,19 @@ kafka:
 
 ---
 
-## 📝 License
+## License
 
 MIT License - feel free to use for commercial or personal projects!
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are very welcome! Please create an issue or pull request.
 
 ---
 
-## 🔗 Links
+## Links
 
 - **GitHub Repository**: [https://github.com/GabrielTenma/bp-go-def](https://github.com/GabrielTenma/bp-go-def)
 - **Documentation**: [https://gabrieltenma.github.io/bp-go-def/](https://gabrieltenma.github.io/bp-go-def/)
@@ -267,4 +267,4 @@ Contributions are very welcome! Please create an issue or pull request.
 
 ---
 
-**Built with ❤️ using Go, Echo, Alpine.js, and Tailwind CSS**
+**Built with using Go, Echo, Alpine.js, and Tailwind CSS**

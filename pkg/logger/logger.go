@@ -26,17 +26,17 @@ func New(debug bool, broadcaster io.Writer) *Logger {
 		if ll, ok := i.(string); ok {
 			switch ll {
 			case "debug":
-				l = "\x1b[36mDEBUG 🐛\x1b[0m"
+				l = "\x1b[36m[ DEBUG ]\x1b[0m"
 			case "info":
-				l = "\x1b[32mINFO 🚀\x1b[0m"
+				l = "\x1b[32m[ INFO  ]\x1b[0m"
 			case "warn":
-				l = "\x1b[33mWARN ⚠️\x1b[0m"
+				l = "\x1b[33m[ WARN  ]\x1b[0m"
 			case "error":
-				l = "\x1b[31mERROR ❌\x1b[0m"
+				l = "\x1b[31m[ ERROR ]\x1b[0m"
 			case "fatal":
-				l = "\x1b[31mFATAL 💀\x1b[0m"
+				l = "\x1b[31m[ FATAL ]\x1b[0m"
 			case "panic":
-				l = "\x1b[31mPANIC 💥\x1b[0m"
+				l = "\x1b[31m[ PANIC ]\x1b[0m"
 			default:
 				l = strings.ToUpper(ll)
 			}

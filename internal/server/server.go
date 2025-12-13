@@ -9,6 +9,7 @@ import (
 	"test-go/internal/services/modules"
 	"test-go/pkg/infrastructure"
 	"test-go/pkg/logger"
+	"test-go/pkg/response"
 	"test-go/pkg/utils"
 	"time"
 
@@ -118,7 +119,7 @@ func (s *Server) Start() error {
 
 	// Health Check Endpoint
 	s.echo.GET("/health", func(c echo.Context) error {
-		return c.JSON(200, map[string]string{"status": "ok"})
+		return response.Success(c, map[string]string{"status": "ok"})
 	})
 
 	// Restart Endpoint (Maintenance)
@@ -127,7 +128,7 @@ func (s *Server) Start() error {
 			time.Sleep(500 * time.Millisecond)
 			os.Exit(1)
 		}()
-		return c.JSON(200, map[string]string{"status": "restarting", "message": "Service is restarting..."})
+		return response.Success(c, map[string]string{"status": "restarting", "message": "Service is restarting..."})
 	})
 
 	// Add Services here

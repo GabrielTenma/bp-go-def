@@ -1,8 +1,8 @@
-# Go Echo Boilerplate 🚀
+# Go Echo Boilerplate
 
 A robust, production-ready Go application boilerplate built with [Echo](https://echo.labstack.com/). Designed for modularity, developer experience, and comprehensive monitoring with user management.
 
-## ✨ Features
+## Features
 
 ### Core Application
 -   **Modular Service Architecture**: Easy service extension with selective enable/disable
@@ -22,15 +22,15 @@ A robust, production-ready Go application boilerplate built with [Echo](https://
 -   **Modern UI**: Beautiful shadcn-inspired design with Lexend font
 -   **Dark Mode**: Full light/dark theme support with persistent storage
 -   **Custom Login**: Shadcn-admin styled login page with HTTP Basic Auth
--   **👤 User Settings**: Profile customization, photo upload, password management
+-   **User Settings**: Profile customization, photo upload, password management
 -   **� Live Metrics**: Real-time system stats (CPU, memory, disk, network)
--   **📝 Live Logs**: SSE-based log streaming with color-coded levels
--   **🔧 Config Editor**: In-browser YAML editing with backup/restore
--   **🎯 Service Manager**: View all endpoints with active status badges
--   **🗄️ Infrastructure Tools**: Redis browser, Postgres monitor, Kafka debugger
--   **⏰ Cron Monitor**: View scheduled jobs and execution status
+-   **Live Logs**: SSE-based log streaming with color-coded levels
+-   **Config Editor**: In-browser YAML editing with backup/restore
+-   **Service Manager**: View all endpoints with active status badges
+-   **Infrastructure Tools**: Redis browser, Postgres monitor, Kafka debugger
+-   **Cron Monitor**: View scheduled jobs and execution status
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Go 1.21+
@@ -57,7 +57,13 @@ go run cmd/app/main.go
 3. Login with default password: `admin`
 4. **Important**: Change password via User Settings immediately!
 
-## 📊 Monitoring Dashboard
+## Demo
+
+<p>
+    <img src="https://s6.imgcdn.dev/YTovOt.gif" width="60%" alt="Demo">
+</p>
+
+## Monitoring Dashboard
 
 ![Monitoring Dashboard](https://s6.imgcdn.dev/YToc5C.png)
 
@@ -87,7 +93,7 @@ go run cmd/app/main.go
 - **Kafka Debugger**: Topic inspection
 - **Banner Editor**: Update ASCII art
 
-## ⚙️ Configuration
+## Configuration
 
 Edit `config.yaml`:
 
@@ -140,7 +146,7 @@ cron:
     health_check: "*/10 * * * * *"
 ```
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 .
@@ -166,7 +172,7 @@ cron:
 └── config.yaml          # Main configuration
 ```
 
-## 🔌 API Endpoints
+## API Endpoints
 
 ### Main Application
 - `GET /health` - Health check
@@ -183,7 +189,7 @@ cron:
 - `POST /api/user/password` - Change password
 - `POST /api/user/photo` - Upload photo
 
-## 🔒 Security
+## Security
 
 - HTTP Basic Auth for monitoring
 - BCrypt password hashing
@@ -192,7 +198,7 @@ cron:
 - API key authentication
 - Permission-based access control
 
-## 🛠️ Development
+## Development
 
 ### Adding a Service
 
@@ -207,7 +213,7 @@ cron:
 - Default user from `config.yaml` password
 - Change password via UI
 
-## 📝 License
+## License
 
 MIT
 

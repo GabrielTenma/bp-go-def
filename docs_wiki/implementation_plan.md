@@ -20,7 +20,7 @@ Create a production-ready, extensible Go application skeleton using `labstack/ec
 
 #### [NEW] `pkg/logger`
 - Custom logger wrapper.
-- Features: Info, Error, Debug, Warn with icons (🚀, ⚠️, ❌, etc.) and colors.
+- Features: Info, Error, Debug, Warn with icons and colors.
 
 #### [NEW] `internal/server`
 - Echo server initialization.

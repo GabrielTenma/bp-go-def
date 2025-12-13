@@ -28,6 +28,8 @@ window.notyf = new Notyf({
 });
 
 function app() {
+
+
     return {
         activeTab: 'dashboard',
         sidebarOpen: false, // Mobile sidebar
@@ -83,7 +85,8 @@ function app() {
             { id: 'cron', label: 'Cron Jobs', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>' },
             { id: 'config', label: 'Config', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>' },
             { id: 'banner', label: 'Banner', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg>' },
-            { id: 'settings', label: 'User Settings', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>' }
+            { id: 'settings', label: 'User Settings', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>' },
+            { id: 'maintenance', label: 'Maintenance', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>' }
         ],
 
         // Dashboard Data
@@ -125,6 +128,9 @@ function app() {
         redis: {},
         postgres: {},
         pgQueries: [],
+        pgRefreshInterval: 5000, // Default 5s for running queries refresh
+        pgRefreshActive: false,
+        pgRefreshTimer: null,
         sqlQuery: "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public';",
         queryResults: null,
         queryError: null,
@@ -151,10 +157,23 @@ function app() {
 
         // Notyf instance (Moved to window.notyf)
 
-        // CodeMirror Instances
-        cmInstances: {},
+
+
+        // Correlation ID
+        correlationId: '',
+
+        getHeaders(contentType = 'application/json') {
+            const headers = { 'Content-Type': contentType };
+            if (this.correlationId) {
+                headers['X-Correlation-ID'] = this.correlationId;
+            }
+            return headers;
+        },
 
         async init() {
+            // Load Correlation ID
+            this.correlationId = localStorage.getItem('x_correlation_id') || '';
+
             // Theme init
             this.isDark = localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
             if (this.isDark) {
@@ -163,26 +182,43 @@ function app() {
                 document.documentElement.classList.remove('dark');
             }
 
-            console.log("Dashboard App Initialized");
+
 
             // Initialize CodeMirror after Alpine mounts
             this.$nextTick(async () => {
-                this.initCodeMirror('configEditor', 'yaml', 'configContent');
-                this.initCodeMirror('bannerEditor', 'shell', 'bannerContent');
-                this.initCodeMirror('sqlEditor', 'sql', 'sqlQuery');
+                // All editors will be initialized when their tabs are opened (lazy loading)
 
                 // Watchers to sync API data -> CodeMirror (Async Fetch)
                 this.$watch('configContent', (val) => {
-                    const cm = this.cmInstances['configEditor'];
+                    const el = document.getElementById('configEditor');
+                    const cm = el ? el.cmInstance : null;
                     if (cm && cm.getValue() !== val) cm.setValue(val);
                 });
                 this.$watch('bannerContent', (val) => {
-                    const cm = this.cmInstances['bannerEditor'];
+                    const el = document.getElementById('bannerEditor');
+                    const cm = el ? el.cmInstance : null;
                     if (cm && cm.getValue() !== val) cm.setValue(val);
                 });
                 this.$watch('sqlQuery', (val) => {
-                    const cm = this.cmInstances['sqlEditor'];
+                    const el = document.getElementById('sqlEditor');
+                    const cm = el ? el.cmInstance : null;
                     if (cm && cm.getValue() !== val) cm.setValue(val);
+                });
+
+                // Watch for postgres reconnection
+                this.$watch('infraStatus.postgres', (isConnected) => {
+                    if (isConnected && this.activeTab === 'postgres') {
+                        // Database reconnected while on postgres tab
+                        // Wait for DOM to update, then re-init CodeMirror
+                        this.$nextTick(() => {
+                            setTimeout(() => {
+                                const el = document.getElementById('sqlEditor');
+                                if (el && !el.cmInstance) {
+                                    this.initCodeMirror('sqlEditor', 'sql', 'sqlQuery');
+                                }
+                            }, 400);
+                        });
+                    }
                 });
 
                 // SSE
@@ -203,21 +239,60 @@ function app() {
                 this.$watch('activeTab', (val) => {
                     // CodeMirror Refresh
                     this.$nextTick(() => {
-                        if (val === 'config' && this.cmInstances['configEditor']) {
-                            this.cmInstances['configEditor'].refresh();
+                        if (val === 'config') {
+                            // Initialize Config editor if not already initialized
+                            setTimeout(() => {
+                                const el = document.getElementById('configEditor');
+                                if (el && !el.cmInstance) {
+                                    this.initCodeMirror('configEditor', 'yaml', 'configContent');
+                                }
+                                // Refresh if already exists
+                                if (el && el.cmInstance) {
+                                    el.cmInstance.refresh();
+                                }
+                            }, 400);
                         }
-                        if (val === 'banner' && this.cmInstances['bannerEditor']) {
-                            this.cmInstances['bannerEditor'].refresh();
+                        if (val === 'banner') {
+                            // Initialize Banner editor if not already initialized
+                            setTimeout(() => {
+                                const el = document.getElementById('bannerEditor');
+                                if (el && !el.cmInstance) {
+                                    this.initCodeMirror('bannerEditor', 'shell', 'bannerContent');
+                                }
+                                // Refresh if already exists
+                                if (el && el.cmInstance) {
+                                    el.cmInstance.refresh();
+                                }
+                            }, 400);
                         }
-                        if (val === 'postgres' && this.cmInstances['sqlEditor']) {
-                            this.cmInstances['sqlEditor'].refresh();
+                        if (val === 'postgres') {
+                            // Initialize SQL editor if not already initialized
+                            setTimeout(() => {
+                                const el = document.getElementById('sqlEditor');
+                                if (el && !el.cmInstance) {
+                                    this.initCodeMirror('sqlEditor', 'sql', 'sqlQuery');
+                                }
+                                // Refresh if already exists
+                                if (el && el.cmInstance) {
+                                    el.cmInstance.refresh();
+                                }
+                            }, 400);
                         }
                     });
 
                     // Data Load
                     if (val === 'endpoints') this.fetchEndpoints();
                     if (val === 'redis') this.fetchRedisKeys();
-                    if (val === 'postgres') { this.fetchPgQueries(); this.fetchPgInfo(); }
+                    if (val === 'postgres') {
+                        this.fetchPgQueries();
+                        this.fetchPgInfo();
+                    } else {
+                        // Stop auto-refresh when leaving postgres tab
+                        if (this.pgRefreshActive) {
+                            this.stopPgRefresh();
+                            this.pgRefreshActive = false;
+                        }
+                    }
                     if (val === 'kafka') this.fetchKafka();
                     if (val === 'cron') this.fetchCronJobs();
                     if (val === 'config') this.fetchConfig();
@@ -229,7 +304,8 @@ function app() {
 
 
         get activeTabLabel() {
-            return this.tabs.find(t => t.id === this.activeTab).label;
+            const tab = this.tabs.find(t => t.id === this.activeTab);
+            return tab ? tab.label : 'Dashboard';
         },
 
         get activeEndpointsCount() {
@@ -244,10 +320,11 @@ function app() {
             try {
                 // POST to logout endpoint to clear session
                 await fetch('/logout', {
-                    method: 'POST'
+                    method: 'POST',
+                    headers: this.getHeaders()
                 });
             } catch (error) {
-                console.error('Logout error:', error);
+                // Silently handle logout error
             } finally {
                 // Always redirect to login page (replace history to prevent back button)
                 window.location.replace('/');
@@ -255,6 +332,11 @@ function app() {
         },
 
         async runQuery() {
+            console.log('🔍 DEBUG: runQuery called');
+            console.log('📝 Current sqlQuery value:', this.sqlQuery);
+            console.log('📝 Current sqlQuery value:', this.sqlQuery);
+            // console.log('📝 CodeMirror value:', cmInstances['sqlEditor']?.getValue());
+
             this.isQueryRunning = true;
             this.queryError = null;
             this.queryResults = null;
@@ -262,18 +344,20 @@ function app() {
             try {
                 const res = await fetch('/api/postgres/query', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: this.getHeaders(),
                     body: JSON.stringify({ query: this.sqlQuery })
                 });
 
-                const data = await res.json();
+                const response = await res.json();
+                const data = response.data; // Alias for cleaner access below if needed
 
                 if (!res.ok) {
-                    this.queryError = data.error || 'Query failed';
+                    this.queryError = response.error?.message || response.message || 'Query failed';
                 } else {
                     this.queryResults = data;
+                    // Show toast for empty results
                     if (Array.isArray(data) && data.length === 0) {
-                        this.queryError = "No results found.";
+                        this.showToast('Query executed successfully, but returned no rows.', 'info');
                     }
                 }
             } catch (err) {
@@ -287,7 +371,10 @@ function app() {
             if (!confirm('Are you sure you want to restart the service? This will briefly interrupt availability.')) return;
 
             try {
-                const res = await fetch('/api/restart', { method: 'POST' });
+                const res = await fetch('/api/restart', {
+                    method: 'POST',
+                    headers: this.getHeaders()
+                });
                 if (res.ok) {
                     this.showToast('Service is restarting...', 'success');
                     setTimeout(() => {
@@ -405,11 +492,13 @@ function app() {
 
         async fetchStatus() {
             try {
-                const res = await fetch('/api/status');
-                const data = await res.json();
+                const res = await fetch('/api/status', { headers: this.getHeaders() });
+                const response = await res.json();
+                const data = response.data || {};
 
                 // Services
-                this.services = data.services || [];
+                const servicesData = data.services;
+                this.services = Array.isArray(servicesData) ? servicesData : [];
                 this.serviceCount = this.services.filter(s => s.active).length;
 
                 // Infrastructure
@@ -479,16 +568,17 @@ function app() {
 
         async fetchDummyStatus() {
             try {
-                const res = await fetch('/api/logs/dummy/status');
-                const data = await res.json();
-                this.dummyLogActive = data.active;
+                const res = await fetch('/api/logs/dummy/status', { headers: this.getHeaders() });
+                const response = await res.json();
+                this.dummyLogActive = response.data?.active;
             } catch (e) { }
         },
 
         async fetchMonitoringConfig() {
             try {
-                const res = await fetch('/api/monitoring/config');
-                const data = await res.json();
+                const res = await fetch('/api/monitoring/config', { headers: this.getHeaders() });
+                const response = await res.json();
+                const data = response.data || {};
                 if (data.title) this.monitoringConfig.title = data.title;
                 if (data.subtitle) this.monitoringConfig.subtitle = data.subtitle;
             } catch (e) { }
@@ -499,7 +589,7 @@ function app() {
             try {
                 const res = await fetch('/api/logs/dummy', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: this.getHeaders(),
                     body: JSON.stringify({ enable: !this.dummyLogActive })
                 });
                 const data = await res.json();
@@ -511,24 +601,34 @@ function app() {
 
         async fetchEndpoints() {
             try {
-                const res = await fetch('/api/endpoints');
-                this.endpoints = await res.json();
-            } catch (e) { this.endpoints = []; }
+                const res = await fetch('/api/endpoints', { headers: this.getHeaders() });
+                const response = await res.json();
+                if (Array.isArray(response.data)) {
+                    this.endpoints = response.data;
+                } else {
+                    console.error("fetchEndpoints: Expected array but got", response.data);
+                    this.endpoints = [];
+                }
+            } catch (e) {
+                console.error("fetchEndpoints error", e);
+                this.endpoints = [];
+            }
         },
 
         async fetchCronJobs() {
             try {
-                const res = await fetch('/api/cron');
-                this.cronJobs = await res.json();
+                const res = await fetch('/api/cron', { headers: this.getHeaders() });
+                const response = await res.json();
+                this.cronJobs = response.data || [];
             } catch (e) { this.cronJobs = []; }
         },
 
         async fetchConfig() {
             try {
                 // Fetch raw for editor
-                const res = await fetch('/api/config/raw');
-                const data = await res.json();
-                this.configContent = data.content || '';
+                const res = await fetch('/api/config/raw', { headers: this.getHeaders() });
+                const response = await res.json();
+                this.configContent = response.data?.content || '';
 
                 // Keep appConfig for viewing if needed, but we focus on editor now
                 // this.appConfig = ...
@@ -539,35 +639,38 @@ function app() {
             try {
                 const res = await fetch('/api/config', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: this.getHeaders(),
                     body: JSON.stringify({ content: this.configContent })
                 });
                 const data = await res.json();
                 if (res.ok) {
                     this.showToast(data.message, 'success', 'Saved');
                 } else {
-                    this.showToast(data.error || 'Failed to save', 'error', 'Error');
+                    this.showToast(data.error?.message || data.message || 'Failed to save', 'error', 'Error');
                 }
             } catch (e) { this.showToast('Failed to save config', 'error', 'Error'); }
         },
 
         async backupConfig() {
             try {
-                const res = await fetch('/api/config/backup', { method: 'POST' });
+                const res = await fetch('/api/config/backup', {
+                    method: 'POST',
+                    headers: this.getHeaders()
+                });
                 const data = await res.json();
                 if (res.ok) {
                     this.showToast(data.message, 'success', 'Backup Created');
                 } else {
-                    this.showToast(data.error || 'Backup failed', 'error', 'Error');
+                    this.showToast(data.error?.message || data.message || 'Backup failed', 'error', 'Error');
                 }
             } catch (e) { this.showToast('Failed to backup config', 'error', 'Error'); }
         },
 
         async fetchBanner() {
             try {
-                const res = await fetch('/api/banner');
-                const data = await res.json();
-                this.bannerContent = data.content || '';
+                const res = await fetch('/api/banner', { headers: this.getHeaders() });
+                const response = await res.json();
+                this.bannerContent = response.data?.content || '';
             } catch (e) { this.bannerContent = 'Error loading banner'; }
         },
 
@@ -575,7 +678,7 @@ function app() {
             try {
                 const res = await fetch('/api/banner', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: this.getHeaders(),
                     body: JSON.stringify({ content: this.bannerContent })
                 });
                 if (res.ok) {
@@ -588,9 +691,9 @@ function app() {
 
         async fetchRedisKeys() {
             try {
-                const res = await fetch(`/api/redis/keys?pattern=${encodeURIComponent(this.redisPattern)}`);
-                const data = await res.json();
-                this.redisKeys = Array.isArray(data) ? data : [];
+                const res = await fetch(`/api/redis/keys?pattern=${encodeURIComponent(this.redisPattern)}`, { headers: this.getHeaders() });
+                const response = await res.json();
+                this.redisKeys = Array.isArray(response.data) ? response.data : [];
             } catch (e) { this.redisKeys = []; }
         },
 
@@ -599,39 +702,73 @@ function app() {
             this.selectedRedisValue = 'Loading...';
             this.redisModalOpen = true;
             try {
-                const res = await fetch(`/api/redis/key/${encodeURIComponent(key)}`);
-                const data = await res.json();
-                this.selectedRedisValue = data.value;
+                const res = await fetch(`/api/redis/key/${encodeURIComponent(key)}`, { headers: this.getHeaders() });
+                const response = await res.json();
+                this.selectedRedisValue = response.data?.value;
             } catch (e) { this.selectedRedisValue = 'Error fetching value'; }
         },
 
         async fetchPgQueries() {
             try {
-                const res = await fetch('/api/postgres/queries');
-                this.pgQueries = await res.json();
+                const res = await fetch('/api/postgres/queries', { headers: this.getHeaders() });
+                const response = await res.json();
+                this.pgQueries = response.data || [];
             } catch (e) { this.pgQueries = []; }
+        },
+
+        togglePgRefresh() {
+            this.pgRefreshActive = !this.pgRefreshActive;
+            if (this.pgRefreshActive) {
+                this.startPgRefresh();
+            } else {
+                this.stopPgRefresh();
+            }
+        },
+
+        startPgRefresh() {
+            this.stopPgRefresh(); // Clear any existing timer
+            this.pgRefreshTimer = setInterval(() => {
+                if (this.activeTab === 'postgres') {
+                    this.fetchPgQueries();
+                }
+            }, this.pgRefreshInterval);
+        },
+
+        stopPgRefresh() {
+            if (this.pgRefreshTimer) {
+                clearInterval(this.pgRefreshTimer);
+                this.pgRefreshTimer = null;
+            }
+        },
+
+        updatePgRefreshInterval() {
+            if (this.pgRefreshActive) {
+                this.startPgRefresh(); // Restart with new interval
+            }
         },
 
         async fetchPgInfo() {
             try {
-                const res = await fetch('/api/postgres/info');
-                this.pgInfo = await res.json();
+                const res = await fetch('/api/postgres/info', { headers: this.getHeaders() });
+                const response = await res.json();
+                this.pgInfo = response.data || {};
             } catch (e) { }
         },
 
         async fetchKafka() {
             try {
-                const res = await fetch('/api/kafka/topics');
-                const data = await res.json();
-                this.kafkaMsg = JSON.stringify(data, null, 2);
+                const res = await fetch('/api/kafka/topics', { headers: this.getHeaders() });
+                const response = await res.json();
+                this.kafkaMsg = response.message || JSON.stringify(response.data, null, 2);
             } catch (e) { }
         },
 
         // User Settings Methods
         async fetchUserSettings() {
             try {
-                const res = await fetch('/api/user/settings');
-                const data = await res.json();
+                const res = await fetch('/api/user/settings', { headers: this.getHeaders() });
+                const response = await res.json();
+                const data = response.data || {};
                 this.userSettings.username = data.username || 'Admin';
                 this.userSettings.photoPath = data.photo_path || '';
             } catch (e) { }
@@ -641,11 +778,15 @@ function app() {
             try {
                 const res = await fetch('/api/user/settings', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: this.getHeaders(),
                     body: JSON.stringify({ username: this.userSettings.username })
                 });
                 const data = await res.json();
-                this.showToast(data.message || 'Username updated', 'success', 'Updated');
+                if (res.ok) {
+                    this.showToast(data.message || 'Username updated', 'success', 'Updated');
+                } else {
+                    this.showToast(data.error?.message || data.message || 'Update failed', 'error', 'Error');
+                }
             } catch (e) {
                 this.showToast('Failed to update username', 'error', 'Error');
             }
@@ -659,7 +800,7 @@ function app() {
             try {
                 const res = await fetch('/api/user/password', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: this.getHeaders(),
                     body: JSON.stringify({
                         current_password: this.passwordForm.current,
                         new_password: this.passwordForm.new
@@ -670,7 +811,7 @@ function app() {
                     this.showToast(data.message || 'Password changed', 'success', 'Success');
                     this.passwordForm = { current: '', new: '', confirm: '' };
                 } else {
-                    this.showToast(data.error || 'Failed to change password', 'error', 'Error');
+                    this.showToast(data.error?.message || data.message || 'Failed to change password', 'error', 'Error');
                 }
             } catch (e) {
                 this.showToast('Failed to change password', 'error', 'Error');
@@ -685,16 +826,21 @@ function app() {
             formData.append('photo', file);
 
             try {
+                // Determine headers but REMOVE Content-Type so browser sets boundary for multipart
+                const headers = this.getHeaders();
+                delete headers['Content-Type'];
+
                 const res = await fetch('/api/user/photo', {
                     method: 'POST',
+                    headers: headers,
                     body: formData
                 });
-                const data = await res.json();
+                const response = await res.json();
                 if (res.ok) {
-                    this.userSettings.photoPath = data.photo_path;
-                    this.showToast(data.message || 'Photo uploaded', 'success', 'Success');
+                    this.userSettings.photoPath = response.data?.photo_path;
+                    this.showToast(response.message || 'Photo uploaded', 'success', 'Success');
                 } else {
-                    this.showToast(data.error || 'Upload failed', 'error', 'Error');
+                    this.showToast(response.error?.message || response.message || 'Upload failed', 'error', 'Error');
                 }
             } catch (e) {
                 this.showToast('Upload failed', 'error', 'Error');
@@ -704,13 +850,16 @@ function app() {
         async deletePhoto() {
             if (!confirm('Delete profile photo?')) return;
             try {
-                const res = await fetch('/api/user/photo', { method: 'DELETE' });
-                const data = await res.json();
+                const res = await fetch('/api/user/photo', {
+                    method: 'DELETE',
+                    headers: this.getHeaders()
+                });
+                const response = await res.json();
                 if (res.ok) {
                     this.userSettings.photoPath = '';
-                    this.showToast(data.message || 'Photo deleted', 'success', 'Deleted');
+                    this.showToast(response.message || 'Photo deleted', 'success', 'Deleted');
                 } else {
-                    this.showToast(data.error || 'Delete failed', 'error', 'Error');
+                    this.showToast(response.error?.message || response.message || 'Delete failed', 'error', 'Error');
                 }
             } catch (e) {
                 this.showToast('Delete failed', 'error', 'Error');
@@ -721,27 +870,56 @@ function app() {
             const el = document.getElementById(id);
             if (!el) return;
 
-            // Prevent double init
-            if (this.cmInstances[id]) return;
-
-            const cm = CodeMirror.fromTextArea(el, {
-                mode: mode,
-                theme: 'dracula',
-                lineNumbers: true,
-                lineWrapping: true
-            });
-
-            // Two-way binding: Update Alpine data on change
-            cm.on('change', () => {
-                this[model] = cm.getValue();
-            });
-
-            // Set initial value from Alpine data
-            if (this[model]) {
-                cm.setValue(this[model]);
+            // Check if this textarea has already been converted to CodeMirror
+            // We check the DOM property 'cmInstance' which is safe from Alpine Proxies
+            if (el.cmInstance) {
+                el.cmInstance.refresh();
+                return;
             }
 
-            this.cmInstances[id] = cm;
+            // Double check for next sibling class just in case manual init happened elsewhere
+            if (el.nextElementSibling && el.nextElementSibling.classList && el.nextElementSibling.classList.contains('CodeMirror')) {
+                if (el.nextElementSibling.CodeMirror) {
+                    el.cmInstance = el.nextElementSibling.CodeMirror;
+                    el.cmInstance.refresh();
+                    return;
+                }
+            }
+
+            try {
+                // Postgres specific mode if requested
+                const actualMode = (mode === 'sql') ? 'text/x-pgsql' : mode;
+
+                const cm = CodeMirror.fromTextArea(el, {
+                    mode: actualMode,
+                    theme: 'dracula',
+                    lineNumbers: true,
+                    lineWrapping: true,
+                    // Pass explicit keymap to avoid 'map' errors if default is missing
+                    extraKeys: { "Ctrl-Space": "autocomplete" }
+                });
+
+                // Two-way binding: Update Alpine data on change
+                cm.on('change', () => {
+                    this[model] = cm.getValue();
+                });
+
+                // Set initial value from Alpine data
+                if (this[model]) {
+                    cm.setValue(this[model]);
+                }
+
+                // Store instance on the DOM element itself
+                // This ensures it survives re-renders if the element persists, 
+                // and avoids Alpine Proxy wrapping the instance.
+                el.cmInstance = cm;
+
+                // Also store reference on the wrapper for redundancy
+                cm.getWrapperElement().CodeMirror = cm;
+
+            } catch (error) {
+                console.error("CodeMirror initialization error for " + id, error);
+            }
         }
     }
 }

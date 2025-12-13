@@ -1,7 +1,11 @@
 /* Custom styles */
 body {
-    overflow: hidden;
-    /* Prevent full page scroll, handle in main */
+    height: 100%;
+    /* overflow: hidden; Removed to fix Surface Pro scrolling */
+}
+
+html {
+    height: 100%;
 }
 
 ::-webkit-scrollbar {
@@ -18,7 +22,20 @@ body {
     border-radius: 4px;
 }
 
-/* Enable momentum scrolling on iOS */
-.overflow-y-auto {
+/* Enable momentum scrolling */
+.overflow-y-auto,
+.overflow-y-scroll {
     -webkit-overflow-scrolling: touch;
+    /* touch-action: pan-y; Removed to allow default browser handling unless specified inline */
+}
+
+/* App-shell loop: Disable browser gestures, allow app to handle touch */
+html,
+body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    margin: 0;
+    touch-action: none;
+    /* Critical for Surface: kills browser zoom/pan, force internal scroll */
 }

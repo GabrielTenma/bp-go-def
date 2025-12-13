@@ -49,12 +49,12 @@ monitoring:
   upload_dir: "web/monitoring/uploads"
   
   minio:
-    enabled: false
-    endpoint: "localhost:9000"
+    enabled: true
+    endpoint: "localhost:9003"
     access_key: "minioadmin"
     secret_key: "minioadmin"
     use_ssl: false
-    bucket: "test-bucket"
+    bucket: "main"
 
   external:
     services:
