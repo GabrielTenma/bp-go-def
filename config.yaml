@@ -3,6 +3,9 @@ app:
   debug: true
   env: "development"
   banner_path: "banner.txt"
+  startup_delay: 15       # seconds to display boot screen (0 to skip)
+  quiet_startup: true     # suppress console logs (TUI only, logs still go to monitoring)
+  enable_tui: true        # enable fancy TUI mode (false = traditional console logging)
 
 server:
   port: "8080"
@@ -43,6 +46,7 @@ monitoring:
   enabled: true
   port: "9090"
   password: "admin"
+  obfuscate_api: true
   title: "GoBP Admin"
   subtitle: "My Kisah Emuach ❤️"
   max_photo_size_mb: 2

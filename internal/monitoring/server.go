@@ -9,6 +9,8 @@ import (
 	"test-go/pkg/infrastructure"
 	"time"
 
+	monMiddleware "test-go/internal/monitoring/middleware"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -81,7 +83,12 @@ func Start(
 
 	// Middleware
 	e.Use(middleware.Recover())
-	e.Use(middleware.CORS()) // Enable CORS for development convenience
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins:  []string{"*"},
+		AllowHeaders:  []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, "X-Correlation-ID"},
+		ExposeHeaders: []string{"X-Obfuscated"},
+	}))
+	e.Use(monMiddleware.Obfuscator(cfg.ObfuscateAPI))
 
 	// Public routes (no auth required)
 	e.GET("/", func(c echo.Context) error {

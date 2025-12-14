@@ -12,6 +12,11 @@ A robust, production-ready Go application boilerplate built with [Echo](https://
 -   **In-Memory Cache**: Thread-safe, generic KV store with TTL support
 -   **Hot Configuration**: Update config without restart
 
+### Terminal Interface
+-   **Interactive Boot**: Visual boot sequence with service status checks
+-   **Live CLI Dashboard**: Real-time terminal-based monitoring (Bubble Tea)
+-   **Responsive TUI**: Adaptive layouts for different terminal sizes
+
 ### Infrastructure Support
 -   **Redis**: Key-value store integration
 -   **PostgreSQL**: SQL database with GORM
@@ -40,7 +45,7 @@ A robust, production-ready Go application boilerplate built with [Echo](https://
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/GabrielTenma/bp-go-def.git
 cd bp-go-def
 
 # Install dependencies
@@ -57,15 +62,13 @@ go run cmd/app/main.go
 3. Login with default password: `admin`
 4. **Important**: Change password via User Settings immediately!
 
-## Demo
+## Backend Console
 
-<p>
-    <img src="https://s6.imgcdn.dev/YTovOt.gif" width="60%" alt="Demo">
-</p>
+![Backend Console](.assets/Recording%202025-12-14%20223856.gif)
 
 ## Monitoring Dashboard
 
-![Monitoring Dashboard](https://s6.imgcdn.dev/YToc5C.png)
+![Monitoring Dashboard](.assets/Recording%202025-12-14%20230230.gif)
 
 ### Login Page
 - Custom shadcn-admin styled design
@@ -93,6 +96,17 @@ go run cmd/app/main.go
 - **Kafka Debugger**: Topic inspection
 - **Banner Editor**: Update ASCII art
 
+## Terminal User Interface (TUI)
+
+The application includes a rich terminal interface built with [Bubble Tea](https://github.com/charmbracelet/bubbletea).
+
+### Features
+-   **Boot Sequence**: Animated startup process showing service initialization status.
+-   **Live Dashboard**: Monitor system resources (CPU, RAM, Goroutines) directly in the terminal.
+-   **Interactive**: Keyboard controls for navigation and quitting.
+
+For detailed implementation documentation, see [TUI_IMPLEMENTATION.md](docs_wiki/TUI_IMPLEMENTATION.md).
+
 ## Configuration
 
 Edit `config.yaml`:
@@ -103,6 +117,9 @@ app:
   debug: true
   env: "development"
   banner_path: "banner.txt"
+  startup_delay: 15       # seconds to display boot screen (0 to skip)
+  quiet_startup: true     # suppress console logs (TUI only)
+  enable_tui: true        # enable fancy TUI mode
 
 server:
   port: "8080"
@@ -120,30 +137,57 @@ auth:
 monitoring:
   enabled: true
   port: "9090"
-  password: "admin"  # Initial password (change via UI!)
+  password: "admin"
+  obfuscate_api: true
   title: "GoBP Admin"
-  subtitle: "My Custom Subtitle"
+  subtitle: "My Kisah Emuach ❤️"
   max_photo_size_mb: 2
   upload_dir: "web/monitoring/uploads"
+  
+  minio:
+    enabled: true
+    endpoint: "localhost:9003"
+    access_key: "minioadmin"
+    secret_key: "minioadmin"
+    use_ssl: false
+    bucket: "main"
+
+  external:
+    services:
+      - name: "Google"
+        url: "https://google.com"
+      - name: "Soundcloud"
+        url: "https://soundcloud.com"
+      - name: "Local API"
+        url: "http://localhost:8080/health"
 
 redis:
   enabled: false
   address: "localhost:6379"
+  password: ""
+  db: 0
 
 postgres:
-  enabled: false
+  enabled: true
   host: "localhost"
   port: 5432
+  user: "postgres"
+  password: "Mypostgres01"
+  dbname: "postgres"
+  sslmode: "disable"
 
 kafka:
   enabled: false
-  brokers: ["localhost:9092"]
+  brokers: 
+    - "localhost:9092"
+  topic: "my-topic"
+  group_id: "my-group"
 
 cron:
   enabled: true
   jobs:
     log_cleanup: "0 0 * * *"
-    health_check: "*/10 * * * * *"
+    health_check: "*/10 * * * * *" # Every 10 seconds
 ```
 
 ## Project Structure
@@ -152,6 +196,7 @@ cron:
 .
 ├── cmd/app/              # Application entry point
 ├── config/               # Configuration logic
+├── docs_wiki/            # Documentation & Guides
 ├── internal/
 │   ├── middleware/       # Auth & permission middleware
 │   ├── monitoring/       # Monitoring dashboard
@@ -163,6 +208,7 @@ cron:
 ├── pkg/
 │   ├── infrastructure/   # Redis, Postgres, Kafka, Cron
 │   ├── logger/           # Rich console logger
+│   ├── tui/              # Terminal User Interface
 │   └── utils/            # System utilities
 ├── web/monitoring/       # Monitoring UI
 │   ├── assets/          # CSS, JS

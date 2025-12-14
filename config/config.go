@@ -30,6 +30,7 @@ type MonitoringConfig struct {
 	MaxPhotoSizeMB int            `mapstructure:"max_photo_size_mb"`
 	MinIO          MinIOConfig    `mapstructure:"minio"`
 	External       ExternalConfig `mapstructure:"external"`
+	ObfuscateAPI   bool           `mapstructure:"obfuscate_api"`
 }
 
 type MinIOConfig struct {
@@ -55,10 +56,13 @@ type CronConfig struct {
 }
 
 type AppConfig struct {
-	Name       string `mapstructure:"name"`
-	Debug      bool   `mapstructure:"debug"`
-	Env        string `mapstructure:"env"`
-	BannerPath string `mapstructure:"banner_path"`
+	Name         string `mapstructure:"name"`
+	Debug        bool   `mapstructure:"debug"`
+	Env          string `mapstructure:"env"`
+	BannerPath   string `mapstructure:"banner_path"`
+	StartupDelay int    `mapstructure:"startup_delay"` // seconds to show TUI boot screen (0 to skip)
+	QuietStartup bool   `mapstructure:"quiet_startup"` // suppress console logs at startup (TUI only)
+	EnableTUI    bool   `mapstructure:"enable_tui"`    // enable fancy TUI mode (false = traditional console)
 }
 
 type ServerConfig struct {
@@ -114,6 +118,9 @@ func LoadConfig() (*Config, error) {
 	viper.SetDefault("app.name", "Go-Echo-App")
 	viper.SetDefault("app.env", "development")
 	viper.SetDefault("app.banner_path", "banner.txt")
+	viper.SetDefault("app.startup_delay", 15)   // 15 seconds default
+	viper.SetDefault("app.quiet_startup", true) // clean console by default
+	viper.SetDefault("app.enable_tui", true)    // TUI enabled by default
 	viper.SetDefault("server.port", "8080")
 	viper.SetDefault("auth.type", "none")
 	viper.SetDefault("services.enable_service_a", true)

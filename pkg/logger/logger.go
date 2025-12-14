@@ -12,11 +12,37 @@ import (
 
 // Logger wraps the zerolog logger
 type Logger struct {
-	z zerolog.Logger
+	z     zerolog.Logger
+	quiet bool
+}
+
+// LoggerConfig contains configuration for the logger
+type LoggerConfig struct {
+	Debug       bool
+	Quiet       bool // suppress console output (logs still go to broadcaster)
+	Broadcaster io.Writer
 }
 
 // New creates a new fancy logger
 func New(debug bool, broadcaster io.Writer) *Logger {
+	return NewWithConfig(LoggerConfig{
+		Debug:       debug,
+		Quiet:       false,
+		Broadcaster: broadcaster,
+	})
+}
+
+// NewQuiet creates a new logger with console output suppressed
+func NewQuiet(debug bool, broadcaster io.Writer) *Logger {
+	return NewWithConfig(LoggerConfig{
+		Debug:       debug,
+		Quiet:       true,
+		Broadcaster: broadcaster,
+	})
+}
+
+// NewWithConfig creates a new logger with full configuration
+func NewWithConfig(cfg LoggerConfig) *Logger {
 	zerolog.TimeFieldFormat = time.RFC3339
 
 	// Console Output (Fancy)
@@ -54,38 +80,39 @@ func New(debug bool, broadcaster io.Writer) *Logger {
 	}
 
 	var multi zerolog.LevelWriter
-	if broadcaster != nil {
-		// Broadcast Output (JSON)
-		// We can't easily mix console writer and json writer in same stream if we want different formats
-		// But zerolog.MultiLevelWriter allows writing to multiple writers.
-		// However, zerolog writes the SAME bytes to all.
-		// Trick: Use the console writer for console, and a separate logger for broadcast?
-		// Actually, simpler: Let's make the main logger write JSON, and have the ConsoleWriter wrap the JSON? No.
-		// Let's stick to ConsoleWriter for stdout.
-		// For broadcast, we ideally want JSON.
-		// To keep it simple: We will pipe the ConsoleWriter output to broadcast which is NOT JSON, but colored text.
-		// Wait, user wants "live logs", usually implies reading them easily.
-		// If we send colored text to web, we need to parse ANSI.
-		// Better approach: Configure zerolog to write JSON to the broadcaster, and ConsoleWriter to stdout.
-		// But MultiLevelWriter writes the SAME bytes.
-		// Solution: Create a MultiWriter that satisfies LevelWriter, but that's complex.
 
-		// Alternative: Just pipe the colored output to the broadcaster too. The UI can display it in a pre tag.
-		// It preserves the "fancy" look in the web console too (if we strip or render ansi).
-		// Let's do that for now to avoid duplicate loggers.
-		multi = zerolog.MultiLevelWriter(consoleOutput, broadcaster)
+	if cfg.Quiet {
+		// Quiet mode: only write to broadcaster (if available), not to console
+		if cfg.Broadcaster != nil {
+			// Create a simple console writer for the broadcaster (without stdout)
+			broadcasterOutput := zerolog.ConsoleWriter{Out: cfg.Broadcaster, TimeFormat: "15:04:05", NoColor: true}
+			multi = zerolog.MultiLevelWriter(broadcasterOutput)
+		} else {
+			// No broadcaster and quiet mode = discard all logs
+			multi = zerolog.MultiLevelWriter(zerolog.ConsoleWriter{Out: io.Discard})
+		}
 	} else {
-		multi = zerolog.MultiLevelWriter(consoleOutput)
+		// Normal mode: write to console and broadcaster
+		if cfg.Broadcaster != nil {
+			multi = zerolog.MultiLevelWriter(consoleOutput, cfg.Broadcaster)
+		} else {
+			multi = zerolog.MultiLevelWriter(consoleOutput)
+		}
 	}
 
 	logLevel := zerolog.InfoLevel
-	if debug {
+	if cfg.Debug {
 		logLevel = zerolog.DebugLevel
 	}
 
 	z := zerolog.New(multi).Level(logLevel).With().Timestamp().Logger()
 
-	return &Logger{z: z}
+	return &Logger{z: z, quiet: cfg.Quiet}
+}
+
+// IsQuiet returns whether the logger is in quiet mode
+func (l *Logger) IsQuiet() bool {
+	return l.quiet
 }
 
 // Info logs an info message
