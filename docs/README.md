@@ -65,6 +65,7 @@ Your GitHub Pages site will be available at:
 - Key advantages highlighted:
   - Modular architecture
   - Beautiful monitoring dashboard
+  - Terminal Interface (TUI)
   - Complete infrastructure integrations
   - Standardized API patterns
   - Premium developer experience

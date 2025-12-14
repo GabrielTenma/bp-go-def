@@ -42,6 +42,8 @@ func (s *ServiceD) Enabled() bool {
 	return s.enabled && s.db != nil && s.db.ORM != nil
 }
 
+func (s *ServiceD) Endpoints() []string { return []string{"/tasks"} }
+
 func (s *ServiceD) RegisterRoutes(g *echo.Group) {
 	sub := g.Group("/tasks")
 	sub.GET("", s.listTasks)

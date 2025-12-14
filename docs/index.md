@@ -1,64 +1,60 @@
 ---
 layout: default
 title: Go Echo Boilerplate - Production-Ready Golang Framework
-description: A powerful Go boilerplate with Echo framework, monitoring dashboard, and complete infrastructure integrations
+description: A powerful Go boilerplate with Echo framework, monitoring dashboard, TUI, and complete infrastructure integrations
 ---
 
 # Go Echo Boilerplate
 
-A robust, production-ready Go application boilerplate built with [Echo](https://echo.labstack.com/). Designed for modularity, exceptional developer experience, and comprehensive monitoring.
+A robust, production-ready Go application boilerplate built with [Echo](https://echo.labstack.com/). Designed for modularity, developer experience, and comprehensive monitoring with user management.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Go Version](https://img.shields.io/badge/go-1.21%2B-00ADD8.svg)
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)
 
----
+## Features
 
-## Key Features
+### Core Application
+-   **Modular Service Architecture**: Easy service extension with selective enable/disable
+-   **Configurable Authentication**: API key-based auth with permission controls
+-   **Fancy Logger**: Rich console output with colors, emojis, and structured logging (Zerolog)
+-   **Custom ASCII Banner**: Configurable startup banner
+-   **In-Memory Cache**: Thread-safe, generic KV store with TTL support
+-   **Hot Configuration**: Update config without restart
 
-### Modular & Flexible Architecture
-- **Modular Services**: Easily add new services with per-service enable/disable system
-- **Clean Architecture**: Clear separation between handlers, services, and infrastructure layers
-- **Plugin System**: Activate/deactivate features through configuration without code changes
+### Terminal Interface
+-   **Interactive Boot**: Visual boot sequence with service status checks
+-   **Live CLI Dashboard**: Real-time terminal-based monitoring (Bubble Tea)
+-   **Responsive TUI**: Adaptive layouts for different terminal sizes
 
-### Beautiful Monitoring Dashboard
-- **Modern UI**: Shadcn-admin inspired design with Lexend font
-- **Dark Mode**: Light/dark theme support with persistent storage
-- **Real-time Metrics**: Live monitoring of CPU, memory, disk, and network
-- **Live Log Streaming**: Server-Sent Events (SSE) for real-time log streaming
-- **User Management**: Profile customization, photo upload, password management
+### Infrastructure Support
+-   **Redis**: Key-value store integration
+-   **PostgreSQL**: SQL database with GORM
+-   **Kafka**: Message queue integration
+-   **Cron Jobs**: Scheduled task execution
 
-### Complete Infrastructure Integration
-- **Redis**: Key-value store with connection pooling
-- **PostgreSQL**: SQL database with GORM ORM
-- **Kafka**: Message queue for event-driven architecture
-- **Cron Jobs**: Scheduled tasks with monitoring
-- **MinIO**: Object storage for file uploads
+### Monitoring Dashboard (Shadcn-Admin Style)
+-   **Modern UI**: Beautiful shadcn-inspired design with Lexend font
+-   **Dark Mode**: Full light/dark theme support with persistent storage
+-   **Custom Login**: Shadcn-admin styled login page with HTTP Basic Auth
+-   **User Settings**: Profile customization, photo upload, password management
+-   **⚡ Live Metrics**: Real-time system stats (CPU, memory, disk, network)
+-   **Live Logs**: SSE-based log streaming with color-coded levels
+-   **Config Editor**: In-browser YAML editing with backup/restore
+-   **Service Manager**: View all endpoints with active status badges
+-   **Infrastructure Tools**: Redis browser, Postgres monitor, Kafka debugger
+-   **Cron Monitor**: View scheduled jobs and execution status
 
-### Standardized Request/Response Patterns
-- **Consistent API**: Uniform response format across all endpoints
-- **Auto Validation**: Automatic request validation with clear error messages
-- **Built-in Pagination**: Pagination support with complete metadata
-- **Type-Safe**: Uses structs for request/response instead of maps
+## Getting Started
 
-### Premium Developer Experience
-- **Rich Logger**: Console output with colors, emojis, and structure (Zerolog)
-- **Custom ASCII Banner**: Customizable banner on startup
-- **Hot Config Reload**: Update configuration without application restart
-- **Fancy Errors**: Informative and easy-to-debug error messages
+### Prerequisites
+- Go 1.21+
+- (Optional) Redis, PostgreSQL, Kafka
 
-### Security First
-- **API Key Authentication**: API key-based auth with permission control
-- **HTTP Basic Auth**: For monitoring dashboard
-- **BCrypt Password**: Secure password hashing
-- **Permission Middleware**: Permission-based access control
-
----
-
-## Quick Start
+### Installation
 
 ```bash
-# Clone repository
+# Clone the repository
 git clone https://github.com/GabrielTenma/bp-go-def.git
 cd bp-go-def
 
@@ -70,105 +66,70 @@ go run cmd/app/main.go
 ```
 
 ### First Access
-1. Start the application
-2. Open `http://localhost:9090` for monitoring
+
+1. Start application
+2. Open `http://localhost:9090`
 3. Login with default password: `admin`
-4. **Important**: Change password via User Settings!
+4. **Important**: Change password via User Settings immediately!
 
----
+## Backend Console
 
-## Documentation
+![Backend Console](https://github.com/GabrielTenma/bp-go-def/raw/main/.assets/Recording%202025-12-14%20223856.gif)
 
-### Complete Guides
-For detailed developer documentation, visit the [docs_wiki folder](https://github.com/GabrielTenma/bp-go-def/tree/main/docs_wiki):
-- **Integration Guide** - How to use Redis, PostgreSQL, Kafka, Cron
-- **Architecture Diagrams** - System flow and architecture diagrams
-- **API Response Structure** - Complete response pattern documentation
-- **Request/Response Structure** - Request validation guide
+## Monitoring Dashboard
 
-### Main Features
+![Monitoring Dashboard](https://github.com/GabrielTenma/bp-go-def/raw/main/.assets/Recording%202025-12-14%20230230.gif)
 
-#### Modular Service System
-Add new services easily:
-```yaml
-# config.yaml
-services:
-  enable_service_a: true
-  enable_service_b: false
-```
+### Login Page
+- Custom shadcn-admin styled design
+- HTTP Basic Auth integration
+- Dark mode support
+- Responsive layout
 
-Services are automatically registered and appear in the monitoring dashboard!
+### User Settings
+- **Profile Photo**: Upload JPG/PNG/GIF (max 2MB)
+- **Display Name**: Custom username
+- **Password Management**: Change monitoring password
+- **SQLite Storage**: Secure local database
 
-#### Monitoring Tools
+### Dashboard Features
+- Service overview with live counts
+- Infrastructure status indicators
+- System information (hostname, IP, disk usage)
+- Live log streaming
+- Categorized sidebar navigation
+
+### Tools
 - **Config Editor**: Edit YAML, backup, restore
 - **Redis Browser**: Scan keys, view values
-- **Postgres Monitor**: Active sessions, query statistics
+- **Postgres Monitor**: Active sessions, top queries
 - **Kafka Debugger**: Topic inspection
-- **Cron Monitor**: Job scheduling and execution history
+- **Banner Editor**: Update ASCII art
 
-#### Standardized Response
-```go
-// Success
-return response.Success(c, data, "User retrieved")
+## Terminal User Interface (TUI)
 
-// Pagination
-meta := response.CalculateMeta(page, perPage, total)
-return response.SuccessWithMeta(c, users, meta)
+The application includes a rich terminal interface built with [Bubble Tea](https://github.com/charmbracelet/bubbletea).
 
-// Error
-return response.NotFound(c, "User not found")
-```
+### Features
+-   **Boot Sequence**: Animated startup process showing service initialization status.
+-   **Live Dashboard**: Monitor system resources (CPU, RAM, Goroutines) directly in the terminal.
+-   **Interactive**: Keyboard controls for navigation and quitting.
 
----
-
-## Project Structure
-
-```
-.
-├── cmd/app/              # Application entry point
-├── config/               # Configuration logic
-├── internal/
-│   ├── middleware/       # Auth & permission middleware
-│   ├── monitoring/       # Monitoring dashboard
-│   ├── server/           # Main server logic
-│   └── services/         # Service implementations
-├── pkg/
-│   ├── infrastructure/   # Redis, Postgres, Kafka, Cron
-│   ├── logger/           # Rich console logger
-│   ├── request/          # Request validation
-│   ├── response/         # Response helpers
-│   └── utils/            # System utilities
-├── web/monitoring/       # Monitoring UI
-└── docs/                 # Developer documentation
-```
-
----
-
-## API Endpoints
-
-### Main Application
-- `GET /health` - Health check
-- `GET /api/service-a` - Service A endpoints
-- `GET /api/service-c` - Service C endpoints
-- `DELETE /api/*` - Blocked by permission middleware
-
-### Monitoring APIs
-- `GET /api/status` - System status & metrics
-- `GET /api/endpoints` - List all services
-- `GET /api/config` - Get/Update configuration
-- `GET /api/user/settings` - User profile management
-
----
+For detailed implementation documentation, see [TUI_IMPLEMENTATION.md](https://github.com/GabrielTenma/bp-go-def/blob/main/docs_wiki/TUI_IMPLEMENTATION.md).
 
 ## Configuration
 
-Edit `config.yaml` to customize the application:
+Edit `config.yaml`:
 
 ```yaml
 app:
   name: "My Fancy Go App"
   debug: true
   env: "development"
+  banner_path: "banner.txt"
+  startup_delay: 15       # seconds to display boot screen (0 to skip)
+  quiet_startup: true     # suppress console logs (TUI only)
+  enable_tui: true        # enable fancy TUI mode
 
 server:
   port: "8080"
@@ -176,95 +137,143 @@ server:
 services:
   enable_service_a: true
   enable_service_b: false
+  enable_service_c: true
+  enable_service_d: false
+
+auth:
+  type: "apikey"
+  secret: "super-secret-key"
 
 monitoring:
   enabled: true
   port: "9090"
   password: "admin"
+  obfuscate_api: true
+  title: "GoBP Admin"
+  subtitle: "My Kisah Emuach ❤️"
+  max_photo_size_mb: 2
+  upload_dir: "web/monitoring/uploads"
+  
+  minio:
+    enabled: true
+    endpoint: "localhost:9003"
+    access_key: "minioadmin"
+    secret_key: "minioadmin"
+    use_ssl: false
+    bucket: "main"
+
+  external:
+    services:
+      - name: "Google"
+        url: "https://google.com"
+      - name: "Soundcloud"
+        url: "https://soundcloud.com"
+      - name: "Local API"
+        url: "http://localhost:8080/health"
 
 redis:
-  enabled: true
+  enabled: false
   address: "localhost:6379"
+  password: ""
+  db: 0
 
 postgres:
   enabled: true
   host: "localhost"
   port: 5432
+  user: "postgres"
+  password: "Mypostgres01"
+  dbname: "postgres"
+  sslmode: "disable"
 
 kafka:
+  enabled: false
+  brokers: 
+    - "localhost:9092"
+  topic: "my-topic"
+  group_id: "my-group"
+
+cron:
   enabled: true
-  brokers: ["localhost:9092"]
+  jobs:
+    log_cleanup: "0 0 * * *"
+    health_check: "*/10 * * * * *" # Every 10 seconds
 ```
 
----
+## Project Structure
 
-## Use Cases
+```
+.
+├── cmd/app/              # Application entry point
+├── config/               # Configuration logic
+├── docs_wiki/            # Documentation & Guides
+├── internal/
+├── internal/
+│   ├── middleware/       # Auth & permission middleware
+│   ├── monitoring/       # Monitoring dashboard
+│   │   ├── database/     # SQLite user management
+│   │   ├── handlers.go   # API endpoints
+│   │   └── server.go     # Monitoring server
+│   ├── server/           # Main server logic
+│   └── services/         # Service implementations
+├── pkg/
+│   ├── infrastructure/   # Redis, Postgres, Kafka, Cron
+│   ├── logger/           # Rich console logger
+│   ├── tui/              # Terminal User Interface
+│   └── utils/            # System utilities
+├── web/monitoring/       # Monitoring UI
+│   ├── assets/          # CSS, JS
+│   ├── login.html       # Login page
+│   ├── index.html       # Dashboard
+│   └── uploads/         # User files
+└── config.yaml          # Main configuration
+```
 
-### Perfect For:
-- REST API development with standardized patterns
-- Microservices with integrated monitoring
-- Event-driven applications with Kafka
-- Applications requiring scheduled jobs
-- Projects with multiple infrastructure dependencies
+## API Endpoints
 
-### Production Ready:
-- Comprehensive error handling
-- Structured logging
-- Health checks
-- Graceful shutdown
-- Security best practices
-- Configuration management
+### Main Application
+- `GET /health` - Health check
+- `GET /api/service-a` - Service A
+- `GET /api/service-c` - Service C
+- `DELETE /api/*` - Blocked by middleware
 
----
+### Monitoring APIs (Protected)
+- `GET /api/status` - System status
+- `GET /api/endpoints` - List services
+- `GET /api/config` - Get config
+- `POST /api/config` - Update config
+- `GET /api/user/settings` - User profile
+- `POST /api/user/password` - Change password
+- `POST /api/user/photo` - Upload photo
 
-## Screenshots
+## Security
 
-![Monitoring Dashboard](https://s6.imgcdn.dev/YToc5C.png)
+- HTTP Basic Auth for monitoring
+- BCrypt password hashing
+- SQLite user database
+- File upload size limits
+- API key authentication
+- Permission-based access control
 
-*Monitoring dashboard with shadcn-admin design and dark mode support*
+## Development
 
----
+### Adding a Service
 
-## Tech Stack
+1. Create in `internal/services/`
+2. Add config flag in `config.yaml`
+3. Register in `internal/server/server.go`
+4. Auto-appears in monitoring!
 
-**Backend:**
-- [Echo](https://echo.labstack.com/) - High performance web framework
-- [Zerolog](https://github.com/rs/zerolog) - Zero allocation JSON logger
-- [Viper](https://github.com/spf13/viper) - Configuration management
-- [Validator](https://github.com/go-playground/validator) - Request validation
+### Database
 
-**Frontend (Monitoring):**
-- [Alpine.js](https://alpinejs.dev/) - Lightweight JavaScript framework
-- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS
-- [Chart.js](https://www.chartjs.org/) - Beautiful charts
-- [CodeMirror](https://codemirror.net/) - Code editor
-
-**Infrastructure:**
-- [Redis](https://redis.io/) - In-memory data store
-- [PostgreSQL](https://www.postgresql.org/) - SQL database
-- [Kafka](https://kafka.apache.org/) - Event streaming
-- [MinIO](https://min.io/) - S3-compatible storage
-
----
+- User settings: `monitoring_users.db` (auto-created)
+- Default user from `config.yaml` password
+- Change password via UI
 
 ## License
 
-MIT License - feel free to use for commercial or personal projects!
+MIT
 
 ---
 
-## Contributing
-
-Contributions are very welcome! Please create an issue or pull request.
-
----
-
-## Links
-
-- **GitHub Repository**: [https://github.com/GabrielTenma/bp-go-def](https://github.com/GabrielTenma/bp-go-def)
-- **Documentation**: [https://gabrieltenma.github.io/bp-go-def/](https://gabrieltenma.github.io/bp-go-def/)
-- **Developer Docs**: [/docs_wiki](https://github.com/GabrielTenma/bp-go-def/tree/main/docs_wiki)
-
----
-
-**Built with using Go, Echo, Alpine.js, and Tailwind CSS**
+**Built with ❤️ using Go, Echo, Alpine.js, Tailwind CSS**

@@ -70,7 +70,7 @@ sequenceDiagram
     participant V as Validator
     participant R as response
 
-    C->>H: POST /api/users
+    C->>H: POST /api/v1/users
     H->>B: Bind(context, &req)
     B->>B: Parse JSON
     B->>V: Validate(req)
@@ -108,33 +108,33 @@ graph LR
 
 ```mermaid
 graph TD
-    subgraph "GET /users (List)"
+    subgraph "GET /api/v1/users (List)"
         A1[Parse Pagination] --> A2[Fetch Data]
         A2 --> A3[Calculate Meta]
         A3 --> A4[SuccessWithMeta]
     end
 
-    subgraph "GET /users/:id (Detail)"
+    subgraph "GET /api/v1/users/:id (Detail)"
         B1[Get ID from URL] --> B2[Find in DB]
         B2 -->|Found| B3[Success]
         B2 -->|Not Found| B4[NotFound]
     end
 
-    subgraph "POST /users (Create)"
+    subgraph "POST /api/v1/users (Create)"
         C1[Bind & Validate] --> C2{Valid?}
         C2 -->|No| C3[ValidationError]
         C2 -->|Yes| C4[Create in DB]
         C4 --> C5[Created 201]
     end
 
-    subgraph "PUT /users/:id (Update)"
+    subgraph "PUT /api/v1/users/:id (Update)"
         D1[Get ID + Bind] --> D2{Valid?}
         D2 -->|No| D3[ValidationError]
         D2 -->|Yes| D4[Update in DB]
         D4 --> D5[Success]
     end
 
-    subgraph "DELETE /users/:id (Delete)"
+    subgraph "DELETE /api/v1/users/:id (Delete)"
         E1[Get ID] --> E2[Delete from DB]
         E2 --> E3[NoContent 204]
     end

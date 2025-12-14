@@ -222,8 +222,11 @@ cron:
 
 ### Main Application
 - `GET /health` - Health check
-- `GET /api/service-a` - Service A
-- `GET /api/service-c` - Service C
+- `GET /api/v1/users` - Service A (List Users)
+- `GET /api/v1/users/:id` - Service A (Get User)
+- `GET /api/v1/products` - Service B
+- `GET /api/v1/cache` - Service C
+- `GET /api/v1/tasks` - Service D
 - `DELETE /api/*` - Blocked by middleware
 
 ### Monitoring APIs (Protected)
