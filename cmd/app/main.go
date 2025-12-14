@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -103,7 +104,9 @@ func runWithTUI(cfg *config.Config, bannerText string, broadcaster *monitoring.L
 	})
 
 	// Init Logger (quiet mode so logs go to TUI only)
-	l := logger.NewQuiet(cfg.App.Debug, liveTUI)
+	// We also broadcast to the monitoring system so the Web UI Live Logs work
+	multiWriter := io.MultiWriter(liveTUI, broadcaster)
+	l := logger.NewQuiet(cfg.App.Debug, multiWriter)
 
 	// Start Live TUI in background
 	liveTUI.Start()

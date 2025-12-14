@@ -46,6 +46,7 @@ monitoring:
   enabled: true
   port: "9090"
   password: "admin"
+  obfuscate_api: true
   title: "GoBP Admin"
   subtitle: "My Kisah Emuach ❤️"
   max_photo_size_mb: 2

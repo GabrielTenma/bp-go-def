@@ -1,7 +1,7 @@
 // Initialize Notyf Globally
 window.notyf = new Notyf({
     duration: 2500,
-    dismissible: true,
+    dismissible: false,
     position: { x: 'center', y: 'bottom' },
     ripple: false,
     types: [
@@ -26,6 +26,96 @@ window.notyf = new Notyf({
         }
     ]
 });
+
+// --- API Obfuscation Handler ---
+const originalFetch = window.fetch;
+window.fetch = async (...args) => {
+    try {
+        const response = await originalFetch(...args);
+
+        // Skip for streams (important!)
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('text/event-stream')) {
+            return response;
+        }
+
+        // Read text safely
+        let bodyText = "";
+        try {
+            bodyText = await response.text();
+        } catch (readErr) {
+            return response;
+        }
+
+        if (!bodyText) {
+            return new Response('', {
+                status: response.status,
+                statusText: response.statusText,
+                headers: response.headers
+            });
+        }
+
+        // Strategy 1: Try parsing as valid JSON directly.
+        // If it works, it means it wasn't obfuscated (or obfuscation failed/disabled).
+        try {
+            JSON.parse(bodyText);
+            // It is valid JSON. Return as is.
+            return new Response(bodyText, {
+                status: response.status,
+                statusText: response.statusText,
+                headers: response.headers
+            });
+        } catch (e) {
+            // Not valid JSON. Matches symptoms of Obfuscated (Base64 is not JSON-valid string usually).
+        }
+
+        // Strategy 2: Try decoding as Base64 JSON
+        try {
+            // Normalize Base64 (URL-safe, whitespace)
+            let b64 = bodyText.replace(/-/g, '+').replace(/_/g, '/').replace(/\s/g, '');
+            while (b64.length % 4) b64 += '=';
+
+            // Decode
+            // Use binary string conversion for UTF-8 safety
+            const binaryStr = atob(b64);
+            const bytes = new Uint8Array(binaryStr.length);
+            for (let i = 0; i < binaryStr.length; i++) {
+                bytes[i] = binaryStr.charCodeAt(i);
+            }
+            const decoded = new TextDecoder().decode(bytes);
+
+            // Clean potential BOM
+            const cleanDecoded = decoded.replace(/^\uFEFF/, '').trim();
+
+            // Validate result is JSON
+            JSON.parse(cleanDecoded);
+
+            // Success! Return decoded.
+            const newHeaders = new Headers(response.headers);
+            newHeaders.delete('Content-Length');
+            newHeaders.set('X-Obfuscated-Decoded', 'true'); // Debug flag
+
+            return new Response(cleanDecoded, {
+                status: response.status,
+                statusText: response.statusText,
+                headers: newHeaders
+            });
+
+        } catch (decodeErr) {
+            // Not base64 json. 
+        }
+
+        // Fallback: Return original
+        return new Response(bodyText, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers
+        });
+
+    } catch (err) {
+        throw err;
+    }
+};
 
 function app() {
 
@@ -172,10 +262,13 @@ function app() {
 
         async init() {
             // Load Correlation ID
-            this.correlationId = localStorage.getItem('x_correlation_id') || '';
+            try { this.correlationId = localStorage.getItem('x_correlation_id') || ''; } catch (e) { console.warn("Storage blocked", e); }
 
             // Theme init
-            this.isDark = localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            try {
+                this.isDark = localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            } catch (e) { this.isDark = false; }
+
             if (this.isDark) {
                 document.documentElement.classList.add('dark');
             } else {
@@ -465,7 +558,7 @@ function app() {
                 const msg = data.message || JSON.stringify(data);
 
                 let badgeClass = 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
-                if (level === 'INFO') badgeClass = 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
+                if (level === 'INFO' || level === 'INF') badgeClass = 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
                 if (level === 'WARN' || level === 'WARNING') badgeClass = 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300';
                 if (level === 'ERROR' || level === 'FATAL') badgeClass = 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300';
                 if (level === 'DEBUG') badgeClass = 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300';
@@ -476,16 +569,49 @@ function app() {
                             <span class="text-foreground break-all pt-0.5">${msg}</span>
                         </div>`;
             } catch (e) {
-                // Fallback for raw text
+                // Fallback for raw text - Try to extract level
                 let badgeClass = 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
-                if (logLine.includes('INFO')) badgeClass = 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
-                if (logLine.includes('WARN')) badgeClass = 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300';
-                if (logLine.includes('ERROR') || logLine.includes('FAIL')) badgeClass = 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300';
+                let level = 'RAW';
+                let displayMsg = logLine;
+                let timestamp = new Date().toLocaleTimeString();
+
+                // Improved regex to handle optional ANSI codes and brackets
+                // Matches optional ANSI -> Timestamp -> optional ANSI -> optional Bracket -> Level -> optional Bracket -> optional ANSI -> Message
+                const parts = logLine.match(/^\s*(?:[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><])?(\d{2}:\d{2}:\d{2})\s+(?:[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><])?(?:\[\s*)?(\w+)(?:\s*\])?(?:[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><])?\s+(.*)$/);
+
+                if (parts) {
+                    timestamp = parts[1];
+                    let rawLevel = parts[2].toUpperCase();
+
+                    // Map short levels to full names
+                    if (rawLevel === 'INF') level = 'INFO';
+                    else if (rawLevel === 'WRN' || rawLevel === 'WARNING') level = 'WARN';
+                    else if (rawLevel === 'ERR') level = 'ERROR';
+                    else if (rawLevel === 'DBG') level = 'DEBUG';
+                    else if (rawLevel === 'FTL') level = 'FATAL';
+                    else level = rawLevel;
+
+                    displayMsg = parts[3];
+                } else if (logLine.includes('INFO')) level = 'INFO';
+                else if (logLine.includes('WARN')) level = 'WARN';
+                else if (logLine.includes('ERROR') || logLine.includes('FAIL')) level = 'ERROR';
+                else if (logLine.includes('DEBUG') || logLine.includes('DBG')) level = 'DEBUG';
+
+                // Clean up any remaining ANSI codes from display message
+                displayMsg = displayMsg.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '');
+
+                // Truncate level to 5 chars max for badge
+                if (level.length > 5) level = level.substring(0, 5);
+
+                if (level.includes('INFO')) badgeClass = 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
+                if (level.includes('WARN')) badgeClass = 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300';
+                if (level.includes('ERR') || level.includes('FAIL') || level === 'FATAL') badgeClass = 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300';
+                if (level.includes('DEBUG')) badgeClass = 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300';
 
                 return `<div class="flex items-start gap-4 text-xs font-mono leading-relaxed">
-                            <span class="text-muted-foreground w-[85px] shrink-0 pt-0.5">${new Date().toLocaleTimeString()}</span>
-                             <span class="px-1.5 py-0.5 rounded-[4px] font-semibold text-[10px] shrink-0 w-[50px] text-center ${badgeClass}">RAW</span>
-                            <span class="text-foreground break-all pt-0.5">${logLine}</span>
+                            <span class="text-muted-foreground w-[85px] shrink-0 pt-0.5">${timestamp}</span>
+                             <span class="px-1.5 py-0.5 rounded-[4px] font-semibold text-[10px] shrink-0 w-[50px] text-center ${badgeClass}">${level}</span>
+                            <span class="text-foreground break-all pt-0.5">${displayMsg}</span>
                         </div>`;
             }
         },

@@ -30,6 +30,7 @@ type MonitoringConfig struct {
 	MaxPhotoSizeMB int            `mapstructure:"max_photo_size_mb"`
 	MinIO          MinIOConfig    `mapstructure:"minio"`
 	External       ExternalConfig `mapstructure:"external"`
+	ObfuscateAPI   bool           `mapstructure:"obfuscate_api"`
 }
 
 type MinIOConfig struct {

@@ -163,6 +163,51 @@
     </div>
 
     <script>
+        // --- API Obfuscation Handler ---
+        const originalFetch = window.fetch;
+        window.fetch = async (...args) => {
+            try {
+                const response = await originalFetch(...args);
+
+                // Check for obfuscation header
+                const isObfuscated = response.headers.get('X-Obfuscated');
+
+                if (isObfuscated === 'true') {
+                    // Clone/Consume response to get text
+                    const encoded = await response.text();
+
+                    if (!encoded) {
+                        return new Response('', {
+                            status: response.status,
+                            statusText: response.statusText,
+                            headers: response.headers
+                        });
+                    }
+
+                    try {
+                        const decoded = atob(encoded);
+                        const newHeaders = new Headers(response.headers);
+                        return new Response(decoded, {
+                            status: response.status,
+                            statusText: response.statusText,
+                            headers: newHeaders
+                        });
+                    } catch (decodeErr) {
+                        console.error("Failed to decode obfuscated response:", decodeErr);
+                        return new Response(encoded, {
+                            status: response.status,
+                            statusText: response.statusText,
+                            headers: response.headers
+                        });
+                    }
+                }
+
+                return response;
+            } catch (err) {
+                throw err;
+            }
+        };
+
         async function handleLogin(event) {
             event.preventDefault();
 
