@@ -12,6 +12,11 @@ A robust, production-ready Go application boilerplate built with [Echo](https://
 -   **In-Memory Cache**: Thread-safe, generic KV store with TTL support
 -   **Hot Configuration**: Update config without restart
 
+### Terminal Interface
+-   **Interactive Boot**: Visual boot sequence with service status checks
+-   **Live CLI Dashboard**: Real-time terminal-based monitoring (Bubble Tea)
+-   **Responsive TUI**: Adaptive layouts for different terminal sizes
+
 ### Infrastructure Support
 -   **Redis**: Key-value store integration
 -   **PostgreSQL**: SQL database with GORM
@@ -57,11 +62,9 @@ go run cmd/app/main.go
 3. Login with default password: `admin`
 4. **Important**: Change password via User Settings immediately!
 
-## Demo
+## Backend Console
 
-<p>
-    <img src="https://s6.imgcdn.dev/YTovOt.gif" width="60%" alt="Demo">
-</p>
+![Backend Console](.assets/Recording%202025-12-14%20223856.gif)
 
 ## Monitoring Dashboard
 
@@ -92,6 +95,17 @@ go run cmd/app/main.go
 - **Postgres Monitor**: Active sessions, top queries
 - **Kafka Debugger**: Topic inspection
 - **Banner Editor**: Update ASCII art
+
+## Terminal User Interface (TUI)
+
+The application includes a rich terminal interface built with [Bubble Tea](https://github.com/charmbracelet/bubbletea).
+
+### Features
+-   **Boot Sequence**: Animated startup process showing service initialization status.
+-   **Live Dashboard**: Monitor system resources (CPU, RAM, Goroutines) directly in the terminal.
+-   **Interactive**: Keyboard controls for navigation and quitting.
+
+For detailed implementation documentation, see [TUI_IMPLEMENTATION.md](docs_wiki/TUI_IMPLEMENTATION.md).
 
 ## Configuration
 
@@ -163,6 +177,7 @@ cron:
 ├── pkg/
 │   ├── infrastructure/   # Redis, Postgres, Kafka, Cron
 │   ├── logger/           # Rich console logger
+│   ├── tui/              # Terminal User Interface
 │   └── utils/            # System utilities
 ├── web/monitoring/       # Monitoring UI
 │   ├── assets/          # CSS, JS
