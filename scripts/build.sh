@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Clear the terminal screen
+clear
+
 # Configuration
 DIST_DIR="dist"
 APP_NAME="bp-go-def"

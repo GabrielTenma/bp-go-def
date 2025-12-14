@@ -1,4 +1,6 @@
 @echo off
+cls
+
 setlocal EnableDelayedExpansion
 set "DIST_DIR=dist"
 set "APP_NAME=bp-go-def.exe"

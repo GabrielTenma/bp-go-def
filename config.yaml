@@ -3,6 +3,9 @@ app:
   debug: true
   env: "development"
   banner_path: "banner.txt"
+  startup_delay: 15       # seconds to display boot screen (0 to skip)
+  quiet_startup: true     # suppress console logs (TUI only, logs still go to monitoring)
+  enable_tui: true        # enable fancy TUI mode (false = traditional console logging)
 
 server:
   port: "8080"
