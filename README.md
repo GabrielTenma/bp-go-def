@@ -45,7 +45,7 @@ A robust, production-ready Go application boilerplate built with [Echo](https://
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/GabrielTenma/bp-go-def.git
 cd bp-go-def
 
 # Install dependencies
@@ -68,7 +68,7 @@ go run cmd/app/main.go
 
 ## Monitoring Dashboard
 
-![Monitoring Dashboard](https://s6.imgcdn.dev/YToc5C.png)
+![Monitoring Dashboard](.assets/Recording%202025-12-14%20230230.gif)
 
 ### Login Page
 - Custom shadcn-admin styled design
@@ -117,6 +117,9 @@ app:
   debug: true
   env: "development"
   banner_path: "banner.txt"
+  startup_delay: 15       # seconds to display boot screen (0 to skip)
+  quiet_startup: true     # suppress console logs (TUI only)
+  enable_tui: true        # enable fancy TUI mode
 
 server:
   port: "8080"
@@ -134,30 +137,57 @@ auth:
 monitoring:
   enabled: true
   port: "9090"
-  password: "admin"  # Initial password (change via UI!)
+  password: "admin"
+  obfuscate_api: true
   title: "GoBP Admin"
-  subtitle: "My Custom Subtitle"
+  subtitle: "My Kisah Emuach ❤️"
   max_photo_size_mb: 2
   upload_dir: "web/monitoring/uploads"
+  
+  minio:
+    enabled: true
+    endpoint: "localhost:9003"
+    access_key: "minioadmin"
+    secret_key: "minioadmin"
+    use_ssl: false
+    bucket: "main"
+
+  external:
+    services:
+      - name: "Google"
+        url: "https://google.com"
+      - name: "Soundcloud"
+        url: "https://soundcloud.com"
+      - name: "Local API"
+        url: "http://localhost:8080/health"
 
 redis:
   enabled: false
   address: "localhost:6379"
+  password: ""
+  db: 0
 
 postgres:
-  enabled: false
+  enabled: true
   host: "localhost"
   port: 5432
+  user: "postgres"
+  password: "Mypostgres01"
+  dbname: "postgres"
+  sslmode: "disable"
 
 kafka:
   enabled: false
-  brokers: ["localhost:9092"]
+  brokers: 
+    - "localhost:9092"
+  topic: "my-topic"
+  group_id: "my-group"
 
 cron:
   enabled: true
   jobs:
     log_cleanup: "0 0 * * *"
-    health_check: "*/10 * * * * *"
+    health_check: "*/10 * * * * *" # Every 10 seconds
 ```
 
 ## Project Structure
@@ -166,6 +196,7 @@ cron:
 .
 ├── cmd/app/              # Application entry point
 ├── config/               # Configuration logic
+├── docs_wiki/            # Documentation & Guides
 ├── internal/
 │   ├── middleware/       # Auth & permission middleware
 │   ├── monitoring/       # Monitoring dashboard
