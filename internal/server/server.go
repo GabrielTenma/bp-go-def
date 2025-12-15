@@ -159,11 +159,11 @@ func (s *Server) Start() error {
 		return response.Success(c, map[string]string{"status": "restarting", "message": "Service is restarting..."})
 	})
 
-	// Add Services here
-	registry.Register(modules.NewServiceA(s.config.Services.EnableServiceA))
-	registry.Register(modules.NewServiceB(s.config.Services.EnableServiceB))
-	registry.Register(modules.NewServiceC(s.config.Services.EnableServiceC))
-	registry.Register(modules.NewServiceD(s.postgresManager, s.config.Services.EnableServiceD))
+	// Add Services here - use IsEnabled() for dynamic config lookup
+	registry.Register(modules.NewServiceA(s.config.Services.IsEnabled("service_a")))
+	registry.Register(modules.NewServiceB(s.config.Services.IsEnabled("service_b")))
+	registry.Register(modules.NewServiceC(s.config.Services.IsEnabled("service_c")))
+	registry.Register(modules.NewServiceD(s.postgresManager, s.config.Services.IsEnabled("service_d")))
 
 	registry.Boot(s.echo)
 
@@ -211,13 +211,8 @@ func (s *Server) GetStatus() map[string]interface{} {
 	}
 
 	return map[string]interface{}{
-		"version": "1.0.0",
-		"services": map[string]bool{
-			"service_a": s.config.Services.EnableServiceA,
-			"service_b": s.config.Services.EnableServiceB,
-			"service_c": s.config.Services.EnableServiceC,
-			"service_d": s.config.Services.EnableServiceD,
-		},
+		"version":        "1.0.0",
+		"services":       s.config.Services, // Dynamic map from config
 		"infrastructure": infra,
 		"system": map[string]interface{}{
 			"disk":    diskStats,

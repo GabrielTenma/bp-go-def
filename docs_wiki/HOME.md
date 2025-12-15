@@ -37,6 +37,11 @@ This wiki serves as the central knowledge base for the project, covering archite
 
 ### Integration & Infrastructure
 
+*   **[Service Implementation Guide](SERVICE_IMPLEMENTATION.md)**
+    *   Creating and implementing new services.
+    *   Service interface and registration.
+    *   Dynamic configuration setup.
+
 *   **[Integration Guide](INTEGRATION_GUIDE.md)**
     *   **Redis**: Configuration and usage of the Redis manager.
     *   **Postgres**: Database connection and Helper methods.
