@@ -24,6 +24,7 @@ type StartupConfig struct {
 	AppVersion  string
 	Banner      string
 	Port        string
+	MonitorPort string
 	Env         string
 	IdleSeconds int // How long to display the boot screen (0 to skip immediately)
 }
@@ -38,9 +39,6 @@ type StartupModel struct {
 	config    StartupConfig
 	startTime time.Time
 	width     int
-
-	// Callback to execute after TUI completes
-	onComplete func()
 }
 
 // Styles
@@ -90,9 +88,6 @@ var (
 			Foreground(lipgloss.Color("#8BE9FD")).
 			Bold(true)
 
-	valueStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#F8F8F2"))
-
 	// Footer style
 	footerStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#6272A4")).
@@ -120,11 +115,6 @@ const (
 
 // Messages
 type tickMsg time.Time
-type serviceUpdateMsg struct {
-	index   int
-	status  string
-	message string
-}
 type doneMsg struct{}
 
 // NewStartupModel creates a new startup TUI model
@@ -183,10 +173,11 @@ func (m StartupModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Simulate service initialization progress
 		if m.current < len(m.services) {
 			// Update current service to loading
-			if m.services[m.current].Status == "pending" {
+			switch m.services[m.current].Status {
+			case "pending":
 				m.services[m.current].Status = "loading"
 				m.services[m.current].Message = "Initializing..."
-			} else if m.services[m.current].Status == "loading" {
+			case "loading":
 				// Complete current service and move to next
 				m.services[m.current].Status = "success"
 				m.services[m.current].Message = "Ready"
@@ -265,7 +256,9 @@ func (m StartupModel) View() string {
 	footer := "Press 'q' to continue..."
 	b.WriteString(footerStyle.Render(footer))
 
-	return b.String()
+	// Wrap entire content with padding
+	containerStyle := lipgloss.NewStyle().Padding(2)
+	return containerStyle.Render(b.String())
 }
 
 func (m StartupModel) renderServices() string {

@@ -185,7 +185,7 @@ func (s *Server) Start() error {
 				Endpoints:  fullEndpoints,
 			})
 		}
-		go monitoring.Start(s.config.Monitoring, s.config, s, s.broadcaster, s.redisManager, s.postgresManager, s.kafkaManager, s.cronManager, servicesList)
+		go monitoring.Start(s.config.Monitoring, s.config, s, s.broadcaster, s.redisManager, s.postgresManager, s.kafkaManager, s.cronManager, servicesList, s.logger)
 		s.logger.Info("Monitoring interface started", "port", s.config.Monitoring.Port)
 	}
 

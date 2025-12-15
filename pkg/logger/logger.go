@@ -52,17 +52,17 @@ func NewWithConfig(cfg LoggerConfig) *Logger {
 		if ll, ok := i.(string); ok {
 			switch ll {
 			case "debug":
-				l = "\x1b[36m[ DEBUG ]\x1b[0m"
+				l = "\x1b[38;2;139;233;253m[ DEBUG ]\x1b[0m" // Pastel Cyan
 			case "info":
-				l = "\x1b[32m[ INFO  ]\x1b[0m"
+				l = "\x1b[38;2;189;147;249m[ INFO  ]\x1b[0m" // Pastel Purple
 			case "warn":
-				l = "\x1b[33m[ WARN  ]\x1b[0m"
+				l = "\x1b[38;2;241;250;140m[ WARN  ]\x1b[0m" // Pastel Yellow
 			case "error":
-				l = "\x1b[31m[ ERROR ]\x1b[0m"
+				l = "\x1b[38;2;255;121;198m[ ERROR ]\x1b[0m" // Pastel Pink
 			case "fatal":
-				l = "\x1b[31m[ FATAL ]\x1b[0m"
+				l = "\x1b[38;2;255;85;85m[ FATAL ]\x1b[0m" // Pastel Red
 			case "panic":
-				l = "\x1b[31m[ PANIC ]\x1b[0m"
+				l = "\x1b[38;2;255;85;85m[ PANIC ]\x1b[0m" // Pastel Red
 			default:
 				l = strings.ToUpper(ll)
 			}

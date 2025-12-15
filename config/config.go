@@ -57,6 +57,7 @@ type CronConfig struct {
 
 type AppConfig struct {
 	Name         string `mapstructure:"name"`
+	Version      string `mapstructure:"version"`
 	Debug        bool   `mapstructure:"debug"`
 	Env          string `mapstructure:"env"`
 	BannerPath   string `mapstructure:"banner_path"`

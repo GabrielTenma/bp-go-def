@@ -1,12 +1,12 @@
 package monitoring
 
 import (
-	"fmt"
 	"net/http"
 	"test-go/config"
 	"test-go/internal/monitoring/database"
 	"test-go/internal/monitoring/session"
 	"test-go/pkg/infrastructure"
+	"test-go/pkg/logger"
 	"time"
 
 	monMiddleware "test-go/internal/monitoring/middleware"
@@ -36,12 +36,13 @@ func Start(
 	kafka *infrastructure.KafkaManager,
 	cron *infrastructure.CronManager,
 	services []ServiceInfo,
+	log *logger.Logger,
 ) {
 	// Initialize database
 	if err := database.InitDB(); err != nil {
-		fmt.Printf("⚠️  Warning: Failed to initialize user settings database: %v\n", err)
+		log.Warn("Failed to initialize user settings database", "error", err)
 	} else {
-		fmt.Println("✅ User settings database initialized")
+		log.Info("User settings database initialized")
 
 		// Ensure upload directory exists
 		uploadDir := cfg.UploadDir
@@ -49,16 +50,16 @@ func Start(
 			uploadDir = "web/monitoring/uploads"
 		}
 		if err := database.EnsureUploadDirectory(uploadDir); err != nil {
-			fmt.Printf("⚠️  Warning: Failed to create upload directory: %v\n", err)
+			log.Warn("Failed to create upload directory", "error", err)
 		}
 
 		// Create default user if not exists
 		settings, _ := database.GetUserSettings()
 		if settings == nil {
 			if err := database.CreateDefaultUser(cfg.Password); err != nil {
-				fmt.Printf("⚠️  Warning: Failed to create default user: %v\n", err)
+				log.Warn("Failed to create default user", "error", err)
 			} else {
-				fmt.Println("✅ Default user created")
+				log.Info("Default user created")
 			}
 		}
 	}
@@ -66,9 +67,9 @@ func Start(
 	// Initialize Infrastructure Managers
 	minioMgr, err := infrastructure.NewMinIOManager(appConfig.Monitoring.MinIO)
 	if err != nil {
-		fmt.Printf("⚠️  Warning: Failed to connect to MinIO: %v\n", err)
+		log.Warn("Failed to connect to MinIO", "error", err)
 	} else {
-		fmt.Println("✅ MinIO Manager initialized")
+		log.Info("MinIO Manager initialized")
 	}
 
 	systemMgr := infrastructure.NewSystemManager()
@@ -126,8 +127,8 @@ func Start(
 	}
 	h.RegisterRoutes(protected)
 
-	fmt.Printf("📊 Monitoring UI running on http://localhost:%s\n", cfg.Port)
+	log.Info("Monitoring UI running", "url", "http://localhost:"+cfg.Port)
 	if err := e.Start(":" + cfg.Port); err != nil && err != http.ErrServerClosed {
-		fmt.Printf("Failed to start monitoring server: %v\n", err)
+		log.Error("Failed to start monitoring server", err)
 	}
 }

@@ -13,11 +13,12 @@ import (
 
 // LiveConfig contains configuration for the live TUI
 type LiveConfig struct {
-	AppName    string
-	AppVersion string
-	Banner     string
-	Port       string
-	Env        string
+	AppName     string
+	AppVersion  string
+	Banner      string
+	Port        string
+	MonitorPort string
+	Env         string
 }
 
 // LogEntry represents a log entry
@@ -46,80 +47,76 @@ type LiveModel struct {
 var (
 	liveBannerStyle = lipgloss.NewStyle().
 			Bold(true).
-			Foreground(lipgloss.Color("#BD93F9"))
+			Foreground(lipgloss.Color("#9dacffff"))
 
 	liveTitleStyle = lipgloss.NewStyle().
 			Bold(true).
 			Foreground(lipgloss.Color("#FF79C6"))
 
 	liveInfoStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#8BE9FD"))
+			Foreground(lipgloss.Color("#9dacffff"))
 
 	liveStatusStyle = lipgloss.NewStyle().
 			Bold(true).
-			Foreground(lipgloss.Color("#50FA7B"))
+			Foreground(lipgloss.Color("#95ffafff"))
 
 	liveDimStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#44475A"))
 
 	liveLogBoxStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("#6272A4")).
+			BorderForeground(lipgloss.Color("#9dacffff")).
 			Padding(0, 1)
 
 	// Single cyan color for progress bar
-	liveProgressColor = "#8BE9FD"
+	liveProgressColor = "#9dacffff"
 )
 
-// Looping progress bar frames
+// Looping progress bar frames - slim style using dots
 var loopingProgressFrames = []string{
-	"█░░░░░░░░░░░░░░░░░░░░░░░░░░░░░",
-	"██░░░░░░░░░░░░░░░░░░░░░░░░░░░░",
-	"███░░░░░░░░░░░░░░░░░░░░░░░░░░░",
-	"████░░░░░░░░░░░░░░░░░░░░░░░░░░",
-	"█████░░░░░░░░░░░░░░░░░░░░░░░░░",
-	"██████░░░░░░░░░░░░░░░░░░░░░░░░",
-	"███████░░░░░░░░░░░░░░░░░░░░░░░",
-	"████████░░░░░░░░░░░░░░░░░░░░░░",
-	"█████████░░░░░░░░░░░░░░░░░░░░░",
-	"██████████░░░░░░░░░░░░░░░░░░░░",
-	"░██████████░░░░░░░░░░░░░░░░░░░",
-	"░░██████████░░░░░░░░░░░░░░░░░░",
-	"░░░██████████░░░░░░░░░░░░░░░░░",
-	"░░░░██████████░░░░░░░░░░░░░░░░",
-	"░░░░░██████████░░░░░░░░░░░░░░░",
-	"░░░░░░██████████░░░░░░░░░░░░░░",
-	"░░░░░░░██████████░░░░░░░░░░░░░",
-	"░░░░░░░░██████████░░░░░░░░░░░░",
-	"░░░░░░░░░██████████░░░░░░░░░░░",
-	"░░░░░░░░░░██████████░░░░░░░░░░",
-	"░░░░░░░░░░░██████████░░░░░░░░░",
-	"░░░░░░░░░░░░██████████░░░░░░░░",
-	"░░░░░░░░░░░░░██████████░░░░░░░",
-	"░░░░░░░░░░░░░░██████████░░░░░░",
-	"░░░░░░░░░░░░░░░██████████░░░░░",
-	"░░░░░░░░░░░░░░░░██████████░░░░",
-	"░░░░░░░░░░░░░░░░░██████████░░░",
-	"░░░░░░░░░░░░░░░░░░██████████░░",
-	"░░░░░░░░░░░░░░░░░░░██████████░",
-	"░░░░░░░░░░░░░░░░░░░░██████████",
-	"░░░░░░░░░░░░░░░░░░░░░█████████",
-	"░░░░░░░░░░░░░░░░░░░░░░████████",
-	"░░░░░░░░░░░░░░░░░░░░░░░███████",
-	"░░░░░░░░░░░░░░░░░░░░░░░░██████",
-	"░░░░░░░░░░░░░░░░░░░░░░░░░█████",
-	"░░░░░░░░░░░░░░░░░░░░░░░░░░████",
-	"░░░░░░░░░░░░░░░░░░░░░░░░░░░███",
-	"░░░░░░░░░░░░░░░░░░░░░░░░░░░░██",
-	"░░░░░░░░░░░░░░░░░░░░░░░░░░░░░█",
-	"░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░",
+	"●──────────────────────────────",
+	"●●─────────────────────────────",
+	"●●●────────────────────────────",
+	"●●●●───────────────────────────",
+	"●●●●●──────────────────────────",
+	"─●●●●●─────────────────────────",
+	"──●●●●●────────────────────────",
+	"───●●●●●───────────────────────",
+	"────●●●●●──────────────────────",
+	"─────●●●●●─────────────────────",
+	"──────●●●●●────────────────────",
+	"───────●●●●●───────────────────",
+	"────────●●●●●──────────────────",
+	"─────────●●●●●─────────────────",
+	"──────────●●●●●────────────────",
+	"───────────●●●●●───────────────",
+	"────────────●●●●●──────────────",
+	"─────────────●●●●●─────────────",
+	"──────────────●●●●●────────────",
+	"───────────────●●●●●───────────",
+	"────────────────●●●●●──────────",
+	"─────────────────●●●●●─────────",
+	"──────────────────●●●●●────────",
+	"───────────────────●●●●●───────",
+	"────────────────────●●●●●──────",
+	"─────────────────────●●●●●─────",
+	"──────────────────────●●●●●────",
+	"───────────────────────●●●●●───",
+	"────────────────────────●●●●●──",
+	"─────────────────────────●●●●●─",
+	"──────────────────────────●●●●●",
+	"───────────────────────────●●●●",
+	"────────────────────────────●●●",
+	"─────────────────────────────●●",
+	"──────────────────────────────●",
+	"───────────────────────────────",
 }
 
 // NewLiveModel creates a new live TUI model
 func NewLiveModel(cfg LiveConfig) *LiveModel {
 	s := spinner.New()
 	s.Spinner = spinner.Dot
-	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("#50FA7B"))
+	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("#95ffafff"))
 
 	return &LiveModel{
 		spinner:   s,
@@ -201,20 +198,21 @@ func (m *LiveModel) View() string {
 	cyanStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(liveProgressColor)).Bold(true)
 
 	header := fmt.Sprintf("%s %s v%s %s",
-		cyanStyle.Render("⚡"),
+		cyanStyle.Render("●"),
 		liveTitleStyle.Render(m.config.AppName),
 		m.config.AppVersion,
-		cyanStyle.Render("⚡"),
+		cyanStyle.Render("●"),
 	)
 	b.WriteString(header)
 	b.WriteString("\n")
 
 	// Status line
 	uptime := time.Since(m.startTime).Round(time.Second)
-	statusLine := fmt.Sprintf("  %s %s  │  Port: %s  │  Env: %s  │  Uptime: %s",
+	statusLine := fmt.Sprintf("  %s %s  │  Service Port: %s  │  Monitor Port: %s  │  Env: %s  │  Uptime: %s",
 		m.spinner.View(),
 		liveStatusStyle.Render("RUNNING"),
 		liveInfoStyle.Render(m.config.Port),
+		liveInfoStyle.Render(m.config.MonitorPort),
 		liveInfoStyle.Render(m.config.Env),
 		liveInfoStyle.Render(uptime.String()),
 	)
@@ -237,24 +235,27 @@ func (m *LiveModel) View() string {
 	footer := liveDimStyle.Render(fmt.Sprintf("  Press 'q' to quit  │  %s", time.Now().Format("15:04:05")))
 	b.WriteString(footer)
 
-	return b.String()
+	// Wrap entire content with padding
+	containerStyle := lipgloss.NewStyle().Padding(2)
+	return containerStyle.Render(b.String())
 }
 
 func (m *LiveModel) renderLogs() string {
 	var lines []string
 
-	// Calculate available width for logs
-	logWidth := m.width - 6 // Account for box borders and padding
-	if logWidth < 60 {
-		logWidth = 60
+	// Calculate available width for logs content
+	// Box width is (m.width - 4), content width accounts for border (2) and padding (2 on each side)
+	logWidth := m.width - 8
+	if logWidth < 56 {
+		logWidth = 56
 	}
-	if logWidth > 120 {
-		logWidth = 120
+	if logWidth > 136 {
+		logWidth = 136
 	}
 
 	header := lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color("#8BE9FD")).
+		Foreground(lipgloss.Color("#ff8d7cff")).
 		Render("◆ Live Logs")
 	lines = append(lines, header)
 	lines = append(lines, liveDimStyle.Render(strings.Repeat("─", logWidth)))
@@ -270,11 +271,21 @@ func (m *LiveModel) renderLogs() string {
 			timeStr := log.Time.Format("15:04:05")
 			levelStr := fmt.Sprintf("[%-5s]", strings.ToUpper(log.Level))
 
-			// Build the line with proper formatting - NO truncation
+			// Calculate max message length and truncate before styling
+			maxMsgLen := logWidth - 20 // Account for timestamp (8), level (7), spaces and prefix
+			if maxMsgLen < 20 {
+				maxMsgLen = 20
+			}
+			msg := log.Message
+			if len(msg) > maxMsgLen {
+				msg = msg[:maxMsgLen-3] + "..."
+			}
+
+			// Build the line with proper formatting
 			line := fmt.Sprintf("  %s %s %s",
 				liveDimStyle.Render(timeStr),
 				levelStyle.Render(levelStr),
-				lipgloss.NewStyle().Foreground(lipgloss.Color("#F8F8F2")).Render(log.Message),
+				lipgloss.NewStyle().Foreground(lipgloss.Color("#F8F8F2")).Render(msg),
 			)
 			lines = append(lines, line)
 		}
@@ -286,15 +297,15 @@ func (m *LiveModel) renderLogs() string {
 func (m *LiveModel) getLevelStyle(level string) lipgloss.Style {
 	switch strings.ToLower(level) {
 	case "debug":
-		return lipgloss.NewStyle().Foreground(lipgloss.Color("#8BE9FD"))
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("#b3ebf8ff"))
 	case "info":
-		return lipgloss.NewStyle().Foreground(lipgloss.Color("#50FA7B"))
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("#9af8b1ff"))
 	case "warn", "warning":
-		return lipgloss.NewStyle().Foreground(lipgloss.Color("#F1FA8C"))
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("#f5fac0ff"))
 	case "error":
-		return lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5555"))
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("#f67373ff"))
 	case "fatal":
-		return lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5555")).Bold(true)
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("#f82626ff")).Bold(true)
 	default:
 		return lipgloss.NewStyle().Foreground(lipgloss.Color("#F8F8F2"))
 	}
@@ -403,13 +414,14 @@ func parseLogLine(line string) (level, message string) {
 	} else {
 		// No timestamp, try to detect level from content
 		upperLine := strings.ToUpper(line)
-		if strings.Contains(upperLine, "DEBUG") || strings.Contains(upperLine, "DBG") {
+		switch {
+		case strings.Contains(upperLine, "DEBUG") || strings.Contains(upperLine, "DBG"):
 			level = "debug"
-		} else if strings.Contains(upperLine, "WARN") || strings.Contains(upperLine, "WRN") {
+		case strings.Contains(upperLine, "WARN") || strings.Contains(upperLine, "WRN"):
 			level = "warn"
-		} else if strings.Contains(upperLine, "ERROR") || strings.Contains(upperLine, "ERR") {
+		case strings.Contains(upperLine, "ERROR") || strings.Contains(upperLine, "ERR"):
 			level = "error"
-		} else if strings.Contains(upperLine, "FATAL") || strings.Contains(upperLine, "FTL") {
+		case strings.Contains(upperLine, "FATAL") || strings.Contains(upperLine, "FTL"):
 			level = "fatal"
 		}
 		message = line

@@ -30,7 +30,6 @@ type BootModel struct {
 	results       []ServiceStatus
 	current       int
 	done          bool
-	error         error
 	config        StartupConfig
 	startTime     time.Time
 	width         int
@@ -45,39 +44,39 @@ var bootFrames = []string{
 	"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏",
 }
 
+// Slim wave animation frames using dots
 var waveFrames = []string{
-	"═══════════════════════════",
-	"▓══════════════════════════",
-	"▓▓═════════════════════════",
-	"▓▓▓════════════════════════",
-	"░▓▓▓═══════════════════════",
-	"░░▓▓▓══════════════════════",
-	"═░░▓▓▓═════════════════════",
-	"══░░▓▓▓════════════════════",
-	"═══░░▓▓▓═══════════════════",
-	"════░░▓▓▓══════════════════",
-	"═════░░▓▓▓═════════════════",
-	"══════░░▓▓▓════════════════",
-	"═══════░░▓▓▓═══════════════",
-	"════════░░▓▓▓══════════════",
-	"═════════░░▓▓▓═════════════",
-	"══════════░░▓▓▓════════════",
-	"═══════════░░▓▓▓═══════════",
-	"════════════░░▓▓▓══════════",
-	"═════════════░░▓▓▓═════════",
-	"══════════════░░▓▓▓════════",
-	"═══════════════░░▓▓▓═══════",
-	"════════════════░░▓▓▓══════",
-	"═════════════════░░▓▓▓═════",
-	"══════════════════░░▓▓▓════",
-	"═══════════════════░░▓▓▓═══",
-	"════════════════════░░▓▓▓══",
-	"═════════════════════░░▓▓▓═",
-	"══════════════════════░░▓▓▓",
-	"═══════════════════════░░▓▓",
-	"════════════════════════░░▓",
-	"═════════════════════════░░",
-	"══════════════════════════░",
+	"───────────────────────────",
+	"●──────────────────────────",
+	"●●─────────────────────────",
+	"●●●────────────────────────",
+	"─●●●───────────────────────",
+	"──●●●──────────────────────",
+	"───●●●─────────────────────",
+	"────●●●────────────────────",
+	"─────●●●───────────────────",
+	"──────●●●──────────────────",
+	"───────●●●─────────────────",
+	"────────●●●────────────────",
+	"─────────●●●───────────────",
+	"──────────●●●──────────────",
+	"───────────●●●─────────────",
+	"────────────●●●────────────",
+	"─────────────●●●───────────",
+	"──────────────●●●──────────",
+	"───────────────●●●─────────",
+	"────────────────●●●────────",
+	"─────────────────●●●───────",
+	"──────────────────●●●──────",
+	"───────────────────●●●─────",
+	"────────────────────●●●────",
+	"─────────────────────●●●───",
+	"──────────────────────●●●──",
+	"───────────────────────●●●─",
+	"────────────────────────●●●",
+	"─────────────────────────●●",
+	"──────────────────────────●",
+	"───────────────────────────",
 }
 
 // Boot styles
@@ -86,19 +85,14 @@ var (
 
 	bootBannerStyle = lipgloss.NewStyle().
 			Bold(true).
-			Foreground(lipgloss.Color("#BD93F9"))
-
-	bootHeaderStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#FF79C6")).
-			Padding(1, 0)
+			Foreground(lipgloss.Color("#dfc8ffff"))
 
 	bootSubStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#6272A4")).
 			Italic(true)
 
 	bootWaveStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#50FA7B"))
+			Foreground(lipgloss.Color("#b8ffcaff"))
 
 	bootBoxBorder = lipgloss.NewStyle().
 			Border(lipgloss.DoubleBorder()).
@@ -107,25 +101,25 @@ var (
 
 	bootCompleteStyle = lipgloss.NewStyle().
 				Bold(true).
-				Foreground(lipgloss.Color("#50FA7B"))
+				Foreground(lipgloss.Color("#545454ff"))
 
 	bootErrorStyle = lipgloss.NewStyle().
 			Bold(true).
-			Foreground(lipgloss.Color("#FF5555"))
+			Foreground(lipgloss.Color("#ffaeaeff"))
 
 	bootPhaseStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#F1FA8C")).
+			Foreground(lipgloss.Color("#faffc7ff")).
 			Bold(true)
 
 	bootInfoStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#8BE9FD"))
+			Foreground(lipgloss.Color("#c7f5ffff"))
 
 	bootSuccessIcon = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#50FA7B")).
+			Foreground(lipgloss.Color("#b0ffc4ff")).
 			Render("✓")
 
 	bootErrorIcon = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#FF5555")).
+			Foreground(lipgloss.Color("#ff9b9bff")).
 			Render("✗")
 
 	bootSkipIcon = lipgloss.NewStyle().
@@ -139,21 +133,16 @@ var (
 
 // Messages for boot model
 type bootTickMsg time.Time
-type bootInitMsg struct {
-	index   int
-	success bool
-	message string
-}
 type bootDoneMsg struct{}
 
 // NewBootModel creates a new boot model
 func NewBootModel(cfg StartupConfig, initQueue []ServiceInit) BootModel {
 	s := spinner.New()
 	s.Spinner = spinner.Dot
-	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF79C6"))
+	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("#ffa8d9ff"))
 
 	p := progress.New(
-		progress.WithScaledGradient("#FF79C6", "#8BE9FD"),
+		progress.WithScaledGradient("#ffa4d8ff", "#caf5ffff"),
 		progress.WithWidth(50),
 	)
 
@@ -376,12 +365,13 @@ func (m BootModel) View() string {
 	if m.done {
 		elapsed := time.Since(m.startTime).Round(time.Millisecond)
 
-		if m.phase == "complete" {
+		switch m.phase {
+		case "complete":
 			msg := fmt.Sprintf("\n🚀 Server ready at http://localhost:%s", m.config.Port)
 			b.WriteString(bootCompleteStyle.Render(msg))
 			b.WriteString("\n")
 			b.WriteString(bootInfoStyle.Render(fmt.Sprintf("⚡ Started in %s", elapsed)))
-		} else if m.phase == "error" {
+		case "error":
 			b.WriteString(bootErrorStyle.Render("\n⚠️  Boot sequence encountered errors"))
 		}
 		b.WriteString("\n")
@@ -393,14 +383,14 @@ func (m BootModel) View() string {
 		// Countdown timer display
 		countdownStyle := lipgloss.NewStyle().
 			Bold(true).
-			Foreground(lipgloss.Color("#FFB86C"))
+			Foreground(lipgloss.Color("#ffdab3ff"))
 
 		progressWidth := 30
 		progressPercent := float64(m.countdown) / float64(m.config.IdleSeconds)
 		filled := int(progressPercent * float64(progressWidth))
 		empty := progressWidth - filled
 
-		progressBar := lipgloss.NewStyle().Foreground(lipgloss.Color("#50FA7B")).Render(strings.Repeat("█", filled)) +
+		progressBar := lipgloss.NewStyle().Foreground(lipgloss.Color("#b6ffc8ff")).Render(strings.Repeat("█", filled)) +
 			lipgloss.NewStyle().Foreground(lipgloss.Color("#44475A")).Render(strings.Repeat("░", empty))
 
 		footerText = fmt.Sprintf("\n  %s Starting server in %s seconds...\n  %s\n\n  Press 'q' to skip and continue now",
@@ -418,7 +408,9 @@ func (m BootModel) View() string {
 	b.WriteString("\n")
 	b.WriteString(footer)
 
-	return b.String()
+	// Wrap entire content with padding
+	containerStyle := lipgloss.NewStyle().Padding(2)
+	return containerStyle.Render(b.String())
 }
 
 func (m BootModel) renderBootServices() string {

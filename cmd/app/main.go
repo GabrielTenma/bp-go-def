@@ -67,11 +67,17 @@ func main() {
 
 // runWithTUI runs the application with fancy TUI interface
 func runWithTUI(cfg *config.Config, bannerText string, broadcaster *monitoring.LogBroadcaster) {
+	// Config conditions
+	if !cfg.Monitoring.Enabled {
+		cfg.Monitoring.Port = "disabled"
+	}
+
 	tuiConfig := tui.StartupConfig{
 		AppName:     cfg.App.Name,
-		AppVersion:  "1.0.0",
+		AppVersion:  cfg.App.Version,
 		Banner:      bannerText,
 		Port:        cfg.Server.Port,
+		MonitorPort: cfg.Monitoring.Port,
 		Env:         cfg.App.Env,
 		IdleSeconds: cfg.App.StartupDelay,
 	}
@@ -99,11 +105,12 @@ func runWithTUI(cfg *config.Config, bannerText string, broadcaster *monitoring.L
 
 	// Create Live TUI for continuous display
 	liveTUI := tui.NewLiveTUI(tui.LiveConfig{
-		AppName:    cfg.App.Name,
-		AppVersion: "1.0.0",
-		Banner:     bannerText,
-		Port:       cfg.Server.Port,
-		Env:        cfg.App.Env,
+		AppName:     cfg.App.Name,
+		AppVersion:  cfg.App.Version,
+		Banner:      bannerText,
+		Port:        cfg.Server.Port,
+		MonitorPort: cfg.Monitoring.Port,
+		Env:         cfg.App.Env,
 	})
 
 	// Init Logger (quiet mode so logs go to TUI only)
@@ -134,6 +141,7 @@ func runWithTUI(cfg *config.Config, bannerText string, broadcaster *monitoring.L
 	time.Sleep(500 * time.Millisecond)
 	liveTUI.AddLog("info", "Server ready at http://localhost:"+cfg.Server.Port)
 	if cfg.Monitoring.Enabled {
+		time.Sleep(500 * time.Millisecond)
 		liveTUI.AddLog("info", "Monitoring at http://localhost:"+cfg.Monitoring.Port)
 	}
 
