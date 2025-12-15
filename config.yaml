@@ -11,10 +11,10 @@ server:
   port: "8080"
 
 services:
-  enable_service_a: true
-  enable_service_b: false
-  enable_service_c: true
-  enable_service_d: false
+  service_a: true
+  service_b: false
+  service_c: true
+  service_d: false
 
 auth:
   type: "apikey"

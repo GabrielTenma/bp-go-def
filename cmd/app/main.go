@@ -84,12 +84,15 @@ func runWithTUI(cfg *config.Config, bannerText string, broadcaster *monitoring.L
 		{Name: "PostgreSQL", Enabled: cfg.Postgres.Enabled, InitFunc: nil},
 		{Name: "Cron Scheduler", Enabled: cfg.Cron.Enabled, InitFunc: nil},
 		{Name: "Middleware", Enabled: true, InitFunc: nil},
-		{Name: "Service A", Enabled: cfg.Services.EnableServiceA, InitFunc: nil},
-		{Name: "Service B", Enabled: cfg.Services.EnableServiceB, InitFunc: nil},
-		{Name: "Service C", Enabled: cfg.Services.EnableServiceC, InitFunc: nil},
-		{Name: "Service D", Enabled: cfg.Services.EnableServiceD, InitFunc: nil},
-		{Name: "Monitoring", Enabled: cfg.Monitoring.Enabled, InitFunc: nil},
 	}
+
+	// Dynamically add services from config
+	for name, enabled := range cfg.Services {
+		initQueue = append(initQueue, tui.ServiceInit{Name: "Service: " + name, Enabled: enabled, InitFunc: nil})
+	}
+
+	// Add monitoring last
+	initQueue = append(initQueue, tui.ServiceInit{Name: "Monitoring", Enabled: cfg.Monitoring.Enabled, InitFunc: nil})
 
 	// Run the boot sequence TUI
 	_, _ = tui.RunBootSequence(tuiConfig, initQueue)
@@ -167,10 +170,12 @@ func runWithConsole(cfg *config.Config, bannerText string, broadcaster *monitori
 	logServiceStatus(l, "Kafka Messaging", cfg.Kafka.Enabled)
 	logServiceStatus(l, "PostgreSQL", cfg.Postgres.Enabled)
 	logServiceStatus(l, "Cron Scheduler", cfg.Cron.Enabled)
-	logServiceStatus(l, "Service A", cfg.Services.EnableServiceA)
-	logServiceStatus(l, "Service B", cfg.Services.EnableServiceB)
-	logServiceStatus(l, "Service C", cfg.Services.EnableServiceC)
-	logServiceStatus(l, "Service D", cfg.Services.EnableServiceD)
+
+	// Dynamically log all services from config
+	for name, enabled := range cfg.Services {
+		logServiceStatus(l, "Service: "+name, enabled)
+	}
+
 	logServiceStatus(l, "Monitoring", cfg.Monitoring.Enabled)
 
 	// Start Server

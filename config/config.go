@@ -69,11 +69,20 @@ type ServerConfig struct {
 	Port string `mapstructure:"port"`
 }
 
-type ServicesConfig struct {
-	EnableServiceA bool `mapstructure:"enable_service_a"`
-	EnableServiceB bool `mapstructure:"enable_service_b"`
-	EnableServiceC bool `mapstructure:"enable_service_c"`
-	EnableServiceD bool `mapstructure:"enable_service_d"`
+// ServicesConfig is a dynamic map of service names to their enabled status.
+// Add new services directly in config.yaml without modifying this type.
+// Example: services:
+//
+//	service_a: true
+//	service_b: false
+type ServicesConfig map[string]bool
+
+// IsEnabled checks if a service is enabled. Returns true by default if not specified.
+func (s ServicesConfig) IsEnabled(serviceName string) bool {
+	if enabled, exists := s[serviceName]; exists {
+		return enabled
+	}
+	return true // Default to enabled if not specified
 }
 
 type AuthConfig struct {
@@ -123,10 +132,8 @@ func LoadConfig() (*Config, error) {
 	viper.SetDefault("app.enable_tui", true)    // TUI enabled by default
 	viper.SetDefault("server.port", "8080")
 	viper.SetDefault("auth.type", "none")
-	viper.SetDefault("services.enable_service_a", true)
-	viper.SetDefault("services.enable_service_b", true)
-	viper.SetDefault("services.enable_service_c", true)
-	viper.SetDefault("services.enable_service_d", true)
+	// Services config uses a dynamic map - no hardcoded defaults needed
+	// Services default to enabled if not specified (see ServicesConfig.IsEnabled)
 
 	viper.SetDefault("redis.enabled", false)
 	viper.SetDefault("kafka.enabled", false)
