@@ -21,8 +21,9 @@ func NewServiceC(enabled bool) *ServiceC {
 	}
 }
 
-func (s *ServiceC) Name() string  { return "Service C (Cache Demo)" }
-func (s *ServiceC) Enabled() bool { return s.enabled }
+func (s *ServiceC) Name() string        { return "Service C (Cache Demo)" }
+func (s *ServiceC) Enabled() bool       { return s.enabled }
+func (s *ServiceC) Endpoints() []string { return []string{"/cache"} }
 
 type CacheRequest struct {
 	Value string `json:"value"`

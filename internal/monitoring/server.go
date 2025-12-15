@@ -20,10 +20,10 @@ type StatusProvider interface {
 }
 
 type ServiceInfo struct {
-	Name       string `json:"name"`
-	StructName string `json:"struct_name"`
-	Active     bool   `json:"active"`
-	Endpoint   string `json:"endpoint"`
+	Name       string   `json:"name"`
+	StructName string   `json:"struct_name"`
+	Active     bool     `json:"active"`
+	Endpoints  []string `json:"endpoints"`
 }
 
 func Start(

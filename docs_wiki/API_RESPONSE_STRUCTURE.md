@@ -239,6 +239,13 @@ type SortRequest struct {
 7. **Use pagination** - For list endpoints, always support pagination
 8. **Keep responses consistent** - All endpoints should follow the same structure
 
+## Exposed Endpoints (Service A)
+- `GET /api/v1/users` - List users
+- `GET /api/v1/users/:id` - Get user details
+- `POST /api/v1/users` - Create user
+- `PUT /api/v1/users/:id` - Update user
+- `DELETE /api/v1/users/:id` - Delete user
+
 ## Example Complete Handler
 
 ```go

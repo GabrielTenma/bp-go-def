@@ -854,7 +854,8 @@
                                     <template x-for="svc in endpoints">
                                         <tr class="border-b transition-colors hover:bg-muted/50">
                                             <td class="p-4 align-middle font-medium" x-text="svc.name"></td>
-                                            <td class="p-4 align-middle text-muted-foreground" x-text="svc.endpoint">
+                                            <td class="p-4 align-middle text-muted-foreground"
+                                                x-text="svc.endpoints ? svc.endpoints.join(', ') : ''">
                                             </td>
                                             <td class="p-4 align-middle">
                                                 <span

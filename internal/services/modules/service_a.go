@@ -16,8 +16,9 @@ func NewServiceA(enabled bool) *ServiceA {
 	return &ServiceA{enabled: enabled}
 }
 
-func (s *ServiceA) Name() string  { return "Service A (Users)" }
-func (s *ServiceA) Enabled() bool { return s.enabled }
+func (s *ServiceA) Name() string        { return "Service A (Users)" }
+func (s *ServiceA) Enabled() bool       { return s.enabled }
+func (s *ServiceA) Endpoints() []string { return []string{"/users", "/users/:id"} }
 
 func (s *ServiceA) RegisterRoutes(g *echo.Group) {
 	sub := g.Group("/users")

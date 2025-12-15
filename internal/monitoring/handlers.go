@@ -13,8 +13,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-const bannerFilePath = "data/banner.txt" // Or wherever you want to store the banner file
-
 type Handler struct {
 	config         *config.Config
 	statusProvider StatusProvider
@@ -35,7 +33,6 @@ type Handler struct {
 }
 
 func (h *Handler) RegisterRoutes(g *echo.Group) {
-	// e.GET("/", h.serveUI) // handled by static now
 	g.GET("/api/status", h.getStatus)
 	g.POST("/api/restart", h.Restart)                      // Maintenance
 	g.GET("/api/monitoring/config", h.getMonitoringConfig) // New

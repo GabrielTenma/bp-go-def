@@ -2,6 +2,7 @@ package server
 
 import (
 	"os"
+	"reflect"
 	"test-go/config"
 	"test-go/internal/middleware"
 	"test-go/internal/monitoring"
@@ -35,7 +36,34 @@ func New(cfg *config.Config, l *logger.Logger, b *monitoring.LogBroadcaster) *Se
 	// Custom HTTP Error Handler for JSON responses
 	e.HTTPErrorHandler = func(err error, c echo.Context) {
 		l.Error("HTTP Error", err)
-		e.DefaultHTTPErrorHandler(err, c)
+
+		// Handle HTTP errors with JSON response
+		if he, ok := err.(*echo.HTTPError); ok {
+			var message string
+			code := he.Code
+
+			// Custom message for 404 Not Found
+			if code == 404 {
+				message = "Endpoint not found. This incident will be reported."
+				response.Error(c, code, "ENDPOINT_NOT_FOUND", message, map[string]interface{}{
+					"path":   c.Request().URL.Path,
+					"method": c.Request().Method,
+				})
+				return
+			}
+
+			// For other HTTP errors, use the original message if it's a string
+			if msg, ok := he.Message.(string); ok {
+				message = msg
+			} else {
+				message = "An unexpected error occurred"
+			}
+			response.Error(c, code, "HTTP_ERROR", message)
+			return
+		}
+
+		// For non-HTTP errors, return internal server error
+		response.InternalServerError(c, "An unexpected error occurred")
 	}
 
 	return &Server{
@@ -141,11 +169,21 @@ func (s *Server) Start() error {
 
 	// 4. Start Monitoring (if enabled)
 	if s.config.Monitoring.Enabled {
-		servicesList := []monitoring.ServiceInfo{
-			{Name: "Service A", StructName: "modules.ServiceA", Active: s.config.Services.EnableServiceA, Endpoint: "/api/v1/service-a"},
-			{Name: "Service B", StructName: "modules.ServiceB", Active: s.config.Services.EnableServiceB, Endpoint: "/api/v1/service-b"},
-			{Name: "Service C", StructName: "modules.ServiceC", Active: s.config.Services.EnableServiceC, Endpoint: "/api/v1/service-c"},
-			{Name: "Service D", StructName: "modules.ServiceD", Active: s.config.Services.EnableServiceD, Endpoint: "/tasks"},
+		// Dynamic Service List Generation
+		var servicesList []monitoring.ServiceInfo
+		for _, srv := range registry.GetServices() {
+			// Prepend /api/v1 to endpoints
+			var fullEndpoints []string
+			for _, endp := range srv.Endpoints() {
+				fullEndpoints = append(fullEndpoints, "/api/v1"+endp)
+			}
+
+			servicesList = append(servicesList, monitoring.ServiceInfo{
+				Name:       srv.Name(),
+				StructName: reflect.TypeOf(srv).Elem().String(),
+				Active:     srv.Enabled(),
+				Endpoints:  fullEndpoints,
+			})
 		}
 		go monitoring.Start(s.config.Monitoring, s.config, s, s.broadcaster, s.redisManager, s.postgresManager, s.kafkaManager, s.cronManager, servicesList)
 		s.logger.Info("Monitoring interface started", "port", s.config.Monitoring.Port)

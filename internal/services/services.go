@@ -11,6 +11,7 @@ type Service interface {
 	Name() string
 	RegisterRoutes(g *echo.Group)
 	Enabled() bool
+	Endpoints() []string
 }
 
 // Registry holds available services
@@ -30,6 +31,11 @@ func NewRegistry(l *logger.Logger) *Registry {
 // Register adds a service to the registry
 func (r *Registry) Register(s Service) {
 	r.services = append(r.services, s)
+}
+
+// GetServices returns the list of registered services
+func (r *Registry) GetServices() []Service {
+	return r.services
 }
 
 // Boot initializes enabled services and registers their routes
