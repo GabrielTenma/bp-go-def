@@ -217,6 +217,8 @@ function app() {
         // Infrastructure Data
         redis: {},
         postgres: {},
+        postgresConnections: [], // New: List of all PostgreSQL connections
+        selectedPostgresConnection: 'default', // New: Currently selected connection
         pgQueries: [],
         pgRefreshInterval: 5000, // Default 5s for running queries refresh
         pgRefreshActive: false,
@@ -377,6 +379,7 @@ function app() {
                     if (val === 'endpoints') this.fetchEndpoints();
                     if (val === 'redis') this.fetchRedisKeys();
                     if (val === 'postgres') {
+                        this.fetchPostgresConnections();
                         this.fetchPgQueries();
                         this.fetchPgInfo();
                     } else {
@@ -435,7 +438,7 @@ function app() {
             this.queryResults = null;
 
             try {
-                const res = await fetch('/api/postgres/query', {
+                const res = await fetch(`/api/postgres/query?connection=${encodeURIComponent(this.selectedPostgresConnection)}`, {
                     method: 'POST',
                     headers: this.getHeaders(),
                     body: JSON.stringify({ query: this.sqlQuery })
@@ -630,9 +633,10 @@ function app() {
                 // Infrastructure
                 // Backend returns keys: redis, postgres, kafka, minio(storage), external
                 // We map them to infraStatus for simple TRUE/FALSE checks or specific logic
+                const hasConfiguredPostgres = data.postgres && data.postgres.connections && Object.keys(data.postgres.connections).length > 0;
                 const infra = {
                     redis: data.redis && data.redis.connected,
-                    postgres: data.postgres && data.postgres.connected,
+                    postgres: hasConfiguredPostgres,
                     kafka: data.kafka && data.kafka.connected,
                     minio: data.storage && data.storage.connected,
                     external: data.external && data.external.length > 0
@@ -836,7 +840,7 @@ function app() {
 
         async fetchPgQueries() {
             try {
-                const res = await fetch('/api/postgres/queries', { headers: this.getHeaders() });
+                const res = await fetch(`/api/postgres/queries?connection=${encodeURIComponent(this.selectedPostgresConnection)}`, { headers: this.getHeaders() });
                 const response = await res.json();
                 this.pgQueries = response.data || [];
             } catch (e) { this.pgQueries = []; }
@@ -875,10 +879,52 @@ function app() {
 
         async fetchPgInfo() {
             try {
-                const res = await fetch('/api/postgres/info', { headers: this.getHeaders() });
+                const res = await fetch(`/api/postgres/info?connection=${encodeURIComponent(this.selectedPostgresConnection)}`, { headers: this.getHeaders() });
                 const response = await res.json();
                 this.pgInfo = response.data || {};
             } catch (e) { }
+        },
+
+        async fetchPostgresConnections() {
+            try {
+                const res = await fetch('/api/status', { headers: this.getHeaders() });
+                const response = await res.json();
+                const data = response.data || {};
+
+                // Check if postgres data contains connections object
+                if (data.postgres && data.postgres.connections && typeof data.postgres.connections === 'object') {
+                    // Extract connections from the connections object
+                    const connections = Object.keys(data.postgres.connections).map(connName => ({
+                        name: connName,
+                        status: data.postgres.connections[connName]
+                    }));
+
+                    if (connections.length > 0) {
+                        this.postgresConnections = connections;
+                        // Keep current selection if it's still valid, otherwise set to first connection
+                        const currentValid = connections.some(conn => conn.name === this.selectedPostgresConnection);
+                        if (!currentValid) {
+                            this.selectedPostgresConnection = connections[0].name || 'default';
+                        }
+                    } else {
+                        this.postgresConnections = [];
+                        this.selectedPostgresConnection = 'default';
+                    }
+                } else {
+                    this.postgresConnections = [];
+                }
+            } catch (e) {
+                console.error("Failed to fetch PostgreSQL connections", e);
+                this.postgresConnections = [];
+            }
+        },
+
+        async changePostgresConnection(connectionName) {
+            this.selectedPostgresConnection = connectionName;
+            // Refresh PostgreSQL data for the selected connection
+            await this.fetchPgInfo();
+            await this.fetchPgQueries();
+            this.showToast(`Switched to PostgreSQL connection: ${connectionName}`, 'info');
         },
 
         async fetchKafka() {

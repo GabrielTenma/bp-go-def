@@ -3,8 +3,8 @@ package infrastructure
 import (
 	"context"
 	"fmt"
-	"log"
 	"test-go/config"
+	"test-go/pkg/logger"
 
 	"github.com/IBM/sarama"
 )
@@ -13,9 +13,10 @@ type KafkaManager struct {
 	Producer sarama.SyncProducer
 	Brokers  []string
 	GroupID  string
+	logger   *logger.Logger
 }
 
-func NewKafkaManager(cfg config.KafkaConfig) (*KafkaManager, error) {
+func NewKafkaManager(cfg config.KafkaConfig, logger *logger.Logger) (*KafkaManager, error) {
 	if !cfg.Enabled {
 		return nil, nil
 	}
@@ -34,6 +35,7 @@ func NewKafkaManager(cfg config.KafkaConfig) (*KafkaManager, error) {
 		Producer: producer,
 		Brokers:  cfg.Brokers,
 		GroupID:  cfg.GroupID,
+		logger:   logger,
 	}, nil
 }
 
@@ -71,6 +73,7 @@ func (k *KafkaManager) Consume(ctx context.Context, topic string, handler func(k
 
 	consumer := &consumerHandler{
 		handler: handler,
+		logger:  k.logger,
 	}
 
 	for {
@@ -88,6 +91,7 @@ func (k *KafkaManager) Consume(ctx context.Context, topic string, handler func(k
 // consumerHandler implements sarama.ConsumerGroupHandler
 type consumerHandler struct {
 	handler func(key, value []byte) error
+	logger  *logger.Logger
 }
 
 func (h *consumerHandler) Setup(sarama.ConsumerGroupSession) error   { return nil }
@@ -95,7 +99,7 @@ func (h *consumerHandler) Cleanup(sarama.ConsumerGroupSession) error { return ni
 func (h *consumerHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for message := range claim.Messages() {
 		if err := h.handler(message.Key, message.Value); err != nil {
-			log.Printf("Error handling message: %v", err)
+			h.logger.Error("Error handling message", err)
 		}
 		session.MarkMessage(message, "")
 	}

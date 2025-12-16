@@ -27,7 +27,7 @@ type ServiceE struct {
 func NewServiceE(enabled bool, config map[string]interface{}) *ServiceE {
 	// Extract configuration
 	algorithm := "aes-256-gcm"
-	key := "default-encryption-key-32-bytes-long-12345"
+	key := ""
 
 	if config != nil {
 		if alg, ok := config["algorithm"].(string); ok && alg != "" {

@@ -33,6 +33,7 @@ func Start(
 	broadcaster *LogBroadcaster,
 	redis *infrastructure.RedisManager,
 	postgres *infrastructure.PostgresManager,
+	postgresConnectionManager *infrastructure.PostgresConnectionManager,
 	kafka *infrastructure.KafkaManager,
 	cron *infrastructure.CronManager,
 	services []ServiceInfo,
@@ -113,17 +114,18 @@ func Start(
 
 	// Register API Handlers
 	h := &Handler{
-		config:         appConfig,
-		statusProvider: statusProvider,
-		broadcaster:    broadcaster,
-		redis:          redis,
-		postgres:       postgres,
-		kafka:          kafka,
-		cron:           cron,
-		services:       services,
-		minio:          minioMgr,
-		system:         systemMgr,
-		http:           httpMgr,
+		config:                    appConfig,
+		statusProvider:            statusProvider,
+		broadcaster:               broadcaster,
+		redis:                     redis,
+		postgres:                  postgres,
+		postgresConnectionManager: postgresConnectionManager,
+		kafka:                     kafka,
+		cron:                      cron,
+		services:                  services,
+		minio:                     minioMgr,
+		system:                    systemMgr,
+		http:                      httpMgr,
 	}
 	h.RegisterRoutes(protected)
 

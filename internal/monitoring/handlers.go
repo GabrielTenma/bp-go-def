@@ -14,17 +14,18 @@ import (
 )
 
 type Handler struct {
-	config         *config.Config
-	statusProvider StatusProvider
-	broadcaster    *LogBroadcaster
-	redis          *infrastructure.RedisManager
-	postgres       *infrastructure.PostgresManager
-	kafka          *infrastructure.KafkaManager
-	cron           *infrastructure.CronManager
-	minio          *infrastructure.MinIOManager
-	system         *infrastructure.SystemManager
-	http           *infrastructure.HttpManager
-	services       []ServiceInfo
+	config                    *config.Config
+	statusProvider            StatusProvider
+	broadcaster               *LogBroadcaster
+	redis                     *infrastructure.RedisManager
+	postgres                  *infrastructure.PostgresManager
+	postgresConnectionManager *infrastructure.PostgresConnectionManager
+	kafka                     *infrastructure.KafkaManager
+	cron                      *infrastructure.CronManager
+	minio                     *infrastructure.MinIOManager
+	system                    *infrastructure.SystemManager
+	http                      *infrastructure.HttpManager
+	services                  []ServiceInfo
 
 	// Dummy Logs
 	dummyMu     sync.Mutex
@@ -160,7 +161,52 @@ func (h *Handler) getStatus(c echo.Context) error {
 	// Collect status from all sources
 	status := h.statusProvider.GetStatus()
 	status["redis"] = h.redis.GetStatus()
-	status["postgres"] = h.postgres.GetStatus()
+
+	// Handle both single and multiple PostgreSQL connections
+	if h.postgresConnectionManager != nil || (h.config.PostgresMultiConfig.Enabled && len(h.config.PostgresMultiConfig.Connections) > 0) {
+		// For multiple connections, format the status for frontend compatibility
+		var pgStatus map[string]map[string]interface{}
+		if h.postgresConnectionManager != nil {
+			pgStatus = h.postgresConnectionManager.GetStatus()
+		} else {
+			pgStatus = make(map[string]map[string]interface{})
+		}
+
+		var connectionStatuses = make(map[string]interface{})
+
+		// Include all configured connections, even if they failed to connect
+		for _, connCfg := range h.config.PostgresMultiConfig.Connections {
+			connName := connCfg.Name
+			if connStatus, exists := pgStatus[connName]; exists {
+				connectionStatuses[connName] = connStatus
+			} else {
+				// Connection configured but failed to connect
+				connectionStatuses[connName] = map[string]interface{}{
+					"connected": false,
+				}
+			}
+		}
+
+		// Check if any connection is connected
+		anyConnected := false
+		for _, connStatus := range connectionStatuses {
+			if statusMap, ok := connStatus.(map[string]interface{}); ok {
+				if connected, ok := statusMap["connected"].(bool); ok && connected {
+					anyConnected = true
+					break
+				}
+			}
+		}
+
+		// Set overall postgres status with connected flag and connection details
+		status["postgres"] = map[string]interface{}{
+			"connected":   anyConnected,
+			"connections": connectionStatuses,
+		}
+	} else {
+		status["postgres"] = h.postgres.GetStatus()
+	}
+
 	status["kafka"] = h.kafka.GetStatus()
 	status["cron"] = h.cron.GetStatus()
 
@@ -220,10 +266,47 @@ func (h *Handler) getRedisValue(c echo.Context) error {
 }
 
 func (h *Handler) getPostgresQueries(c echo.Context) error {
-	if h.postgres == nil {
+	// Check if PostgreSQL is enabled in configuration
+	if !h.config.Postgres.Enabled && !h.config.PostgresMultiConfig.Enabled {
 		return response.ServiceUnavailable(c, "Postgres not enabled")
 	}
-	queries, err := h.postgres.GetRunningQueries(c.Request().Context())
+
+	// Get requested connection from query param
+	connectionName := c.QueryParam("connection")
+
+	// Use connection manager if available, otherwise fallback to single connection
+	var postgresManager *infrastructure.PostgresManager
+	if h.postgresConnectionManager != nil {
+		if connectionName != "" {
+			// Use specific connection if requested
+			if conn, exists := h.postgresConnectionManager.GetConnection(connectionName); exists {
+				postgresManager = conn
+			}
+			// If specific connection requested but not found, don't fallback
+		} else {
+			// Use default connection
+			if defaultConn, exists := h.postgresConnectionManager.GetDefaultConnection(); exists {
+				postgresManager = defaultConn
+			}
+		}
+	} else {
+		postgresManager = h.postgres
+	}
+
+	// If we have a connection manager but no connection found, try to get any available connection (only if no specific connection requested)
+	if postgresManager == nil && h.postgresConnectionManager != nil && connectionName == "" {
+		allConnections := h.postgresConnectionManager.GetAllConnections()
+		for _, conn := range allConnections {
+			postgresManager = conn
+			break // Use the first available connection
+		}
+	}
+
+	if postgresManager == nil {
+		return response.Success(c, []interface{}{})
+	}
+
+	queries, err := postgresManager.GetRunningQueries(c.Request().Context())
 	if err != nil {
 		return response.InternalServerError(c, err.Error())
 	}
@@ -231,23 +314,94 @@ func (h *Handler) getPostgresQueries(c echo.Context) error {
 }
 
 func (h *Handler) getPostgresInfo(c echo.Context) error {
-	if h.postgres == nil {
+	// Check if PostgreSQL is enabled in configuration
+	if !h.config.Postgres.Enabled && !h.config.PostgresMultiConfig.Enabled {
 		return response.ServiceUnavailable(c, "Postgres not enabled")
 	}
-	info, err := h.postgres.GetDBInfo(c.Request().Context())
+
+	// Get requested connection from query param
+	connectionName := c.QueryParam("connection")
+
+	// Use connection manager if available, otherwise fallback to single connection
+	var postgresManager *infrastructure.PostgresManager
+	if h.postgresConnectionManager != nil {
+		if connectionName != "" {
+			// Use specific connection if requested
+			if conn, exists := h.postgresConnectionManager.GetConnection(connectionName); exists {
+				postgresManager = conn
+			}
+		} else {
+			// Use default connection
+			if defaultConn, exists := h.postgresConnectionManager.GetDefaultConnection(); exists {
+				postgresManager = defaultConn
+			}
+		}
+	} else {
+		postgresManager = h.postgres
+	}
+
+	// If we have a connection manager but no connection found, try to get any available connection (only if no specific connection requested)
+	if postgresManager == nil && h.postgresConnectionManager != nil && connectionName == "" {
+		allConnections := h.postgresConnectionManager.GetAllConnections()
+		for _, conn := range allConnections {
+			postgresManager = conn
+			break // Use the first available connection
+		}
+	}
+
+	if postgresManager == nil {
+		return response.Success(c, map[string]interface{}{})
+	}
+
+	info, err := postgresManager.GetDBInfo(c.Request().Context())
 	if err != nil {
 		return response.InternalServerError(c, err.Error())
 	}
 
-	count, _ := h.postgres.GetSessionCount(c.Request().Context())
+	count, _ := postgresManager.GetSessionCount(c.Request().Context())
 	info["sessions"] = count
 
 	return response.Success(c, info)
 }
 
 func (h *Handler) runPostgresQuery(c echo.Context) error {
-	if h.postgres == nil {
+	// Check if PostgreSQL is enabled in configuration
+	if !h.config.Postgres.Enabled && !h.config.PostgresMultiConfig.Enabled {
 		return response.ServiceUnavailable(c, "Postgres not enabled")
+	}
+
+	// Get requested connection from query param
+	connectionName := c.QueryParam("connection")
+
+	// Use connection manager if available, otherwise fallback to single connection
+	var postgresManager *infrastructure.PostgresManager
+	if h.postgresConnectionManager != nil {
+		if connectionName != "" {
+			// Use specific connection if requested
+			if conn, exists := h.postgresConnectionManager.GetConnection(connectionName); exists {
+				postgresManager = conn
+			}
+		} else {
+			// Use default connection
+			if defaultConn, exists := h.postgresConnectionManager.GetDefaultConnection(); exists {
+				postgresManager = defaultConn
+			}
+		}
+	} else {
+		postgresManager = h.postgres
+	}
+
+	// If we have a connection manager but no connection found, try to get any available connection (only if no specific connection requested)
+	if postgresManager == nil && h.postgresConnectionManager != nil && connectionName == "" {
+		allConnections := h.postgresConnectionManager.GetAllConnections()
+		for _, conn := range allConnections {
+			postgresManager = conn
+			break // Use the first available connection
+		}
+	}
+
+	if postgresManager == nil {
+		return response.ServiceUnavailable(c, "Postgres connection not available")
 	}
 
 	type QueryReq struct {
@@ -267,7 +421,7 @@ func (h *Handler) runPostgresQuery(c echo.Context) error {
 	// 	 return response.Forbidden(c, "Only SELECT queries are allowed in this demo")
 	// }
 
-	results, err := h.postgres.ExecuteRawQuery(c.Request().Context(), req.Query)
+	results, err := postgresManager.ExecuteRawQuery(c.Request().Context(), req.Query)
 	if err != nil {
 		return response.InternalServerError(c, err.Error())
 	}

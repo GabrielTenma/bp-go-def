@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"sync"
 	"test-go/config"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -14,6 +15,11 @@ import (
 type PostgresManager struct {
 	DB  *sql.DB
 	ORM *gorm.DB
+}
+
+type PostgresConnectionManager struct {
+	connections map[string]*PostgresManager
+	mu          sync.RWMutex
 }
 
 func NewPostgresDB(cfg config.PostgresConfig) (*PostgresManager, error) {
@@ -46,6 +52,107 @@ func NewPostgresDB(cfg config.PostgresConfig) (*PostgresManager, error) {
 		DB:  sqlDB,
 		ORM: gormDB,
 	}, nil
+}
+
+func NewPostgresConnectionManager(cfg config.PostgresMultiConfig) (*PostgresConnectionManager, error) {
+	if !cfg.Enabled {
+		return nil, nil
+	}
+
+	manager := &PostgresConnectionManager{
+		connections: make(map[string]*PostgresManager),
+	}
+
+	for _, connCfg := range cfg.Connections {
+		if !connCfg.Enabled {
+			continue
+		}
+
+		// Convert connection config to single config for backward compatibility
+		singleCfg := config.PostgresConfig{
+			Enabled:  connCfg.Enabled,
+			Host:     connCfg.Host,
+			Port:     connCfg.Port,
+			User:     connCfg.User,
+			Password: connCfg.Password,
+			DBName:   connCfg.DBName,
+			SSLMode:  connCfg.SSLMode,
+		}
+
+		db, err := NewPostgresDB(singleCfg)
+		if err != nil {
+			// Log error but continue with other connections
+			// Don't fail the entire manager initialization
+			continue
+		}
+
+		if db != nil {
+			manager.connections[connCfg.Name] = db
+		}
+	}
+
+	return manager, nil
+}
+
+// GetConnection returns a specific named connection
+func (m *PostgresConnectionManager) GetConnection(name string) (*PostgresManager, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	conn, exists := m.connections[name]
+	return conn, exists
+}
+
+// GetDefaultConnection returns the first connection or nil if none exist
+func (m *PostgresConnectionManager) GetDefaultConnection() (*PostgresManager, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	for _, conn := range m.connections {
+		return conn, true
+	}
+	return nil, false
+}
+
+// GetAllConnections returns all connections
+func (m *PostgresConnectionManager) GetAllConnections() map[string]*PostgresManager {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	// Create a copy to avoid race conditions
+	copy := make(map[string]*PostgresManager, len(m.connections))
+	for k, v := range m.connections {
+		copy[k] = v
+	}
+	return copy
+}
+
+// GetStatus returns status for all connections
+func (m *PostgresConnectionManager) GetStatus() map[string]map[string]interface{} {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	status := make(map[string]map[string]interface{})
+
+	for name, conn := range m.connections {
+		status[name] = conn.GetStatus()
+	}
+
+	return status
+}
+
+// CloseAll closes all connections
+func (m *PostgresConnectionManager) CloseAll() error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	var errors []error
+	for name, conn := range m.connections {
+		if err := conn.DB.Close(); err != nil {
+			errors = append(errors, fmt.Errorf("failed to close connection '%s': %w", name, err))
+		}
+	}
+
+	if len(errors) > 0 {
+		return fmt.Errorf("errors closing connections: %v", errors)
+	}
+	return nil
 }
 
 func (p *PostgresManager) GetStatus() map[string]interface{} {

@@ -1,9 +1,9 @@
 package modules
 
 import (
-	"fmt"
 	"strconv"
 	"test-go/pkg/infrastructure"
+	"test-go/pkg/logger"
 	"test-go/pkg/response"
 
 	"github.com/labstack/echo/v4"
@@ -19,18 +19,20 @@ type Task struct {
 
 type ServiceD struct {
 	db      *infrastructure.PostgresManager
+	logger  *logger.Logger
 	enabled bool
 }
 
-func NewServiceD(db *infrastructure.PostgresManager, enabled bool) *ServiceD {
+func NewServiceD(db *infrastructure.PostgresManager, enabled bool, logger *logger.Logger) *ServiceD {
 	if enabled && db != nil && db.ORM != nil {
 		// Auto-migrate the schema
 		if err := db.ORM.AutoMigrate(&Task{}); err != nil {
-			fmt.Printf("Error migrating Task model: %v\n", err)
+			logger.Error("Error migrating Task model", err)
 		}
 	}
 	return &ServiceD{
 		db:      db,
+		logger:  logger,
 		enabled: enabled,
 	}
 }

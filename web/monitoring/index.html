@@ -976,6 +976,62 @@
 
                     <template x-if="infraStatus.postgres">
                         <div class="space-y-6">
+                            <!-- Database Connection Selector -->
+                            <div class="rounded-md border bg-card shadow-sm p-4">
+                                <div class="flex items-center gap-4">
+                                    <div class="flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+                                            <path d="M2 12h20"></path>
+                                            <path d="M12 2v20"></path>
+                                            <path d="M20 20a1 1 0 1 0 2 0a1 1 0 1 0-2 0"></path>
+                                            <path d="M4 20a1 1 0 1 0 2 0a1 1 0 1 0-2 0"></path>
+                                            <path d="M20 4a1 1 0 1 0 2 0a1 1 0 1 0-2 0"></path>
+                                            <path d="M4 4a1 1 0 1 0 2 0a1 1 0 1 0-2 0"></path>
+                                        </svg>
+                                        <span class="font-medium">Database Connection:</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <!-- Custom Shadcn-style Dropdown -->
+                                        <div class="relative" x-data="{ open: false }">
+                                            <button @click="open = !open" @click.outside="open = false"
+                                                class="flex items-center gap-2 h-9 px-3 text-sm font-medium border rounded-md bg-background hover:bg-accent hover:text-accent-foreground transition-colors focus:outline-none focus:ring-1 focus:ring-ring">
+                                                <span class="text-muted-foreground mr-1">Connection:</span>
+                                                <span x-text="selectedPostgresConnection"></span>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="opacity-50">
+                                                    <path d="m6 9 6 6 6-6" />
+                                                </svg>
+                                            </button>
+                                            <div x-show="open" x-transition:enter="transition ease-out duration-100"
+                                                x-transition:enter-start="opacity-0 scale-95"
+                                                x-transition:enter-end="opacity-100 scale-100"
+                                                x-transition:leave="transition ease-in duration-75"
+                                                x-transition:leave-start="opacity-100 scale-100"
+                                                x-transition:leave-end="opacity-0 scale-95"
+                                                class="absolute top-full left-0 mt-1 w-48 rounded-md border bg-popover text-popover-foreground shadow-md z-[100] p-1"
+                                                style="display: none;">
+                                                <template x-for="conn in postgresConnections" :key="conn.name">
+                                                    <div @click="changePostgresConnection(conn.name); open = false"
+                                                        class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-xs outline-none hover:bg-accent hover:text-accent-foreground">
+                                                        <span x-show="conn.name === selectedPostgresConnection" class="absolute right-2 text-xs">✓</span>
+                                                        <div class="flex items-center gap-2">
+                                                            <div class="w-2 h-2 rounded-full" :class="conn.status.connected ? 'bg-green-500' : 'bg-red-500'"></div>
+                                                            <span x-text="conn.name"></span>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+
+                                        <button @click="fetchPostgresConnections()" class="h-9 px-3 text-sm bg-secondary hover:bg-secondary/80 rounded-md transition-colors">
+                                            Refresh
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Info Cards -->
                             <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                                 <div class="rounded-xl border bg-card text-card-foreground shadow p-6">

@@ -20,7 +20,7 @@ A robust, production-ready Go application boilerplate built with [Echo](https://
 
 ### Infrastructure Support
 -   **Redis**: Key-value store integration
--   **PostgreSQL**: SQL database with GORM
+-   **PostgreSQL**: SQL database with GORM, now supporting multiple named connections for enhanced flexibility and scalability
 -   **Kafka**: Message queue integration
 -   **Cron Jobs**: Scheduled task execution
 
@@ -236,6 +236,10 @@ encryption:
 - `GET /api/v1/products` - Service B
 - `GET /api/v1/cache` - Service C
 - `GET /api/v1/tasks` - Service D
+- `POST /api/v1/encryption/encrypt` - Service E (Encrypt Data)
+- `POST /api/v1/encryption/decrypt` - Service E (Decrypt Data)
+- `GET /api/v1/encryption/status` - Service E (Get Status)
+- `POST /api/v1/encryption/key-rotate` - Service E (Rotate Key)
 - `DELETE /api/*` - Blocked by middleware
 
 ### Encryption Service

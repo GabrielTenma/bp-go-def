@@ -16,7 +16,8 @@ services:
   service_b: false
   service_c: true
   service_d: false
-  service_encryption: false
+  service_e: false
+  service_f: true
 
 auth:
   type: "apikey"
@@ -37,12 +38,24 @@ kafka:
 
 postgres:
   enabled: true
-  host: "localhost"
-  port: 5432
-  user: "postgres"
-  password: "Mypostgres01"
-  dbname: "postgres"
-  sslmode: "disable"
+  connections:
+    - name: "primary"
+      enabled: true
+      host: "localhost"
+      port: 5432
+      user: "postgres"
+      password: "Mypostgres01"
+      dbname: "postgres"
+      sslmode: "disable"
+
+    - name: "secondary"
+      enabled: true
+      host: "localhost"
+      port: 5433
+      user: "postgres"
+      password: "Mypostgres01"
+      dbname: "postgres"
+      sslmode: "disable"
 
 monitoring:
   enabled: true
@@ -80,6 +93,6 @@ cron:
 encryption:
   enabled: false
   algorithm: "aes-256-gcm"
-  key: "default-encryption-key-32-bytes-long-12345"
+  key: ""
   rotate_keys: false
   key_rotation_interval: "24h"

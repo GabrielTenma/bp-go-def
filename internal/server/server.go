@@ -18,14 +18,15 @@ import (
 )
 
 type Server struct {
-	echo            *echo.Echo
-	config          *config.Config
-	logger          *logger.Logger
-	redisManager    *infrastructure.RedisManager
-	kafkaManager    *infrastructure.KafkaManager
-	postgresManager *infrastructure.PostgresManager
-	cronManager     *infrastructure.CronManager
-	broadcaster     *monitoring.LogBroadcaster
+	echo                      *echo.Echo
+	config                    *config.Config
+	logger                    *logger.Logger
+	redisManager              *infrastructure.RedisManager
+	kafkaManager              *infrastructure.KafkaManager
+	postgresManager           *infrastructure.PostgresManager
+	postgresConnectionManager *infrastructure.PostgresConnectionManager
+	cronManager               *infrastructure.CronManager
+	broadcaster               *monitoring.LogBroadcaster
 }
 
 func New(cfg *config.Config, l *logger.Logger, b *monitoring.LogBroadcaster) *Server {
@@ -92,7 +93,7 @@ func (s *Server) Start() error {
 	// Kafka
 	if s.config.Kafka.Enabled {
 		// Note: NewKafkaManager replaces NewKafkaProducer
-		km, err := infrastructure.NewKafkaManager(s.config.Kafka)
+		km, err := infrastructure.NewKafkaManager(s.config.Kafka, s.logger)
 		if err != nil {
 			s.logger.Error("Failed to initialize Kafka", err)
 		} else {
@@ -101,14 +102,31 @@ func (s *Server) Start() error {
 		}
 	}
 
-	// Postgres
-	if s.config.Postgres.Enabled {
-		db, err := infrastructure.NewPostgresDB(s.config.Postgres)
-		if err != nil {
-			s.logger.Error("Failed to initialize Postgres", err)
-		} else {
-			s.postgresManager = db
-			s.logger.Info("Postgres initialized")
+	// Postgres - Support both single and multiple connections
+	if s.config.Postgres.Enabled || s.config.PostgresMultiConfig.Enabled {
+		// Try multi-config first (new format)
+		if s.config.PostgresMultiConfig.Enabled && len(s.config.PostgresMultiConfig.Connections) > 0 {
+			connManager, err := infrastructure.NewPostgresConnectionManager(s.config.PostgresMultiConfig)
+			if err != nil {
+				s.logger.Error("Failed to initialize Postgres connections", err)
+			} else {
+				s.postgresConnectionManager = connManager
+				s.logger.Info("Postgres connections initialized")
+
+				// Set default connection for backward compatibility
+				if defaultConn, exists := connManager.GetDefaultConnection(); exists {
+					s.postgresManager = defaultConn
+				}
+			}
+		} else if s.config.Postgres.Enabled {
+			// Fallback to single connection (old format)
+			db, err := infrastructure.NewPostgresDB(s.config.Postgres)
+			if err != nil {
+				s.logger.Error("Failed to initialize Postgres", err)
+			} else {
+				s.postgresManager = db
+				s.logger.Info("Postgres initialized (single connection)")
+			}
 		}
 	}
 
@@ -169,7 +187,7 @@ func (s *Server) Start() error {
 	registry.Register(modules.NewServiceA(s.config.Services.IsEnabled("service_a")))
 	registry.Register(modules.NewServiceB(s.config.Services.IsEnabled("service_b")))
 	registry.Register(modules.NewServiceC(s.config.Services.IsEnabled("service_c")))
-	registry.Register(modules.NewServiceD(s.postgresManager, s.config.Services.IsEnabled("service_d")))
+	registry.Register(modules.NewServiceD(s.postgresManager, s.config.Services.IsEnabled("service_d"), s.logger))
 
 	// Add Encryption Service
 	encryptionConfig := map[string]interface{}{
@@ -177,6 +195,9 @@ func (s *Server) Start() error {
 		"key":       s.config.Encryption.Key,
 	}
 	registry.Register(modules.NewServiceE(s.config.Encryption.Enabled, encryptionConfig))
+
+	// Add Multi-Tenant Orders Service (demonstrates multiple database connections)
+	registry.Register(modules.NewServiceF(s.postgresConnectionManager, s.config.Services.IsEnabled("service_f"), s.logger))
 
 	registry.Boot(s.echo)
 
@@ -198,7 +219,7 @@ func (s *Server) Start() error {
 				Endpoints:  fullEndpoints,
 			})
 		}
-		go monitoring.Start(s.config.Monitoring, s.config, s, s.broadcaster, s.redisManager, s.postgresManager, s.kafkaManager, s.cronManager, servicesList, s.logger)
+		go monitoring.Start(s.config.Monitoring, s.config, s, s.broadcaster, s.redisManager, s.postgresManager, s.postgresConnectionManager, s.kafkaManager, s.cronManager, servicesList, s.logger)
 		s.logger.Info("Monitoring interface started", "port", s.config.Monitoring.Port)
 	}
 
@@ -219,7 +240,7 @@ func (s *Server) GetStatus() map[string]interface{} {
 	infra := map[string]bool{
 		"redis":    s.config.Redis.Enabled && s.redisManager != nil,
 		"kafka":    s.config.Kafka.Enabled && s.kafkaManager != nil,
-		"postgres": s.config.Postgres.Enabled && s.postgresManager != nil,
+		"postgres": (s.config.Postgres.Enabled || s.config.PostgresMultiConfig.Enabled) && (s.postgresManager != nil || s.postgresConnectionManager != nil),
 		"cron":     s.config.Cron.Enabled && s.cronManager != nil,
 	}
 

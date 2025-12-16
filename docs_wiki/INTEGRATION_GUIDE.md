@@ -42,6 +42,10 @@ func (s *MyService) Example() {
 ## 2. Postgres
 
 ### Configuration (`config.yaml`)
+
+The application now supports both single and multiple PostgreSQL connections for enhanced flexibility and scalability. Multiple connections allow you to monitor and query different databases through the web monitoring interface.
+
+#### Single Connection (Original Format - Still Supported)
 ```yaml
 postgres:
   enabled: true
@@ -55,9 +59,44 @@ postgres:
   max_idle_conns: 5
 ```
 
-### Usage (Code)
-The `PostgresManager` wraps `sqlx.DB`, providing struct mapping and helper methods.
+#### Multiple Connections (New Format)
+```yaml
+postgres:
+  enabled: true
+  connections:
+    - name: "primary"
+      enabled: true
+      host: "localhost"
+      port: "5432"
+      user: "postgres"
+      password: "password"
+      dbname: "primary_db"
+      sslmode: "disable"
 
+    - name: "secondary"
+      enabled: true
+      host: "localhost"
+      port: "5433"
+      user: "postgres"
+      password: "password"
+      dbname: "secondary_db"
+      sslmode: "disable"
+
+    - name: "analytics"
+      enabled: false  # Disabled by default
+      host: "analytics.example.com"
+      port: "5432"
+      user: "analytics_user"
+      password: "analytics_password"
+      dbname: "analytics_db"
+      sslmode: "require"
+```
+
+### Usage (Code)
+
+The application provides both single connection and multi-connection managers for PostgreSQL.
+
+#### Using Single Connection (Backward Compatible)
 ```go
 // Inject PostgresManager
 type MyService struct {
@@ -68,12 +107,79 @@ func (s *MyService) Example() {
     // Access underlying sqlx.DB
     var users []User
     err := s.db.DB.Select(&users, "SELECT * FROM users WHERE active = $1", true)
-    
+
     // Using transaction helper (if implemented in your manager extensions) or usage of standard sqlx patterns
     tx, err := s.db.DB.Beginx()
     // ...
 }
 ```
+
+#### Using Multiple Connections
+```go
+// Inject PostgresConnectionManager
+type MyService struct {
+    postgresManager *infrastructure.PostgresConnectionManager
+}
+
+func (s *MyService) Example() {
+    // Get a specific named connection
+    if conn, exists := s.postgresManager.GetConnection("primary"); exists {
+        var users []User
+        err := conn.DB.Select(&users, "SELECT * FROM users WHERE active = $1", true)
+    }
+
+    // Get the default connection (first enabled connection)
+    if defaultConn, exists := s.postgresManager.GetDefaultConnection(); exists {
+        // Use the default connection
+    }
+
+    // Get all connections
+    allConnections := s.postgresManager.GetAllConnections()
+
+    // Get status for all connections
+    status := s.postgresManager.GetStatus()
+}
+```
+
+### Connection Management Methods
+
+The `PostgresConnectionManager` provides several useful methods:
+
+```go
+// Get a specific named connection
+conn, exists := postgresManager.GetConnection("primary")
+
+// Get the default connection (first enabled connection)
+defaultConn, exists := postgresManager.GetDefaultConnection()
+
+// Get all connections as a map
+allConnections := postgresManager.GetAllConnections()
+
+// Get status for all connections (useful for monitoring)
+statusMap := postgresManager.GetStatus()
+
+// Close all connections (for graceful shutdown)
+err := postgresManager.CloseAll()
+```
+
+### Best Practices
+
+1. **Connection Naming**: Use descriptive names like "primary", "secondary", "analytics", "read_replica"
+2. **Error Handling**: Always check if a connection exists before using it
+3. **Resource Management**: Close connections properly during application shutdown
+4. **Configuration**: Disable unused connections to avoid unnecessary resource consumption
+5. **Monitoring**: Use the status methods to monitor connection health in your monitoring system
+
+### Migration Guide
+
+To migrate from single to multiple connections:
+
+1. **Update Configuration**: Convert your existing PostgreSQL config to the new format
+2. **Update Services**: Modify services to use the connection manager when needed
+3. **Test**: Verify all database operations work with the new connection manager
+4. **Monitor**: Check the monitoring dashboard to see all PostgreSQL connections
+
+The system automatically handles backward compatibility, so existing single-connection configurations will continue to work without modification.
 
 ---
 

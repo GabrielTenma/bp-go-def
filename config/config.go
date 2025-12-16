@@ -8,16 +8,17 @@ import (
 )
 
 type Config struct {
-	App        AppConfig        `mapstructure:"app"`
-	Server     ServerConfig     `mapstructure:"server"`
-	Services   ServicesConfig   `mapstructure:"services"`
-	Auth       AuthConfig       `mapstructure:"auth"`
-	Redis      RedisConfig      `mapstructure:"redis"`
-	Kafka      KafkaConfig      `mapstructure:"kafka"`
-	Postgres   PostgresConfig   `mapstructure:"postgres"`
-	Monitoring MonitoringConfig `mapstructure:"monitoring"`
-	Cron       CronConfig       `mapstructure:"cron"`
-	Encryption EncryptionConfig `mapstructure:"encryption"`
+	App                 AppConfig           `mapstructure:"app"`
+	Server              ServerConfig        `mapstructure:"server"`
+	Services            ServicesConfig      `mapstructure:"services"`
+	Auth                AuthConfig          `mapstructure:"auth"`
+	Redis               RedisConfig         `mapstructure:"redis"`
+	Kafka               KafkaConfig         `mapstructure:"kafka"`
+	Postgres            PostgresConfig      `mapstructure:"postgres"`
+	PostgresMultiConfig PostgresMultiConfig `mapstructure:"postgres"`
+	Monitoring          MonitoringConfig    `mapstructure:"monitoring"`
+	Cron                CronConfig          `mapstructure:"cron"`
+	Encryption          EncryptionConfig    `mapstructure:"encryption"`
 }
 
 type MonitoringConfig struct {
@@ -124,6 +125,22 @@ type PostgresConfig struct {
 	SSLMode  string `mapstructure:"sslmode"`
 }
 
+type PostgresConnectionConfig struct {
+	Name     string `mapstructure:"name"`
+	Enabled  bool   `mapstructure:"enabled"`
+	Host     string `mapstructure:"host"`
+	Port     int    `mapstructure:"port"`
+	User     string `mapstructure:"user"`
+	Password string `mapstructure:"password"`
+	DBName   string `mapstructure:"dbname"`
+	SSLMode  string `mapstructure:"sslmode"`
+}
+
+type PostgresMultiConfig struct {
+	Enabled     bool                       `mapstructure:"enabled"`
+	Connections []PostgresConnectionConfig `mapstructure:"connections"`
+}
+
 func LoadConfig() (*Config, error) {
 	viper.SetConfigName("config") // name of config file (without extension)
 	viper.SetConfigType("yaml")   // REQUIRED if the config file does not have the extension in the name
@@ -159,6 +176,30 @@ func LoadConfig() (*Config, error) {
 	var cfg Config
 	if err := viper.Unmarshal(&cfg); err != nil {
 		return nil, err
+	}
+
+	// Handle PostgreSQL configuration - both single and multi-connection
+	// Check if multi-connection format is provided (has connections array)
+	if len(cfg.PostgresMultiConfig.Connections) > 0 {
+		// Multi-connection format is provided, use it
+		cfg.PostgresMultiConfig.Enabled = true
+	} else if cfg.Postgres.Enabled {
+		// Single connection format provided, convert to multi-connection format
+		cfg.PostgresMultiConfig = PostgresMultiConfig{
+			Enabled: true,
+			Connections: []PostgresConnectionConfig{
+				{
+					Name:     "default",
+					Enabled:  true,
+					Host:     cfg.Postgres.Host,
+					Port:     cfg.Postgres.Port,
+					User:     cfg.Postgres.User,
+					Password: cfg.Postgres.Password,
+					DBName:   cfg.Postgres.DBName,
+					SSLMode:  cfg.Postgres.SSLMode,
+				},
+			},
+		}
 	}
 
 	return &cfg, nil
