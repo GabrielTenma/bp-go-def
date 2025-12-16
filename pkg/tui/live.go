@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -190,6 +191,8 @@ func (m *LiveModel) View() string {
 
 	// Sticky Banner
 	if m.config.Banner != "" {
+		b.WriteString("\n")
+		b.WriteString("\n")
 		b.WriteString(liveBannerStyle.Render(m.config.Banner))
 		b.WriteString("\n")
 	}
@@ -354,6 +357,7 @@ func (t *LiveTUI) Start() {
 func (t *LiveTUI) Stop() {
 	if t.program != nil {
 		t.program.Quit()
+		os.Exit(0)
 	}
 }
 

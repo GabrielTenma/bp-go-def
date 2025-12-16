@@ -11,6 +11,7 @@ A robust, production-ready Go application boilerplate built with [Echo](https://
 -   **Custom ASCII Banner**: Configurable startup banner
 -   **In-Memory Cache**: Thread-safe, generic KV store with TTL support
 -   **Hot Configuration**: Update config without restart
+-   **API Encryption**: AES-256-GCM request/response encryption with automatic middleware
 
 ### Terminal Interface
 -   **Interactive Boot**: Visual boot sequence with service status checks
@@ -28,7 +29,7 @@ A robust, production-ready Go application boilerplate built with [Echo](https://
 -   **Dark Mode**: Full light/dark theme support with persistent storage
 -   **Custom Login**: Shadcn-admin styled login page with HTTP Basic Auth
 -   **User Settings**: Profile customization, photo upload, password management
--   **� Live Metrics**: Real-time system stats (CPU, memory, disk, network)
+-   **📊 Live Metrics**: Real-time system stats (CPU, memory, disk, network)
 -   **Live Logs**: SSE-based log streaming with color-coded levels
 -   **Config Editor**: In-browser YAML editing with backup/restore
 -   **Service Manager**: View all endpoints with active status badges
@@ -129,6 +130,7 @@ services:
   enable_service_b: false
   enable_service_c: true
   enable_service_d: false
+  enable_service_encryption: false
 
 auth:
   type: "apikey"
@@ -143,7 +145,7 @@ monitoring:
   subtitle: "My Kisah Emuach ❤️"
   max_photo_size_mb: 2
   upload_dir: "web/monitoring/uploads"
-  
+
   minio:
     enabled: true
     endpoint: "localhost:9003"
@@ -178,7 +180,7 @@ postgres:
 
 kafka:
   enabled: false
-  brokers: 
+  brokers:
     - "localhost:9092"
   topic: "my-topic"
   group_id: "my-group"
@@ -188,6 +190,13 @@ cron:
   jobs:
     log_cleanup: "0 0 * * *"
     health_check: "*/10 * * * * *" # Every 10 seconds
+
+encryption:
+  enabled: false
+  algorithm: "aes-256-gcm"
+  key: "your-32-byte-secret-key-here"
+  rotate_keys: false
+  key_rotation_interval: "24h"
 ```
 
 ## Project Structure
@@ -229,6 +238,12 @@ cron:
 - `GET /api/v1/tasks` - Service D
 - `DELETE /api/*` - Blocked by middleware
 
+### Encryption Service
+- `POST /api/v1/encryption/encrypt` - Encrypt data using AES-256-GCM
+- `POST /api/v1/encryption/decrypt` - Decrypt encrypted data
+- `GET /api/v1/encryption/status` - Get encryption service status
+- `POST /api/v1/encryption/key-rotate` - Rotate encryption keys
+
 ### Monitoring APIs (Protected)
 - `GET /api/status` - System status
 - `GET /api/endpoints` - List services
@@ -239,13 +254,15 @@ cron:
 - `POST /api/user/photo` - Upload photo
 
 ## Security
-
 - HTTP Basic Auth for monitoring
 - BCrypt password hashing
 - SQLite user database
 - File upload size limits
 - API key authentication
 - Permission-based access control
+- AES-256-GCM API encryption with automatic middleware
+
+For complete encryption documentation, see [ENCRYPTION_API.md](docs_wiki/ENCRYPTION_API.md)
 
 ## Development
 

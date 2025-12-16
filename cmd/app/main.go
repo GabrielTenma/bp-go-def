@@ -199,6 +199,7 @@ func runWithConsole(cfg *config.Config, bannerText string, broadcaster *monitori
 	time.Sleep(500 * time.Millisecond)
 	l.Info("Server ready", "url", "http://localhost:"+cfg.Server.Port)
 	if cfg.Monitoring.Enabled {
+		time.Sleep(500 * time.Millisecond)
 		l.Info("Monitoring dashboard", "url", "http://localhost:"+cfg.Monitoring.Port)
 	}
 

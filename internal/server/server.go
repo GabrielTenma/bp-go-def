@@ -141,6 +141,12 @@ func (s *Server) Start() error {
 		Logger:   s.logger,
 	})
 
+	// Add encryption middleware if enabled
+	if s.config.Encryption.Enabled {
+		s.logger.Info("Initializing Encryption Middleware...")
+		s.echo.Use(middleware.EncryptionMiddleware(s.config, s.logger))
+	}
+
 	// 3. Init Services
 	s.logger.Info("Booting Services...")
 	registry := services.NewRegistry(s.logger)
@@ -164,6 +170,13 @@ func (s *Server) Start() error {
 	registry.Register(modules.NewServiceB(s.config.Services.IsEnabled("service_b")))
 	registry.Register(modules.NewServiceC(s.config.Services.IsEnabled("service_c")))
 	registry.Register(modules.NewServiceD(s.postgresManager, s.config.Services.IsEnabled("service_d")))
+
+	// Add Encryption Service
+	encryptionConfig := map[string]interface{}{
+		"algorithm": s.config.Encryption.Algorithm,
+		"key":       s.config.Encryption.Key,
+	}
+	registry.Register(modules.NewServiceE(s.config.Encryption.Enabled, encryptionConfig))
 
 	registry.Boot(s.echo)
 

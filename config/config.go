@@ -17,6 +17,7 @@ type Config struct {
 	Postgres   PostgresConfig   `mapstructure:"postgres"`
 	Monitoring MonitoringConfig `mapstructure:"monitoring"`
 	Cron       CronConfig       `mapstructure:"cron"`
+	Encryption EncryptionConfig `mapstructure:"encryption"`
 }
 
 type MonitoringConfig struct {
@@ -53,6 +54,14 @@ type ExternalService struct {
 type CronConfig struct {
 	Enabled bool              `mapstructure:"enabled"`
 	Jobs    map[string]string `mapstructure:"jobs"`
+}
+
+type EncryptionConfig struct {
+	Enabled             bool   `mapstructure:"enabled"`
+	Algorithm           string `mapstructure:"algorithm"`
+	Key                 string `mapstructure:"key"`
+	RotateKeys          bool   `mapstructure:"rotate_keys"`
+	KeyRotationInterval string `mapstructure:"key_rotation_interval"`
 }
 
 type AppConfig struct {

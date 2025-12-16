@@ -4,7 +4,7 @@ app:
   debug: true
   env: "development"
   banner_path: "banner.txt"
-  startup_delay: 5        # seconds to display boot screen (0 to skip)
+  startup_delay: 3        # seconds to display boot screen (0 to skip)
   quiet_startup: true     # suppress console logs (TUI only, logs still go to monitoring)
   enable_tui: true        # enable fancy TUI mode (false = traditional console logging)
 
@@ -16,6 +16,7 @@ services:
   service_b: false
   service_c: true
   service_d: false
+  service_encryption: false
 
 auth:
   type: "apikey"
@@ -75,3 +76,10 @@ cron:
   jobs:
     log_cleanup: "0 0 * * *"
     health_check: "*/10 * * * * *" # Every 10 seconds
+
+encryption:
+  enabled: false
+  algorithm: "aes-256-gcm"
+  key: "default-encryption-key-32-bytes-long-12345"
+  rotate_keys: false
+  key_rotation_interval: "24h"

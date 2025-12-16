@@ -19,17 +19,18 @@ func Obfuscator(enabled bool) echo.MiddlewareFunc {
 				return next(c)
 			}
 
-			// Only obfuscate API endpoints
+			// Only obfuscate API endpoints, exclude streaming or static API paths
 			path := c.Request().URL.Path
+			excludedPrefixes := []string{"/api/logs", "/api/cpu", "/api/user/photos"}
+
 			if !strings.HasPrefix(path, "/api/") {
 				return next(c)
 			}
 
-			// Exclude streaming or static API paths
-			if strings.HasPrefix(path, "/api/logs") ||
-				strings.HasPrefix(path, "/api/cpu") ||
-				strings.HasPrefix(path, "/api/user/photos") {
-				return next(c)
+			for _, prefix := range excludedPrefixes {
+				if strings.HasPrefix(path, prefix) {
+					return next(c)
+				}
 			}
 
 			// Create a recorder
