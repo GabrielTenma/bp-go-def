@@ -2,7 +2,7 @@ name: Go Security Scan
 
 on:
   schedule:
-    - cron: '0 2 * * *'  # Daily at 2 AM
+    - cron: '30 3 * * *'  # At 3:30 AM UTC (10:30 AM WIB)
   workflow_dispatch:
   push:
     branches: [ main, development ]
