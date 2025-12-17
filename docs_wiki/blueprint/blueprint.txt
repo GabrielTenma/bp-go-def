@@ -334,7 +334,7 @@ chmod +x scripts/build.sh
 **Windows Script (`scripts/build.bat`):**
 ```cmd
 # Prerequisites: Go compiler, tar (built-in Windows 10/11)
-scripts\build.bat
+scripts/build.bat
 ```
 
 **Configuration Variables:**
@@ -352,6 +352,56 @@ scripts\build.bat
 - **GitHub Actions**: Automated build workflows
 - **Jenkins Pipeline**: Build and archive artifacts
 - **Artifact Management**: Upload build artifacts to repositories
+
+### 7.2 Docker Containerization
+
+The project includes comprehensive Docker containerization with multi-stage builds, automated build scripts, and container-optimized configuration.
+
+**Features:**
+- **Multi-Stage Builds**: Separate builder, test, development, and production stages
+- **Automated Build Scripts**: Cross-platform scripts for building Docker images
+- **Container-Optimized Configuration**: Automatic TUI disable and logging configuration for containers
+- **Multi-Platform Support**: Scripts for Unix/Linux/macOS and Windows environments
+- **Infrastructure Integration**: Docker Compose support for complete development stacks
+
+**Dockerfile Architecture:**
+- **Builder Stage**: Compiles Go application with UPX compression, optimized build flags (-w -s), and static linking
+- **Test Stage**: Runs test suite in isolated environment
+- **Development Stage**: Full Go toolchain with development tools, TUI disabled for containers
+- **Production Stage**: Minimal Alpine Linux image with compressed binary, TUI disabled for containers
+- **Ultra-Production Stage**: Distroless image for maximum security and minimal size
+
+**Build Scripts:**
+- **Unix/Linux/macOS**: `scripts/docker_build.sh`
+- **Windows**: `scripts/docker_build.bat`
+
+**Usage:**
+```bash
+# Build all stages (test, dev, prod)
+./scripts/docker_build.sh
+
+# Build with custom app name and image name
+./scripts/docker_build.sh "my-app" "myregistry/myapp"
+
+# Build specific target (prod for production only)
+./scripts/docker_build.sh "my-app" "myregistry/myapp" "prod"
+```
+
+**Container Configuration:**
+- **Environment Variables**: `APP_QUIET_STARTUP=false`, `APP_ENABLE_TUI=false`
+- **Automatic Overrides**: Disables TUI and quiet startup in containerized environments
+- **Port Exposure**: Main API (8080) and monitoring (9090) ports
+- **Volume Mounts**: Support for config file and source code mounting
+
+**Docker Compose Integration:**
+- **Development**: Full stack with Postgres, Redis, and app services
+- **Production**: Optimized production configuration
+- **Infrastructure**: Pre-configured database and cache services
+
+**CI/CD Integration:**
+- **GitHub Actions**: Automated Docker image building and testing
+- **Jenkins Pipeline**: Containerized build and deployment pipelines
+- **Registry Support**: Push to Docker registries and artifact repositories
 
 ### 7.2 Package Name Change Scripts
 
@@ -591,11 +641,26 @@ id, err := cron.AddJob("database_backup", "0 3 * * *", func() {
 
 ```
 bp-go-def/
+├── Dockerfile                  # Multi-stage Docker configuration
 ├── cmd/
 │   └── app/
 │       └── main.go              # Application entry point
 ├── config/
-│   └── config.go               # Configuration management
+│   ├── config.go               # Configuration management
+│   └── config.yaml             # Application configuration
+├── docs_wiki/                  # Documentation
+│   ├── API_OBFUSCATION.md
+│   ├── API_RESPONSE_STRUCTURE.md
+│   ├── ARCHITECTURE_DIAGRAMS.md
+│   ├── DOCKER_CONTAINERIZATION.md  # Docker setup guide
+│   ├── ERROR_HANDLING.md
+│   ├── HOME.md
+│   ├── INTEGRATION_GUIDE.md
+│   ├── REQUEST_RESPONSE_STRUCTURE.md
+│   ├── SERVICE_IMPLEMENTATION.md
+│   ├── TUI_IMPLEMENTATION.md
+│   └── blueprint/              # Blueprint files
+│       └── blueprint.txt       # This file
 ├── internal/
 │   ├── middleware/             # HTTP middleware
 │   ├── monitoring/             # Monitoring system
@@ -609,19 +674,14 @@ bp-go-def/
 │   ├── tui/                    # Terminal UI
 │   ├── infrastructure/         # External integrations
 │   ├── logger/                 # Logging
-│   └── utils/                  # Utilities
-├── docs_wiki/                  # Documentation
-│   ├── API_OBFUSCATION.md
-│   ├── API_RESPONSE_STRUCTURE.md
-│   ├── ARCHITECTURE_DIAGRAMS.md
-│   ├── ERROR_HANDLING.md
-│   ├── HOME.md
-│   ├── INTEGRATION_GUIDE.md
-│   ├── REQUEST_RESPONSE_STRUCTURE.md
-│   ├── SERVICE_IMPLEMENTATION.md
-│   ├── TUI_IMPLEMENTATION.md
-│   └── blueprint/              # Blueprint files
-│       └── blueprint.txt       # This file
+│   └── utils/                  # Utility functions
+├── scripts/                    # Build and utility scripts
+│   ├── build.sh                # Go binary build (Unix/Linux/macOS)
+│   ├── build.bat               # Go binary build (Windows)
+│   ├── change_package.sh       # Package name change (Unix/Linux/macOS)
+│   ├── change_package.bat      # Package name change (Windows)
+│   ├── docker_build.sh         # Docker image build (Unix/Linux/macOS)
+│   └── docker_build.bat        # Docker image build (Windows)
 └── web/                       # Web assets
     └── monitoring/            # Monitoring UI
 ```

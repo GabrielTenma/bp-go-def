@@ -4,6 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Admin Monitor</title>
     <!-- Tailwind via Local Script (Offline) -->
     <script src="/assets/vendor/tailwindcss.js"></script>
@@ -59,9 +62,8 @@
             }
         }
     </script>
-    <style type="text/tailwindcss">
-        @layer base {
-          :root {
+    <style>
+        :root {
             --background: 0 0% 100%;
             --foreground: 240 10% 3.9%;
             --card: 0 0% 100%;
@@ -82,28 +84,28 @@
             --input: 240 5.9% 90%;
             --ring: 240 10% 3.9%;
             --radius: 0.5rem;
-          }
-          .dark {
-            --background: 240 10% 3.9%;
-            --foreground: 0 0% 98%;
-            --card: 240 10% 3.9%;
-            --card-foreground: 0 0% 98%;
-            --popover: 240 10% 3.9%;
-            --popover-foreground: 0 0% 98%;
-            --primary: 0 0% 98%;
-            --primary-foreground: 240 5.9% 10%;
-            --secondary: 240 3.7% 15.9%;
-            --secondary-foreground: 0 0% 98%;
-            --muted: 240 3.7% 15.9%;
-            --muted-foreground: 240 5% 64.9%;
-            --accent: 240 3.7% 15.9%;
-            --accent-foreground: 0 0% 98%;
+        }
+
+        .dark {
+            --background: 224 71.4% 4.1%;
+            --foreground: 210 20% 98%;
+            --card: 224 71.4% 4.1%;
+            --card-foreground: 210 20% 98%;
+            --popover: 224 71.4% 4.1%;
+            --popover-foreground: 210 20% 98%;
+            --primary: 210 20% 98%;
+            --primary-foreground: 220.9 39.3% 11%;
+            --secondary: 215 27.9% 16.9%;
+            --secondary-foreground: 210 20% 98%;
+            --muted: 215 27.9% 16.9%;
+            --muted-foreground: 217.9 10.6% 64.9%;
+            --accent: 215 27.9% 16.9%;
+            --accent-foreground: 210 20% 98%;
             --destructive: 0 62.8% 30.6%;
-            --destructive-foreground: 0 0% 98%;
-            --border: 240 3.7% 15.9%;
-            --input: 240 3.7% 15.9%;
-            --ring: 240 4.9% 83.9%;
-          }
+            --destructive-foreground: 210 20% 98%;
+            --border: 215 27.9% 16.9%;
+            --input: 215 27.9% 16.9%;
+            --ring: 216 12.2% 83.9%;
         }
     </style>
     <link rel="stylesheet" href="assets/css/style.css">
@@ -597,7 +599,7 @@
                             id="logs-box">
                             <div class="flex flex-col w-full">
                                 <template x-for="log in logs">
-                                    <div class="w-full px-6 py-2 border-b border-gray-50 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-accent/50 transition-colors group"
+                                    <div class="w-full px-6 py-2 border-b border-border hover:bg-muted/50 transition-colors group"
                                         x-html="formatLog(log)"></div>
                                 </template>
                                 <div x-show="logs.length === 0"
@@ -1535,7 +1537,7 @@
 
     <!-- Notyf JS (Local Offline) -->
     <script src="/assets/vendor/notyf/notyf.min.js"></script>
-    <script src="/assets/js/app.js"></script>
+    <script src="/assets/js/app.js?v=1.1"></script>
 </body>
 
 </html>

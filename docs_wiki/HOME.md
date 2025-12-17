@@ -50,6 +50,11 @@ This wiki serves as the central knowledge base for the project, covering archite
 
 ### Integration & Infrastructure
 
+*   **[Docker Containerization](DOCKER_CONTAINERIZATION.md)**
+    *   Multi-stage Dockerfile for development, testing, and production.
+    *   Docker Compose integration with infrastructure services.
+    *   CI/CD integration, security best practices, and troubleshooting.
+
 *   **[Build Scripts](BUILD_SCRIPTS.md)**
     *   Automated build process with backup and archiving.
     *   Cross-platform scripts for Unix/Linux/macOS and Windows.
@@ -59,6 +64,12 @@ This wiki serves as the central knowledge base for the project, covering archite
     *   Automated tools for renaming Go module package names.
     *   Cross-platform support for comprehensive codebase refactoring.
     *   Safety mechanisms, backup creation, and error handling.
+
+*   **[Onboarding Scripts](ONBOARDING_SCRIPTS.md)**
+    *   Interactive setup wizard for first-time configuration.
+    *   Cross-platform scripts for Unix/Linux/macOS and Windows.
+    *   Guided configuration of app settings, services, and infrastructure.
+    *   Security warnings and best practices for production setup.
 
 *   **[Service Implementation Guide](SERVICE_IMPLEMENTATION.md)**
     *   Creating and implementing new services.
