@@ -1,48 +1,13 @@
-# Go Echo Boilerplate
+# bp-go-def
 
-A robust, production-ready Go application boilerplate built with [Echo](https://echo.labstack.com/). Designed for modularity, developer experience, and comprehensive monitoring with user management.
+A robust, production-ready Go application boilerplate built with [Echo](https://echo.labstack.com/). Features modular architecture, comprehensive monitoring, and built-in infrastructure support.
 
-## Features
-
-### Core Application
--   **Modular Service Architecture**: Easy service extension with selective enable/disable
--   **Configurable Authentication**: API key-based auth with permission controls
--   **Fancy Logger**: Rich console output with colors, emojis, and structured logging (Zerolog)
--   **Custom ASCII Banner**: Configurable startup banner
--   **In-Memory Cache**: Thread-safe, generic KV store with TTL support
--   **Hot Configuration**: Update config without restart
--   **API Encryption**: AES-256-GCM request/response encryption with automatic middleware
-
-### Terminal Interface
--   **Interactive Boot**: Visual boot sequence with service status checks
--   **Live CLI Dashboard**: Real-time terminal-based monitoring (Bubble Tea)
--   **Responsive TUI**: Adaptive layouts for different terminal sizes
-
-### Infrastructure Support
--   **Redis**: Key-value store integration
--   **PostgreSQL**: SQL database with GORM, now supporting multiple named connections for enhanced flexibility and scalability
--   **Kafka**: Message queue integration
--   **Cron Jobs**: Scheduled task execution
-
-### Monitoring Dashboard (Shadcn-Admin Style)
--   **Modern UI**: Beautiful shadcn-inspired design with Lexend font
--   **Dark Mode**: Full light/dark theme support with persistent storage
--   **Custom Login**: Shadcn-admin styled login page with HTTP Basic Auth
--   **User Settings**: Profile customization, photo upload, password management
--   **📊 Live Metrics**: Real-time system stats (CPU, memory, disk, network)
--   **Live Logs**: SSE-based log streaming with color-coded levels
--   **Config Editor**: In-browser YAML editing with backup/restore
--   **Service Manager**: View all endpoints with active status badges
--   **Infrastructure Tools**: Redis browser, Postgres monitor, Kafka debugger
--   **Cron Monitor**: View scheduled jobs and execution status
-
-## Getting Started
+## Quick Start
 
 ### Prerequisites
 - Go 1.21+
-- (Optional) Redis, PostgreSQL, Kafka
 
-### Installation
+### Installation & Run
 
 ```bash
 # Clone the repository
@@ -56,148 +21,47 @@ go mod download
 go run cmd/app/main.go
 ```
 
-### First Access
+**First Access:**
+1. Open `http://localhost:9090` (monitoring dashboard)
+2. Login with password: `admin`
+3. **Important**: Change the default password immediately!
 
-1. Start application
-2. Open `http://localhost:9090`
-3. Login with default password: `admin`
-4. **Important**: Change password via User Settings immediately!
+## Screenshots
 
-## Backend Console
-
+### Backend Console
 ![Backend Console](.assets/Recording%202025-12-14%20223856.gif)
 
-## Monitoring Dashboard
-
+### Monitoring Dashboard
 ![Monitoring Dashboard](.assets/Recording%202025-12-14%20230230.gif)
 
-### Login Page
-- Custom shadcn-admin styled design
-- HTTP Basic Auth integration
-- Dark mode support
-- Responsive layout
+## Key Features
 
-### User Settings
-- **Profile Photo**: Upload JPG/PNG/GIF (max 2MB)
-- **Display Name**: Custom username
-- **Password Management**: Change monitoring password
-- **SQLite Storage**: Secure local database
+- **Modular Services**: Enable/disable services via configuration
+- **Monitoring Dashboard**: Real-time metrics, logs, and system monitoring
+- **Terminal UI**: Interactive boot sequence and live CLI dashboard
+- **Infrastructure Support**: Redis, PostgreSQL (multi-tenant), Kafka, MinIO
+- **Security**: API encryption, authentication, and access controls
+- **Build Tools**: Automated build scripts with backup and archiving
 
-### Dashboard Features
-- Service overview with live counts
-- Infrastructure status indicators
-- System information (hostname, IP, disk usage)
-- Live log streaming
-- Categorized sidebar navigation
+## Documentation
 
-### Tools
-- **Config Editor**: Edit YAML, backup, restore
-- **Redis Browser**: Scan keys, view values
-- **Postgres Monitor**: Active sessions, top queries
-- **Kafka Debugger**: Topic inspection
-- **Banner Editor**: Update ASCII art
+📖 **[Full Documentation](docs_wiki/)** - Comprehensive guides and references
 
-## Terminal User Interface (TUI)
+### Core Documentation
+- **[Configuration Guide](docs_wiki/CONFIGURATION_GUIDE.md)** - Complete configuration reference
+- **[API Response Structure](docs_wiki/API_RESPONSE_STRUCTURE.md)** - Standard response formats
+- **[Architecture Diagrams](docs_wiki/ARCHITECTURE_DIAGRAMS.md)** - System design and flow diagrams
+- **[Service Implementation](docs_wiki/SERVICE_IMPLEMENTATION.md)** - How to add new services
 
-The application includes a rich terminal interface built with [Bubble Tea](https://github.com/charmbracelet/bubbletea).
+### Infrastructure & Integration
+- **[Integration Guide](docs_wiki/INTEGRATION_GUIDE.md)** - Redis, PostgreSQL, Kafka, MinIO setup
+- **[Build Scripts](docs_wiki/BUILD_SCRIPTS.md)** - Production deployment automation
+- **[Package Management](docs_wiki/CHANGE_PACKAGE_SCRIPTS.md)** - Module renaming tools
 
-### Features
--   **Boot Sequence**: Animated startup process showing service initialization status.
--   **Live Dashboard**: Monitor system resources (CPU, RAM, Goroutines) directly in the terminal.
--   **Interactive**: Keyboard controls for navigation and quitting.
-
-For detailed implementation documentation, see [TUI_IMPLEMENTATION.md](docs_wiki/TUI_IMPLEMENTATION.md).
-
-## Configuration
-
-Edit `config.yaml`:
-
-```yaml
-app:
-  name: "My Fancy Go App"
-  debug: true
-  env: "development"
-  banner_path: "banner.txt"
-  startup_delay: 15       # seconds to display boot screen (0 to skip)
-  quiet_startup: true     # suppress console logs (TUI only)
-  enable_tui: true        # enable fancy TUI mode
-
-server:
-  port: "8080"
-
-services:
-  enable_service_a: true
-  enable_service_b: false
-  enable_service_c: true
-  enable_service_d: false
-  enable_service_encryption: false
-
-auth:
-  type: "apikey"
-  secret: "super-secret-key"
-
-monitoring:
-  enabled: true
-  port: "9090"
-  password: "admin"
-  obfuscate_api: true
-  title: "GoBP Admin"
-  subtitle: "My Kisah Emuach ❤️"
-  max_photo_size_mb: 2
-  upload_dir: "web/monitoring/uploads"
-
-  minio:
-    enabled: true
-    endpoint: "localhost:9003"
-    access_key: "minioadmin"
-    secret_key: "minioadmin"
-    use_ssl: false
-    bucket: "main"
-
-  external:
-    services:
-      - name: "Google"
-        url: "https://google.com"
-      - name: "Soundcloud"
-        url: "https://soundcloud.com"
-      - name: "Local API"
-        url: "http://localhost:8080/health"
-
-redis:
-  enabled: false
-  address: "localhost:6379"
-  password: ""
-  db: 0
-
-postgres:
-  enabled: true
-  host: "localhost"
-  port: 5432
-  user: "postgres"
-  password: "Mypostgres01"
-  dbname: "postgres"
-  sslmode: "disable"
-
-kafka:
-  enabled: false
-  brokers:
-    - "localhost:9092"
-  topic: "my-topic"
-  group_id: "my-group"
-
-cron:
-  enabled: true
-  jobs:
-    log_cleanup: "0 0 * * *"
-    health_check: "*/10 * * * * *" # Every 10 seconds
-
-encryption:
-  enabled: false
-  algorithm: "aes-256-gcm"
-  key: "your-32-byte-secret-key-here"
-  rotate_keys: false
-  key_rotation_interval: "24h"
-```
+### Security & Features
+- **[API Encryption](docs_wiki/ENCRYPTION_API.md)** - End-to-end encryption
+- **[API Obfuscation](docs_wiki/API_OBFUSCATION.md)** - Data obfuscation mechanisms
+- **[TUI Implementation](docs_wiki/TUI_IMPLEMENTATION.md)** - Terminal interface details
 
 ## Project Structure
 
@@ -205,83 +69,20 @@ encryption:
 .
 ├── cmd/app/              # Application entry point
 ├── config/               # Configuration logic
-├── docs_wiki/            # Documentation & Guides
+├── docs_wiki/            # 📖 Documentation
 ├── internal/
-│   ├── middleware/       # Auth & permission middleware
-│   ├── monitoring/       # Monitoring dashboard
-│   │   ├── database/     # SQLite user management
-│   │   ├── handlers.go   # API endpoints
-│   │   └── server.go     # Monitoring server
+│   ├── middleware/       # Auth & security middleware
+│   ├── monitoring/       # Web monitoring dashboard
 │   ├── server/           # Main server logic
-│   └── services/         # Service implementations
+│   └── services/         # Modular service implementations
 ├── pkg/
-│   ├── infrastructure/   # Redis, Postgres, Kafka, Cron
-│   ├── logger/           # Rich console logger
+│   ├── infrastructure/   # Redis, Postgres, Kafka, etc.
+│   ├── logger/           # Rich console logging
 │   ├── tui/              # Terminal User Interface
 │   └── utils/            # System utilities
-├── web/monitoring/       # Monitoring UI
-│   ├── assets/          # CSS, JS
-│   ├── login.html       # Login page
-│   ├── index.html       # Dashboard
-│   └── uploads/         # User files
-└── config.yaml          # Main configuration
+├── web/monitoring/       # Monitoring web UI
+└── config.yaml           # Main configuration
 ```
-
-## API Endpoints
-
-### Main Application
-- `GET /health` - Health check
-- `GET /api/v1/users` - Service A (List Users)
-- `GET /api/v1/users/:id` - Service A (Get User)
-- `GET /api/v1/products` - Service B
-- `GET /api/v1/cache` - Service C
-- `GET /api/v1/tasks` - Service D
-- `POST /api/v1/encryption/encrypt` - Service E (Encrypt Data)
-- `POST /api/v1/encryption/decrypt` - Service E (Decrypt Data)
-- `GET /api/v1/encryption/status` - Service E (Get Status)
-- `POST /api/v1/encryption/key-rotate` - Service E (Rotate Key)
-- `DELETE /api/*` - Blocked by middleware
-
-### Encryption Service
-- `POST /api/v1/encryption/encrypt` - Encrypt data using AES-256-GCM
-- `POST /api/v1/encryption/decrypt` - Decrypt encrypted data
-- `GET /api/v1/encryption/status` - Get encryption service status
-- `POST /api/v1/encryption/key-rotate` - Rotate encryption keys
-
-### Monitoring APIs (Protected)
-- `GET /api/status` - System status
-- `GET /api/endpoints` - List services
-- `GET /api/config` - Get config
-- `POST /api/config` - Update config
-- `GET /api/user/settings` - User profile
-- `POST /api/user/password` - Change password
-- `POST /api/user/photo` - Upload photo
-
-## Security
-- HTTP Basic Auth for monitoring
-- BCrypt password hashing
-- SQLite user database
-- File upload size limits
-- API key authentication
-- Permission-based access control
-- AES-256-GCM API encryption with automatic middleware
-
-For complete encryption documentation, see [ENCRYPTION_API.md](docs_wiki/ENCRYPTION_API.md)
-
-## Development
-
-### Adding a Service
-
-1. Create in `internal/services/`
-2. Add config flag in `config.yaml`
-3. Register in `internal/server/server.go`
-4. Auto-appears in monitoring!
-
-### Database
-
-- User settings: `monitoring_users.db` (auto-created)
-- Default user from `config.yaml` password
-- Change password via UI
 
 ## License
 

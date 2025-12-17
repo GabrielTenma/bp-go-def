@@ -44,7 +44,7 @@ BACKUP_ROOT="${DIST_DIR}/backups"
 BACKUP_PATH="${BACKUP_ROOT}/${TIMESTAMP}"
 
 # 2. Stop running process
-echo -e "${B_PURPLE}[1/4]${RESET} ${P_CYAN}Checking for running process...${RESET}"
+echo -e "${B_PURPLE}[1/5]${RESET} ${P_CYAN}Checking for running process...${RESET}"
 if pgrep -x "$APP_NAME" >/dev/null; then
     echo -e "   ${B_YELLOW}! App is running. Stopping...${RESET}"
     pkill -x "$APP_NAME"
@@ -54,7 +54,7 @@ else
 fi
 
 # 3. Backup Old Files
-echo -e "${B_PURPLE}[2/4]${RESET} ${P_CYAN}Backing up old files...${RESET}"
+echo -e "${B_PURPLE}[2/5]${RESET} ${P_CYAN}Backing up old files...${RESET}"
 if [ -d "$DIST_DIR" ]; then
     mkdir -p "$BACKUP_PATH"
 
@@ -88,11 +88,22 @@ else
     mkdir -p "$DIST_DIR"
 fi
 
+# 6. Archive Backup
+echo -e "${B_PURPLE}[3/5]${RESET} ${P_CYAN}Archiving backup...${RESET}"
+if [ -d "$BACKUP_PATH" ]; then
+    cd "$BACKUP_ROOT" || exit 1
+    zip -r "${TIMESTAMP}.zip" "$TIMESTAMP"
+    rm -rf "$TIMESTAMP"
+    echo -e "   ${B_GREEN}+ Backup archived:${RESET} ${B_WHITE}${BACKUP_ROOT}/${TIMESTAMP}.zip${RESET}"
+else
+    echo -e "   ${GRAY}+ No backup created. Skipping archive.${RESET}"
+fi
+
 # Ensure dist directory
 mkdir -p "$DIST_DIR"
 
 # 4. Build
-echo -e "${B_PURPLE}[3/4]${RESET} ${P_CYAN}Building Go binary...${RESET}"
+echo -e "${B_PURPLE}[4/5]${RESET} ${P_CYAN}Building Go binary...${RESET}"
 go build -o "$DIST_DIR/$APP_NAME" "$MAIN_PATH"
 if [ $? -ne 0 ]; then
     echo -e "   ${B_RED}x Build FAILED! Exit code: $?${RESET}"
@@ -101,7 +112,7 @@ fi
 echo -e "   ${B_GREEN}+ Build successful:${RESET} ${B_WHITE}${DIST_DIR}/${APP_NAME}${RESET}"
 
 # 5. Copy Assets
-echo -e "${B_PURPLE}[4/4]${RESET} ${P_CYAN}Copying assets...${RESET}"
+echo -e "${B_PURPLE}[5/5]${RESET} ${P_CYAN}Copying assets...${RESET}"
 
 if [ -d "web" ]; then
     echo -e "   ${B_GREEN}+ Copying web folder...${RESET}"

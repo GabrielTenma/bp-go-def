@@ -10,6 +10,7 @@ This wiki serves as the central knowledge base for the project, covering archite
     *   Complete reference for `config.yaml` configuration.
     *   All available options with explanations and examples.
     *   Multiple PostgreSQL connections setup guide with web monitoring interface.
+    *   Dynamic connection switching and health monitoring.
 
 *   **[Architecture Diagrams](ARCHITECTURE_DIAGRAMS.md)**
     *   Visual guide to the system's request/response flow.
@@ -49,6 +50,16 @@ This wiki serves as the central knowledge base for the project, covering archite
 
 ### Integration & Infrastructure
 
+*   **[Build Scripts](BUILD_SCRIPTS.md)**
+    *   Automated build process with backup and archiving.
+    *   Cross-platform scripts for Unix/Linux/macOS and Windows.
+    *   Backup management, troubleshooting, and CI/CD integration.
+
+*   **[Package Name Change Scripts](CHANGE_PACKAGE_SCRIPTS.md)**
+    *   Automated tools for renaming Go module package names.
+    *   Cross-platform support for comprehensive codebase refactoring.
+    *   Safety mechanisms, backup creation, and error handling.
+
 *   **[Service Implementation Guide](SERVICE_IMPLEMENTATION.md)**
     *   Creating and implementing new services.
     *   Service interface and registration.
@@ -57,7 +68,7 @@ This wiki serves as the central knowledge base for the project, covering archite
 *   **[Integration Guide](INTEGRATION_GUIDE.md)**
     *   **Redis**: Configuration and usage of the Redis manager.
     *   **Postgres**: Database connection and Helper methods.
-    *   **NEW**: Multiple PostgreSQL connections with dynamic switching in monitoring UI.
+    *   Multiple PostgreSQL connections with dynamic switching in monitoring UI.
     *   **Kafka**: Message producing and configuration.
     *   **MinIO**: Object storage integration for file uploads.
     *   **Cron Jobs**: Dynamic job scheduling and management.

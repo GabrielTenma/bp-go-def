@@ -7,10 +7,12 @@ This project is a sophisticated Go-based boilerplate application with a modular 
 ### Key Characteristics:
 - **Language**: Go (Golang)
 - **Framework**: Echo for HTTP services
-- **Architecture**: Modular, service-oriented
+- **ORM**: GORM for database operations with auto-migration
+- **Architecture**: Modular, service-oriented with multi-tenant support
 - **UI**: Terminal User Interface (TUI) using Bubble Tea
-- **Monitoring**: Real-time system and service monitoring
-- **Security**: API obfuscation, comprehensive error handling
+- **Monitoring**: Real-time system and service monitoring with web dashboard
+- **Database**: Multiple PostgreSQL connections with dynamic switching
+- **Security**: API obfuscation, comprehensive error handling, AES-256 encryption
 
 ## 2. ARCHITECTURE & DESIGN
 
@@ -299,9 +301,115 @@ The TUI provides visual feedback during boot and real-time monitoring using Bubb
 - Wave animation (boot screen)
 - Pulse effects (color cycling)
 
-## 7. INFRASTRUCTURE INTEGRATION
+## 7. BUILD AND DEPLOYMENT SYSTEM
 
-### 7.1 Redis
+### 7.1 Build Scripts
+
+The project includes comprehensive build scripts for automated compilation, backup management, and deployment across multiple platforms.
+
+**Features:**
+- **Cross-Platform Support**: Separate scripts for Unix/Linux/macOS (`scripts/build.sh`) and Windows (`scripts/build.bat`)
+- **Automatic Backup**: Creates timestamped backups of previous builds before deployment
+- **Archive Compression**: Compresses backups into ZIP files for efficient storage
+- **Process Management**: Automatically stops running application instances
+- **Asset Management**: Copies configuration files, databases, and web assets
+- **Clean Builds**: Optimized Go binary compilation
+- **Pure CMD Implementation**: Windows script uses only built-in CMD commands (no PowerShell dependency)
+
+**Build Process:**
+1. **Timestamp Generation**: Creates `YYYYMMDD_HHMMSS` format timestamps
+2. **Process Management**: Stops running application instances using `pgrep`/`pkill` (Unix) or `tasklist`/`taskkill` (Windows)
+3. **Backup Creation**: Moves old binaries, configs, databases, and web assets to timestamped directories
+4. **Archive Compression**: Compresses backup folders using `zip` (Unix) or `tar` (Windows)
+5. **Build Execution**: Compiles Go application with `go build`
+6. **Asset Copying**: Copies required files to build directory
+
+**Unix/Linux/macOS Script (`scripts/build.sh`):**
+```bash
+# Prerequisites: Go compiler, zip utility, pgrep/pkill
+chmod +x scripts/build.sh
+./scripts/build.sh
+```
+
+**Windows Script (`scripts/build.bat`):**
+```cmd
+# Prerequisites: Go compiler, tar (built-in Windows 10/11)
+scripts\build.bat
+```
+
+**Configuration Variables:**
+- `DIST_DIR`: Build output directory (default: `dist`)
+- `APP_NAME`: Application binary name
+- `MAIN_PATH`: Path to main Go file (default: `./cmd/app/main.go`)
+
+**Backup Management:**
+- **Archive Format**: ZIP compression with directory preservation
+- **Naming Convention**: `YYYYMMDD_HHMMSS.zip`
+- **Storage Location**: `dist/backups/` directory
+- **Cleanup**: Automatic removal of uncompressed backup directories
+
+**CI/CD Integration:**
+- **GitHub Actions**: Automated build workflows
+- **Jenkins Pipeline**: Build and archive artifacts
+- **Artifact Management**: Upload build artifacts to repositories
+
+### 7.2 Package Name Change Scripts
+
+The project includes automated scripts for changing the Go module package name across the entire codebase. These scripts are essential when renaming or refactoring the project module.
+
+**Features:**
+- **Cross-Platform Support**: Separate scripts for Unix/Linux/macOS (`scripts/change_package.sh`) and Windows (`scripts/change_package.bat`)
+- **Automatic Import Updates**: Scans all `.go` files and updates import paths
+- **Module Declaration Update**: Updates the `module` directive in `go.mod`
+- **Backup Creation**: Shell script creates `.bak` backup files before modifications
+- **Pure CMD Implementation**: Windows script uses only built-in CMD commands (no PowerShell dependency)
+
+**Change Process:**
+1. **Module Validation**: Reads and validates current module name from `go.mod`
+2. **File Discovery**: Finds all `.go` files in the project recursively
+3. **Import Path Replacement**: Updates all import statements containing the old module name
+4. **Module Declaration Update**: Changes the module line in `go.mod`
+
+**Unix/Linux/macOS Script (`scripts/change_package.sh`):**
+```bash
+# Prerequisites: Bash, sed, find, awk, grep
+chmod +x scripts/change_package.sh
+./scripts/change_package.sh "github.com/new-org/new-project"
+```
+
+**Windows Script (`scripts/change_package.bat`):**
+```cmd
+# Prerequisites: Windows CMD (built-in)
+scripts\change_package.bat github.com/new-org/new-project
+```
+
+**Usage Examples:**
+```bash
+# Change to a new GitHub repository
+./scripts/change_package.sh "github.com/mycompany/myproject"
+
+# Change to a local module
+./scripts/change_package.sh "mycompany.com/internal/project"
+
+# Change to a generic module name
+./scripts/change_package.bat "example.com/my-app"
+```
+
+**Safety Features:**
+- **Validation**: Checks that the new module name is provided
+- **Backup Creation**: Creates `.bak` files (Unix/Linux/macOS only)
+- **Error Handling**: Stops execution on critical errors
+- **Dry Run Option**: Can be easily modified for preview-only mode
+
+**Important Notes:**
+- **Commit First**: Always commit changes before running the script
+- **Test After**: Run `go mod tidy` and test compilation after changes
+- **Backup Files**: Remove `.bak` files after verifying changes (Unix/Linux/macOS)
+- **IDE Restart**: May need to restart IDE/editor after module name changes
+
+### 7.2 Infrastructure Integration
+
+#### 7.2.1 Redis
 
 **Configuration:**
 ```yaml
@@ -323,7 +431,31 @@ err = redis.Delete(ctx, "my-key")
 
 ### 7.2 Postgres
 
-**Configuration:**
+**Configuration (Multiple Connections):**
+```yaml
+postgres:
+  enabled: true
+  connections:
+    - name: "primary"
+      enabled: true
+      host: "localhost"
+      port: 5432
+      user: "postgres"
+      password: "Mypostgres01"
+      dbname: "primary_db"
+      sslmode: "disable"
+
+    - name: "secondary"
+      enabled: true
+      host: "localhost"
+      port: 5433
+      user: "postgres"
+      password: "Mypostgres01"
+      dbname: "secondary_db"
+      sslmode: "disable"
+```
+
+**Single Connection (Legacy):**
 ```yaml
 postgres:
   enabled: true
@@ -337,7 +469,32 @@ postgres:
   max_idle_conns: 5
 ```
 
-**Usage:**
+**Usage (GORM with Multiple Connections):**
+```go
+// Get specific connection
+if conn, exists := postgresManager.GetConnection("primary"); exists {
+    var users []User
+    result := conn.ORM.Where("active = ?", true).Find(&users)
+    if result.Error != nil {
+        // Handle error
+    }
+}
+
+// Get default connection
+if defaultConn, exists := postgresManager.GetDefaultConnection(); exists {
+    var orders []Order
+    defaultConn.ORM.Where("tenant_id = ?", tenantID).Find(&orders)
+}
+
+// Auto-migration for all connections
+for tenant, db := range postgresManager.GetAllConnections() {
+    if db.ORM != nil {
+        db.ORM.AutoMigrate(&User{}, &Order{}) // Migrate schemas
+    }
+}
+```
+
+**Raw SQL Usage:**
 ```go
 var users []User
 err := db.DB.Select(&users, "SELECT * FROM users WHERE active = $1", true)
@@ -474,11 +631,13 @@ bp-go-def/
 ### 10.1 Core Features
 
 - **Modular Architecture**: Services can be enabled/disabled via config
+- **Multi-Tenant Database Support**: Multiple PostgreSQL connections with dynamic switching
+- **ORM Integration**: GORM with auto-migration for database operations
 - **Standardized API**: Consistent request/response structure
 - **Comprehensive Validation**: Built-in and custom validators
 - **Advanced Error Handling**: Custom HTTP error handler
 - **API Obfuscation**: Base64 encoding for data privacy
-- **Real-time Monitoring**: System and service health dashboard
+- **Real-time Monitoring**: System and service health dashboard with web interface
 - **Terminal UI**: Interactive boot sequence and dashboard
 - **Infrastructure Integrations**: Redis, Postgres, Kafka, MinIO, Cron
 
@@ -553,9 +712,11 @@ This project represents a sophisticated, production-ready Go boilerplate with co
 
 The combination of:
 - **Clean architecture** with separation of concerns
+- **Multi-tenant database support** with dynamic connection switching
+- **ORM integration** using GORM with auto-migration capabilities
 - **Comprehensive API structure** with validation and error handling
-- **Advanced monitoring** with TUI dashboard
-- **Security features** like API obfuscation
-- **Infrastructure integrations** for common services
+- **Advanced monitoring** with both TUI and web dashboards
+- **Security features** including API obfuscation and AES-256 encryption
+- **Infrastructure integrations** for Redis, multiple PostgreSQL databases, Kafka, MinIO, and Cron
 
-makes this boilerplate suitable for a wide range of applications from simple APIs to complex microservices systems.
+makes this boilerplate suitable for a wide range of applications from simple APIs to complex multi-tenant SaaS systems.

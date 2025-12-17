@@ -122,6 +122,156 @@ func (s *OrdersService) createOrder(c echo.Context) error {
 
 ---
 
+## Creating a Service with Multiple Database Connections
+
+### Multi-Tenant Services with GORM
+
+For services that need to work with multiple PostgreSQL databases (multi-tenancy), inject the `PostgresConnectionManager`:
+
+```go
+package modules
+
+import (
+    "fmt"
+    "strconv"
+    "test-go/pkg/infrastructure"
+    "test-go/pkg/response"
+
+    "github.com/labstack/echo/v4"
+    "gorm.io/gorm"
+)
+
+type MultiTenantOrder struct {
+    gorm.Model
+    TenantID    string  `json:"tenant_id" gorm:"not null;index"`
+    CustomerID  uint    `json:"customer_id" gorm:"not null"`
+    ProductName string  `json:"product_name" gorm:"not null"`
+    Quantity    int     `json:"quantity" gorm:"not null;check:quantity > 0"`
+    TotalPrice  float64 `json:"total_price" gorm:"not null;type:decimal(10,2)"`
+    Status      string  `json:"status" gorm:"not null;default:'pending'"`
+}
+
+type OrdersService struct {
+    enabled                   bool
+    postgresConnectionManager *infrastructure.PostgresConnectionManager
+}
+
+func NewOrdersService(
+    enabled bool,
+    postgresConnectionManager *infrastructure.PostgresConnectionManager,
+) *OrdersService {
+    // Auto-migrate schema for all connected databases
+    if enabled && postgresConnectionManager != nil {
+        allConnections := postgresConnectionManager.GetAllConnections()
+        for tenant, db := range allConnections {
+            if db.ORM != nil {
+                if err := db.ORM.AutoMigrate(&MultiTenantOrder{}); err != nil {
+                    fmt.Printf("Error migrating MultiTenantOrder for tenant '%s': %v\n", tenant, err)
+                }
+            }
+        }
+    }
+
+    return &OrdersService{
+        enabled:                   enabled,
+        postgresConnectionManager: postgresConnectionManager,
+    }
+}
+
+func (s *OrdersService) Name() string        { return "Multi-Tenant Orders Service" }
+func (s *OrdersService) Enabled() bool       { return s.enabled && s.postgresConnectionManager != nil }
+func (s *OrdersService) Endpoints() []string { return []string{"/orders/{tenant}", "/orders/{tenant}/{id}"} }
+
+func (s *OrdersService) RegisterRoutes(g *echo.Group) {
+    sub := g.Group("/orders")
+
+    // Routes with tenant parameter for database selection
+    sub.GET("/:tenant", s.listOrdersByTenant)
+    sub.POST("/:tenant", s.createOrder)
+    sub.GET("/:tenant/:id", s.getOrderByTenant)
+    sub.PUT("/:tenant/:id", s.updateOrder)
+    sub.DELETE("/:tenant/:id", s.deleteOrder)
+}
+
+func (s *OrdersService) listOrdersByTenant(c echo.Context) error {
+    tenant := c.Param("tenant")
+
+    // Get the database connection for this tenant
+    dbConn, exists := s.postgresConnectionManager.GetConnection(tenant)
+    if !exists {
+        return response.NotFound(c, fmt.Sprintf("Tenant database '%s' not found or not connected", tenant))
+    }
+
+    // Query using GORM
+    var orders []MultiTenantOrder
+    result := dbConn.ORM.Where("tenant_id = ?", tenant).Order("created_at DESC").Find(&orders)
+    if result.Error != nil {
+        return response.InternalServerError(c, fmt.Sprintf("Failed to query tenant '%s' database: %v", tenant, result.Error))
+    }
+
+    return response.Success(c, orders, fmt.Sprintf("Orders retrieved from tenant '%s' database", tenant))
+}
+
+func (s *OrdersService) createOrder(c echo.Context) error {
+    tenant := c.Param("tenant")
+
+    // Get the database connection for this tenant
+    dbConn, exists := s.postgresConnectionManager.GetConnection(tenant)
+    if !exists {
+        return response.NotFound(c, fmt.Sprintf("Tenant database '%s' not found or not connected", tenant))
+    }
+
+    var order MultiTenantOrder
+    if err := c.Bind(&order); err != nil {
+        return response.BadRequest(c, "Invalid order data")
+    }
+
+    // Set tenant ID and create using GORM
+    order.TenantID = tenant
+    order.Status = "pending"
+
+    result := dbConn.ORM.Create(&order)
+    if result.Error != nil {
+        return response.InternalServerError(c, fmt.Sprintf("Failed to create order in tenant '%s' database: %v", tenant, result.Error))
+    }
+
+    return response.Created(c, order, fmt.Sprintf("Order created in tenant '%s' database", tenant))
+}
+```
+
+### Benefits of Multi-Tenant Architecture
+
+- **Data Isolation**: Each tenant's data is completely separated
+- **Scalability**: Different tenants can use different database instances
+- **Performance**: Queries are isolated to specific tenant databases
+- **Security**: Tenant data cannot accidentally mix
+- **Flexibility**: Tenants can have different database configurations
+
+### Configuration for Multi-Tenant Services
+
+```yaml
+postgres:
+  enabled: true
+  connections:
+    - name: "tenant_a"
+      enabled: true
+      host: "localhost"
+      port: 5432
+      user: "postgres"
+      password: "password"
+      dbname: "tenant_a_db"
+      sslmode: "disable"
+
+    - name: "tenant_b"
+      enabled: true
+      host: "localhost"
+      port: 5433
+      user: "postgres"
+      password: "password"
+      dbname: "tenant_b_db"
+      sslmode: "disable"
+```
+
 ## Creating a Service with Dependencies
 
 For services that require infrastructure (database, cache, etc.), inject dependencies via the constructor:
