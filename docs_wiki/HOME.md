@@ -54,6 +54,15 @@ This wiki serves as the central knowledge base for the project, covering archite
     *   **Boot Sequence**: Visual feedback during service initialization.
     *   **Live Dashboard**: Real-time monitoring of system resources and service health.
 
+### Real-time Features
+
+*   **[Live Event Streaming](EVENT_STREAMING.md)**
+    *   Server-Sent Events (SSE) implementation with multiple concurrent streams.
+    *   Real-time push notifications to connected clients without polling.
+    *   Event broadcasting to specific streams or all streams simultaneously.
+    *   Stream management with start, stop, pause, and resume operations.
+    *   Client management with automatic subscription/unsubscription.
+
 ### Integration & Infrastructure
 
 *   **[MongoDB Integration](MONGODB_INTEGRATION.md)**

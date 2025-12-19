@@ -19,6 +19,7 @@ services:
   service_e: false
   service_f: true
   service_g: true
+  service_h: true
 
 auth:
   type: "apikey"

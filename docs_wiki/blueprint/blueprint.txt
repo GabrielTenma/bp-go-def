@@ -290,6 +290,77 @@ The TUI provides visual feedback during boot and real-time monitoring using Bubb
 - **Infrastructure Box**: External connection status
 - **Services Box**: Internal service health
 
+### 6.4 Service Architecture Showcase
+
+The application demonstrates different service implementation patterns through specialized services:
+
+#### Service G (`internal/services/modules/service_g.go`) - MongoDB Multi-Tenant Service
+**Database-focused service** providing comprehensive MongoDB operations:
+- **Multi-tenant support**: Operations across isolated tenant databases
+- **Full CRUD operations**: Create, read, update, delete for products
+- **Advanced search**: Complex queries with filtering and pagination
+- **Analytics**: Aggregation pipelines for tenant-specific insights
+- **API Endpoints**: `/api/v1/products/{tenant}/*` - Tenant-scoped operations
+
+#### Service H (`internal/services/modules/service_h.go`) - Clean Event Streaming Demo
+**Simple, user-friendly implementation** using the broadcast utility:
+- **Clean and simple**: Only 150 lines of code using `pkg/utils/broadcast.go`
+- **Easy to understand**: Demonstrates how easy event streaming can be
+- **Broadcasting made easy**: Shows the power of reusable utilities
+- **Educational value**: Perfect example of clean architecture
+
+#### Broadcast Utility (`pkg/utils/broadcast.go`) - Reusable Infrastructure
+**Extracted broadcasting component** for maximum reusability:
+
+```go
+// Simple integration for any service
+broadcaster := utils.NewEventBroadcaster()
+client := broadcaster.Subscribe("my-stream")
+broadcaster.Broadcast("my-stream", "event", "message", data)
+```
+
+**Utility Benefits:**
+- **Clean code**: Services focus on business logic, not infrastructure
+- **Easy integration**: Just import and use
+- **Consistent API**: All services using broadcast have same interface
+- **Thread-safe operations** with proper synchronization
+
+#### Service Implementation Patterns
+
+**Simple Utility Pattern (Service H)**
+```go
+// Clean and simple implementation
+type ServiceH struct {
+    broadcaster *utils.EventBroadcaster  // Just use the utility!
+    streams     map[string]*SimpleStreamGenerator
+}
+
+// Pros: Clean, maintainable, easy to understand
+// Cons: Minimal - just use the utility
+```
+
+#### API Endpoints
+
+| Service | Purpose | API Prefix | Implementation |
+|---------|---------|------------|----------------|
+| **Service G** | MongoDB multi-tenant | `/products/{tenant}/` | Database operations |
+| **Service H** | Event streaming | `/events/` | Clean utility usage |
+
+#### MongoDB Multi-Tenant Operations (Service G)
+- `GET /api/v1/products/{tenant}` - List tenant products
+- `POST /api/v1/products/{tenant}` - Create product in tenant
+- `GET /api/v1/products/{tenant}/{id}` - Get specific product
+- `PUT /api/v1/products/{tenant}/{id}` - Update product
+- `DELETE /api/v1/products/{tenant}/{id}` - Delete product
+- `GET /api/v1/products/{tenant}/search` - Advanced search
+- `GET /api/v1/products/{tenant}/analytics` - Analytics dashboard
+
+#### Event Streaming Operations (Service H)
+- `GET /api/v1/events/stream/{stream_id}` - SSE subscription
+- `POST /api/v1/events/broadcast` - Event broadcasting
+- `GET /api/v1/events/streams` - Stream information
+- `POST /api/v1/events/stream/{id}/start|stop` - Simple stream management
+
 ### 6.4 Styling System (`pkg/tui/styles.go`)
 
 **Color Palette (Dracula-inspired):**

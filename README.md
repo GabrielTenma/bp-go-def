@@ -45,7 +45,7 @@ go run cmd/app/main.go
 
 ## Documentation
 
-📖 **[Full Documentation](docs_wiki/)** - Comprehensive guides and references
+**[Full Documentation](docs_wiki/)** - Comprehensive guides and references
 
 ### Core Documentation
 - **[Configuration Guide](docs_wiki/CONFIGURATION_GUIDE.md)** - Complete configuration reference
@@ -69,7 +69,7 @@ go run cmd/app/main.go
 .
 ├── cmd/app/              # Application entry point
 ├── config/               # Configuration logic
-├── docs_wiki/            # 📖 Documentation
+├── docs_wiki/            # Documentation
 ├── internal/
 │   ├── middleware/       # Auth & security middleware
 │   ├── monitoring/       # Web monitoring dashboard

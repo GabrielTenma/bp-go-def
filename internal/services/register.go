@@ -147,6 +147,12 @@ func (sr *ServiceRegistrar) RegisterAllServices(registry *Registry, echo *echo.E
 				return modules.NewServiceG(sr.mongoConnMgr, sr.config.Services.IsEnabled("service_g"), sr.logger)
 			},
 		},
+		{
+			Name: "service_h",
+			Constructor: func() interface{ Service } {
+				return modules.NewServiceH(sr.config.Services.IsEnabled("service_h"), sr.logger)
+			},
+		},
 
 		// ===============================
 		// ADD YOUR NEW SERVICE ABOVE THIS LINE
