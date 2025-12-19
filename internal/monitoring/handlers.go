@@ -20,6 +20,8 @@ type Handler struct {
 	redis                     *infrastructure.RedisManager
 	postgres                  *infrastructure.PostgresManager
 	postgresConnectionManager *infrastructure.PostgresConnectionManager
+	mongo                     *infrastructure.MongoManager
+	mongoConnectionManager    *infrastructure.MongoConnectionManager
 	kafka                     *infrastructure.KafkaManager
 	cron                      *infrastructure.CronManager
 	minio                     *infrastructure.MinIOManager
@@ -46,6 +48,8 @@ func (h *Handler) RegisterRoutes(g *echo.Group) {
 	g.GET("/api/endpoints", h.getEndpoints)
 	g.GET("/api/cron", h.getCronJobs)
 	g.POST("/api/postgres/query", h.runPostgresQuery) // New: Raw Query
+	g.GET("/api/mongo/info", h.getMongoInfo)          // MongoDB info
+	g.POST("/api/mongo/query", h.runMongoQuery)       // MongoDB raw query
 
 	// Utils
 	g.GET("/api/logs/dummy/status", h.getDummyStatus)
@@ -209,6 +213,51 @@ func (h *Handler) getStatus(c echo.Context) error {
 
 	status["kafka"] = h.kafka.GetStatus()
 	status["cron"] = h.cron.GetStatus()
+
+	// Handle both single and multiple MongoDB connections
+	if h.mongoConnectionManager != nil || (h.config.MongoMultiConfig.Enabled && len(h.config.MongoMultiConfig.Connections) > 0) {
+		// For multiple connections, format the status for frontend compatibility
+		var mongoStatus map[string]map[string]interface{}
+		if h.mongoConnectionManager != nil {
+			mongoStatus = h.mongoConnectionManager.GetStatus()
+		} else {
+			mongoStatus = make(map[string]map[string]interface{})
+		}
+
+		var connectionStatuses = make(map[string]interface{})
+
+		// Include all configured connections, even if they failed to connect
+		for _, connCfg := range h.config.MongoMultiConfig.Connections {
+			connName := connCfg.Name
+			if connStatus, exists := mongoStatus[connName]; exists {
+				connectionStatuses[connName] = connStatus
+			} else {
+				// Connection configured but failed to connect
+				connectionStatuses[connName] = map[string]interface{}{
+					"connected": false,
+				}
+			}
+		}
+
+		// Check if any connection is connected
+		anyConnected := false
+		for _, connStatus := range connectionStatuses {
+			if statusMap, ok := connStatus.(map[string]interface{}); ok {
+				if connected, ok := statusMap["connected"].(bool); ok && connected {
+					anyConnected = true
+					break
+				}
+			}
+		}
+
+		// Set overall mongo status with connected flag and connection details
+		status["mongo"] = map[string]interface{}{
+			"connected":   anyConnected,
+			"connections": connectionStatuses,
+		}
+	} else {
+		status["mongo"] = h.mongo.GetStatus()
+	}
 
 	// New Infrastructure
 	status["storage"] = h.minio.GetStatus()
@@ -565,4 +614,117 @@ func (h *Handler) streamCPU(c echo.Context) error {
 			return nil
 		}
 	}
+}
+
+func (h *Handler) getMongoInfo(c echo.Context) error {
+	// Check if MongoDB is enabled in configuration
+	if !h.config.Mongo.Enabled && !h.config.MongoMultiConfig.Enabled {
+		return response.ServiceUnavailable(c, "MongoDB not enabled")
+	}
+
+	// Get requested connection from query param
+	connectionName := c.QueryParam("connection")
+
+	// Use connection manager if available, otherwise fallback to single connection
+	var mongoManager *infrastructure.MongoManager
+	if h.mongoConnectionManager != nil {
+		if connectionName != "" {
+			// Use specific connection if requested
+			if conn, exists := h.mongoConnectionManager.GetConnection(connectionName); exists {
+				mongoManager = conn
+			}
+		} else {
+			// Use default connection
+			if defaultConn, exists := h.mongoConnectionManager.GetDefaultConnection(); exists {
+				mongoManager = defaultConn
+			}
+		}
+	} else {
+		mongoManager = h.mongo
+	}
+
+	// If we have a connection manager but no connection found, try to get any available connection (only if no specific connection requested)
+	if mongoManager == nil && h.mongoConnectionManager != nil && connectionName == "" {
+		allConnections := h.mongoConnectionManager.GetAllConnections()
+		for _, conn := range allConnections {
+			mongoManager = conn
+			break // Use the first available connection
+		}
+	}
+
+	if mongoManager == nil {
+		return response.Success(c, map[string]interface{}{})
+	}
+
+	info, err := mongoManager.GetDBInfo(c.Request().Context())
+	if err != nil {
+		return response.InternalServerError(c, err.Error())
+	}
+
+	return response.Success(c, info)
+}
+
+func (h *Handler) runMongoQuery(c echo.Context) error {
+	// Check if MongoDB is enabled in configuration
+	if !h.config.Mongo.Enabled && !h.config.MongoMultiConfig.Enabled {
+		return response.ServiceUnavailable(c, "MongoDB not enabled")
+	}
+
+	// Get requested connection from query param
+	connectionName := c.QueryParam("connection")
+
+	// Use connection manager if available, otherwise fallback to single connection
+	var mongoManager *infrastructure.MongoManager
+	if h.mongoConnectionManager != nil {
+		if connectionName != "" {
+			// Use specific connection if requested
+			if conn, exists := h.mongoConnectionManager.GetConnection(connectionName); exists {
+				mongoManager = conn
+			}
+		} else {
+			// Use default connection
+			if defaultConn, exists := h.mongoConnectionManager.GetDefaultConnection(); exists {
+				mongoManager = defaultConn
+			}
+		}
+	} else {
+		mongoManager = h.mongo
+	}
+
+	// If we have a connection manager but no connection found, try to get any available connection (only if no specific connection requested)
+	if mongoManager == nil && h.mongoConnectionManager != nil && connectionName == "" {
+		allConnections := h.mongoConnectionManager.GetAllConnections()
+		for _, conn := range allConnections {
+			mongoManager = conn
+			break // Use the first available connection
+		}
+	}
+
+	if mongoManager == nil {
+		return response.ServiceUnavailable(c, "MongoDB connection not available")
+	}
+
+	type QueryReq struct {
+		Collection string                 `json:"collection"`
+		Query      map[string]interface{} `json:"query"`
+	}
+	var req QueryReq
+	if err := c.Bind(&req); err != nil {
+		return response.BadRequest(c, "Invalid request")
+	}
+
+	if req.Collection == "" {
+		return response.BadRequest(c, "Collection cannot be empty")
+	}
+
+	if req.Query == nil {
+		req.Query = map[string]interface{}{} // Empty query to find all documents
+	}
+
+	results, err := mongoManager.ExecuteRawQuery(c.Request().Context(), req.Collection, req.Query)
+	if err != nil {
+		return response.InternalServerError(c, err.Error())
+	}
+
+	return response.Success(c, results)
 }

@@ -80,12 +80,14 @@ if "%TARGET%"=="all" goto :valid_target
 if "%TARGET%"=="test" goto :valid_target
 if "%TARGET%"=="dev" goto :valid_target
 if "%TARGET%"=="prod" goto :valid_target
+if "%TARGET%"=="prod-slim" goto :valid_target
+if "%TARGET%"=="prod-minimal" goto :valid_target
 if "%TARGET%"=="ultra-prod" goto :valid_target
 if "%TARGET%"=="ultra-all" goto :valid_target
 if "%TARGET%"=="ultra-dev" goto :valid_target
 if "%TARGET%"=="ultra-test" goto :valid_target
 echo    %B_RED%x Invalid target: %TARGET%%RESET%
-echo    %B_CYAN%Valid targets: all, test, dev, prod, ultra-prod, ultra-all, ultra-dev, ultra-test%RESET%
+echo    %B_CYAN%Valid targets: all, test, dev, prod, prod-slim, prod-minimal, ultra-prod, ultra-all, ultra-dev, ultra-test%RESET%
 exit /b 1
 
 :valid_target
@@ -212,6 +214,40 @@ set /a STEP+=1
 
 :skip_prod
 
+REM Build Slim Production Stage
+if "%TARGET%"=="prod-slim" goto :build_prod_slim
+goto :skip_prod_slim
+
+:build_prod_slim
+echo %B_PURPLE%[%STEP%/%TOTAL_STEPS%]%RESET% %P_CYAN%Building slim production image...%RESET%
+docker build --target prod-slim -t "%IMAGE_NAME%:slim" .
+if %ERRORLEVEL% equ 0 (
+    echo    %B_GREEN%+ Slim production image built:%RESET% %B_WHITE%%IMAGE_NAME%:slim%RESET%
+) else (
+    echo    %B_RED%x Slim production build failed%RESET%
+    exit /b 1
+)
+set /a STEP+=1
+
+:skip_prod_slim
+
+REM Build Minimal Production Stage
+if "%TARGET%"=="prod-minimal" goto :build_prod_minimal
+goto :skip_prod_minimal
+
+:build_prod_minimal
+echo %B_PURPLE%[%STEP%/%TOTAL_STEPS%]%RESET% %P_CYAN%Building minimal production image...%RESET%
+docker build --target prod-minimal -t "%IMAGE_NAME%:minimal" .
+if %ERRORLEVEL% equ 0 (
+    echo    %B_GREEN%+ Minimal production image built:%RESET% %B_WHITE%%IMAGE_NAME%:minimal%RESET%
+) else (
+    echo    %B_RED%x Minimal production build failed%RESET%
+    exit /b 1
+)
+set /a STEP+=1
+
+:skip_prod_minimal
+
 REM Build Ultra Production Stage (for ultra-all and ultra-prod)
 if "%TARGET%"=="ultra-all" goto :build_ultra_prod
 if "%TARGET%"=="ultra-prod" goto :build_ultra_prod
@@ -254,6 +290,8 @@ if "%TARGET%"=="ultra-dev" echo    %B_WHITE%%IMAGE_NAME%:dev%RESET%      %GRAY%(
 if "%TARGET%"=="ultra-all" echo    %B_WHITE%%IMAGE_NAME%:dev%RESET%      %GRAY%(development)%RESET%
 if "%TARGET%"=="prod" echo    %B_WHITE%%IMAGE_NAME%:latest%RESET%  %GRAY%(production)%RESET%
 if "%TARGET%"=="all" echo    %B_WHITE%%IMAGE_NAME%:latest%RESET%  %GRAY%(production)%RESET%
+if "%TARGET%"=="prod-slim" echo    %B_WHITE%%IMAGE_NAME%:slim%RESET%    %GRAY%(slim-production)%RESET%
+if "%TARGET%"=="prod-minimal" echo    %B_WHITE%%IMAGE_NAME%:minimal%RESET% %GRAY%(minimal-production)%RESET%
 if "%TARGET%"=="ultra-prod" echo    %B_WHITE%%IMAGE_NAME%:ultra%RESET%    %GRAY%(ultra-production)%RESET%
 if "%TARGET%"=="ultra-all" echo    %B_WHITE%%IMAGE_NAME%:ultra%RESET%    %GRAY%(ultra-production)%RESET%
 

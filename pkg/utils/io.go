@@ -2,19 +2,18 @@ package utils
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 )
 
 // WriteFile writes content to a file, creating it if it doesn't exist.
 // It overwrites the file if it exists.
 func WriteFile(path string, content []byte) error {
-	return ioutil.WriteFile(path, content, 0644)
+	return os.WriteFile(path, content, 0644)
 }
 
 // ReadFile reads the content of a file.
 func ReadFile(path string) ([]byte, error) {
-	return ioutil.ReadFile(path)
+	return os.ReadFile(path)
 }
 
 // FileExists checks if a file exists.

@@ -310,7 +310,7 @@ func (m BootModel) View() string {
 		Bold(true).
 		Foreground(lipgloss.Color(bootTitleGradient[colorIdx]))
 
-	title := fmt.Sprintf("✨ %s ✨", m.config.AppName)
+	title := fmt.Sprintf(" %s ", m.config.AppName)
 	b.WriteString(titleGradient.Render(title))
 	b.WriteString("\n")
 
@@ -367,12 +367,12 @@ func (m BootModel) View() string {
 
 		switch m.phase {
 		case "complete":
-			msg := fmt.Sprintf("\n🚀 Server ready at http://localhost:%s", m.config.Port)
+			msg := fmt.Sprintf("\n Server ready at http://localhost:%s", m.config.Port)
 			b.WriteString(bootCompleteStyle.Render(msg))
 			b.WriteString("\n")
-			b.WriteString(bootInfoStyle.Render(fmt.Sprintf("⚡ Started in %s", elapsed)))
+			b.WriteString(bootInfoStyle.Render(fmt.Sprintf(" Started in %s", elapsed)))
 		case "error":
-			b.WriteString(bootErrorStyle.Render("\n⚠️  Boot sequence encountered errors"))
+			b.WriteString(bootErrorStyle.Render("\n  Boot sequence encountered errors"))
 		}
 		b.WriteString("\n")
 	}
@@ -385,25 +385,25 @@ func (m BootModel) View() string {
 			Bold(true).
 			Foreground(lipgloss.Color("#ffdab3ff"))
 
-		progressWidth := 30
-		progressPercent := float64(m.countdown) / float64(m.config.IdleSeconds)
-		filled := int(progressPercent * float64(progressWidth))
-		empty := progressWidth - filled
+		// progressWidth := 30
+		// progressPercent := float64(m.countdown) / float64(m.config.IdleSeconds)
+		// filled := int(progressPercent * float64(progressWidth))
+		// empty := progressWidth - filled
 
-		progressBar := lipgloss.NewStyle().Foreground(lipgloss.Color("#b6ffc8ff")).Render(strings.Repeat("█", filled)) +
-			lipgloss.NewStyle().Foreground(lipgloss.Color("#44475A")).Render(strings.Repeat("░", empty))
+		// progressBar := lipgloss.NewStyle().Foreground(lipgloss.Color("#b6ffc8ff")).Render(strings.Repeat("█", filled)) +
+		// 	lipgloss.NewStyle().Foreground(lipgloss.Color("#44475A")).Render(strings.Repeat("░", empty))
 
-		footerText = fmt.Sprintf("\n  %s Starting server in %s seconds...\n  %s\n\n  Press 'q' to skip and continue now",
+		footerText = fmt.Sprintf("\n  %s Starting server in %s seconds...\n  Press 'q' to skip and continue now",
 			bootFrames[m.animFrame%len(bootFrames)],
 			countdownStyle.Render(fmt.Sprintf("%d", m.countdown)),
-			progressBar,
+			// progressBar,
 		)
 	} else {
 		footerText = "Press 'q' to continue..."
 	}
 
 	footer := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#44475A")).
+		Foreground(lipgloss.Color("#56575eff")).
 		Render(footerText)
 	b.WriteString("\n")
 	b.WriteString(footer)

@@ -15,7 +15,7 @@ redis:
 ```
 
 ### Usage (Code)
-The `RedisManager` provides a wrapper around `go-redis`.
+The `RedisManager` provides async operations with worker pools.
 
 ```go
 // Inject RedisManager into your service
@@ -26,14 +26,38 @@ type MyService struct {
 func (s *MyService) Example() {
     ctx := context.Background()
 
-    // SET
-    err := s.redis.Set(ctx, "my-key", "my-value", time.Minute*10)
+    // Async SET - returns immediately
+    result := s.redis.SetAsync(ctx, "my-key", "my-value", time.Minute*10)
 
-    // GET
-    val, err := s.redis.Get(ctx, "my-key")
-    
-    // DELETE
-    err = s.redis.Delete(ctx, "my-key")
+    // Wait for completion
+    err := result.Wait()
+
+    // Async GET
+    getResult := s.redis.GetAsync(ctx, "my-key")
+    value, err := getResult.Wait()
+
+    // Async DELETE
+    delResult := s.redis.DeleteAsync(ctx, "my-key")
+    err := delResult.Wait()
+}
+
+// Batch operations for efficiency
+func (s *MyService) BatchExample() {
+    ctx := context.Background()
+    keys := []string{"key1", "key2", "key3"}
+
+    // Get multiple keys concurrently
+    result := s.redis.GetBatchAsync(ctx, keys)
+    values, errors := result.WaitAll()
+
+    // Process results
+    for i, val := range values {
+        if errors[i] != nil {
+            // Handle error
+        } else {
+            // Process value
+        }
+    }
 }
 ```
 

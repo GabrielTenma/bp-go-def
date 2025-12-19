@@ -29,10 +29,10 @@ go run cmd/app/main.go
 ## Screenshots
 
 ### Backend Console
-![Backend Console](.assets/Recording%202025-12-14%20223856.gif)
+![Backend Console](.assets/Recording_Console.gif)
 
 ### Monitoring Dashboard
-![Monitoring Dashboard](.assets/Recording%202025-12-14%20230230.gif)
+![Monitoring Dashboard](.assets/Recording_Dashboard.gif)
 
 ## Key Features
 

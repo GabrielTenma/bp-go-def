@@ -1,41 +1,24 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"os/signal"
-	"runtime"
 	"syscall"
 	"test-go/config"
 	"test-go/internal/monitoring"
 	"test-go/internal/server"
 	"test-go/pkg/logger"
 	"test-go/pkg/tui"
+	"test-go/pkg/utils"
 	"time"
 )
 
-// clearScreen clears the terminal screen (cross-platform)
-func clearScreen() {
-	var cmd *exec.Cmd
-
-	switch runtime.GOOS {
-	case "windows":
-		// Windows: use cmd /c cls
-		cmd = exec.Command("cmd", "/c", "cls")
-	default:
-		// Linux, macOS, and others: use clear command
-		cmd = exec.Command("clear")
-	}
-
-	cmd.Stdout = os.Stdout
-	cmd.Run()
-}
-
 func main() {
 	// Clear the terminal screen for a fresh start
-	clearScreen()
+	utils.ClearScreen()
 
 	// 1. Load Config
 	cfg, err := config.LoadConfig()
@@ -52,7 +35,14 @@ func main() {
 		}
 	}
 
-	// 3. Init Broadcaster for monitoring
+	// 3. Check port availability
+	if err := utils.CheckPortAvailability(cfg.Server.Port, cfg.Monitoring.Port, cfg.Monitoring.Enabled); err != nil {
+		fmt.Printf("\033[31m❌ Port Error: %s\033[0m\n", err.Error())
+		fmt.Println("\033[33mPlease stop the conflicting service or change the port in config.yaml\033[0m")
+		os.Exit(1)
+	}
+
+	// 4. Init Broadcaster for monitoring
 	broadcaster := monitoring.NewLogBroadcaster()
 
 	// Check if TUI mode is enabled
@@ -111,6 +101,7 @@ func runWithTUI(cfg *config.Config, bannerText string, broadcaster *monitoring.L
 		Port:        cfg.Server.Port,
 		MonitorPort: cfg.Monitoring.Port,
 		Env:         cfg.App.Env,
+		OnShutdown:  utils.TriggerShutdown, // Pass the shutdown callback
 	})
 
 	// Init Logger (quiet mode so logs go to TUI only)
@@ -141,7 +132,6 @@ func runWithTUI(cfg *config.Config, bannerText string, broadcaster *monitoring.L
 	time.Sleep(500 * time.Millisecond)
 	liveTUI.AddLog("info", "Server ready at http://localhost:"+cfg.Server.Port)
 	if cfg.Monitoring.Enabled {
-		time.Sleep(500 * time.Millisecond)
 		liveTUI.AddLog("info", "Monitoring at http://localhost:"+cfg.Monitoring.Port)
 	}
 
@@ -149,11 +139,21 @@ func runWithTUI(cfg *config.Config, bannerText string, broadcaster *monitoring.L
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
-	// Block until signal
-	<-sigChan
+	// Block until signal or shutdown channel
+	select {
+	case <-sigChan:
+		// External signal (Ctrl+C)
+	case <-utils.ShutdownChan:
+		// Internal shutdown request from TUI
+	}
 
 	liveTUI.AddLog("warn", "Shutting down...")
+	srv.Shutdown(context.Background(), l)
 	liveTUI.Stop()
+
+	// Give a moment for cleanup and then exit
+	time.Sleep(100 * time.Millisecond)
+	os.Exit(0)
 }
 
 // runWithConsole runs the application with traditional console logging
@@ -211,6 +211,11 @@ func runWithConsole(cfg *config.Config, bannerText string, broadcaster *monitori
 	<-sigChan
 
 	l.Warn("Shutting down...")
+	srv.Shutdown(context.Background(), l)
+
+	// Give a moment for cleanup and then exit
+	time.Sleep(100 * time.Millisecond)
+	os.Exit(0)
 }
 
 // logServiceStatus logs whether a service is enabled or skipped

@@ -6,6 +6,12 @@ This wiki serves as the central knowledge base for the project, covering archite
 
 ### Architecture & Design
 
+*   **[Async Infrastructure Implementation](ASYNC_INFRASTRUCTURE.md)**
+    *   Complete async infrastructure system ensuring non-blocking operations.
+    *   Worker pools, goroutines, and channels for concurrent processing.
+    *   Generic AsyncResult types with timeout and error handling.
+    *   Performance benefits and best practices for async operations.
+
 *   **[Configuration Guide](CONFIGURATION_GUIDE.md)**
     *   Complete reference for `config.yaml` configuration.
     *   All available options with explanations and examples.
@@ -50,6 +56,13 @@ This wiki serves as the central knowledge base for the project, covering archite
 
 ### Integration & Infrastructure
 
+*   **[MongoDB Integration](MONGODB_INTEGRATION.md)**
+    *   Complete MongoDB integration guide with multiple database support.
+    *   Web monitoring interface for MongoDB databases and collections.
+    *   Manual query execution and real-time database statistics.
+    *   Multi-tenant MongoDB operations with connection switching.
+    *   CRUD operations, aggregation pipelines, and best practices.
+
 *   **[Docker Containerization](DOCKER_CONTAINERIZATION.md)**
     *   Multi-stage Dockerfile for development, testing, and production.
     *   Docker Compose integration with infrastructure services.
@@ -80,6 +93,7 @@ This wiki serves as the central knowledge base for the project, covering archite
     *   **Redis**: Configuration and usage of the Redis manager.
     *   **Postgres**: Database connection and Helper methods.
     *   Multiple PostgreSQL connections with dynamic switching in monitoring UI.
+    *   **MongoDB**: NoSQL database integration with multi-connection support.
     *   **Kafka**: Message producing and configuration.
     *   **MinIO**: Object storage integration for file uploads.
     *   **Cron Jobs**: Dynamic job scheduling and management.

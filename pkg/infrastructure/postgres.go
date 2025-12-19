@@ -13,8 +13,9 @@ import (
 )
 
 type PostgresManager struct {
-	DB  *sql.DB
-	ORM *gorm.DB
+	DB   *sql.DB
+	ORM  *gorm.DB
+	Pool *WorkerPool // Async worker pool
 }
 
 type PostgresConnectionManager struct {
@@ -48,9 +49,14 @@ func NewPostgresDB(cfg config.PostgresConfig) (*PostgresManager, error) {
 		return nil, fmt.Errorf("failed to initialize GORM: %w", err)
 	}
 
+	// Initialize worker pool for async operations
+	pool := NewWorkerPool(15) // Moderate pool for DB operations
+	pool.Start()
+
 	return &PostgresManager{
-		DB:  sqlDB,
-		ORM: gormDB,
+		DB:   sqlDB,
+		ORM:  gormDB,
+		Pool: pool,
 	}, nil
 }
 
@@ -358,4 +364,167 @@ func (p *PostgresManager) GetDBInfo(ctx context.Context) (map[string]interface{}
 		"user":     user,
 		"ssl_mode": sslMode,
 	}, nil
+}
+
+// Async Postgres Operations
+
+// QueryAsync asynchronously executes a query that returns rows.
+func (p *PostgresManager) QueryAsync(ctx context.Context, query string, args ...interface{}) *AsyncResult[*sql.Rows] {
+	return ExecuteAsync(ctx, func(ctx context.Context) (*sql.Rows, error) {
+		return p.Query(ctx, query, args...)
+	})
+}
+
+// QueryRowAsync asynchronously executes a query that returns at most one row.
+func (p *PostgresManager) QueryRowAsync(ctx context.Context, query string, args ...interface{}) *AsyncResult[*sql.Row] {
+	return ExecuteAsync(ctx, func(ctx context.Context) (*sql.Row, error) {
+		row := p.QueryRow(ctx, query, args...)
+		return row, nil // Note: sql.Row cannot be directly returned from async, this is a limitation
+	})
+}
+
+// ExecAsync asynchronously executes a query without returning rows.
+func (p *PostgresManager) ExecAsync(ctx context.Context, query string, args ...interface{}) *AsyncResult[sql.Result] {
+	return ExecuteAsync(ctx, func(ctx context.Context) (sql.Result, error) {
+		return p.Exec(ctx, query, args...)
+	})
+}
+
+// InsertAsync asynchronously executes an INSERT statement.
+func (p *PostgresManager) InsertAsync(ctx context.Context, query string, args ...interface{}) *AsyncResult[int64] {
+	return ExecuteAsync(ctx, func(ctx context.Context) (int64, error) {
+		return p.Insert(ctx, query, args...)
+	})
+}
+
+// UpdateAsync asynchronously executes an UPDATE statement.
+func (p *PostgresManager) UpdateAsync(ctx context.Context, query string, args ...interface{}) *AsyncResult[int64] {
+	return ExecuteAsync(ctx, func(ctx context.Context) (int64, error) {
+		return p.Update(ctx, query, args...)
+	})
+}
+
+// DeleteAsync asynchronously executes a DELETE statement.
+func (p *PostgresManager) DeleteAsync(ctx context.Context, query string, args ...interface{}) *AsyncResult[int64] {
+	return ExecuteAsync(ctx, func(ctx context.Context) (int64, error) {
+		return p.Delete(ctx, query, args...)
+	})
+}
+
+// ExecuteRawQueryAsync asynchronously executes a raw SQL query.
+func (p *PostgresManager) ExecuteRawQueryAsync(ctx context.Context, query string) *AsyncResult[[]map[string]interface{}] {
+	return ExecuteAsync(ctx, func(ctx context.Context) ([]map[string]interface{}, error) {
+		return p.ExecuteRawQuery(ctx, query)
+	})
+}
+
+// GetRunningQueriesAsync asynchronously gets running queries.
+func (p *PostgresManager) GetRunningQueriesAsync(ctx context.Context) *AsyncResult[[]PGQuery] {
+	return ExecuteAsync(ctx, func(ctx context.Context) ([]PGQuery, error) {
+		return p.GetRunningQueries(ctx)
+	})
+}
+
+// GetSessionCountAsync asynchronously gets session count.
+func (p *PostgresManager) GetSessionCountAsync(ctx context.Context) *AsyncResult[int] {
+	return ExecuteAsync(ctx, func(ctx context.Context) (int, error) {
+		return p.GetSessionCount(ctx)
+	})
+}
+
+// GetDBInfoAsync asynchronously gets database information.
+func (p *PostgresManager) GetDBInfoAsync(ctx context.Context) *AsyncResult[map[string]interface{}] {
+	return ExecuteAsync(ctx, func(ctx context.Context) (map[string]interface{}, error) {
+		return p.GetDBInfo(ctx)
+	})
+}
+
+// GORM Async Operations
+
+// GORMCreateAsync asynchronously creates a record using GORM.
+func (p *PostgresManager) GORMCreateAsync(ctx context.Context, value interface{}) *AsyncResult[struct{}] {
+	return ExecuteAsync(ctx, func(ctx context.Context) (struct{}, error) {
+		err := p.ORM.WithContext(ctx).Create(value).Error
+		return struct{}{}, err
+	})
+}
+
+// GORMFindAsync asynchronously finds records using GORM.
+func (p *PostgresManager) GORMFindAsync(ctx context.Context, dest interface{}, conds ...interface{}) *AsyncResult[struct{}] {
+	return ExecuteAsync(ctx, func(ctx context.Context) (struct{}, error) {
+		err := p.ORM.WithContext(ctx).Find(dest, conds...).Error
+		return struct{}{}, err
+	})
+}
+
+// GORMFirstAsync asynchronously finds first record using GORM.
+func (p *PostgresManager) GORMFirstAsync(ctx context.Context, dest interface{}, conds ...interface{}) *AsyncResult[struct{}] {
+	return ExecuteAsync(ctx, func(ctx context.Context) (struct{}, error) {
+		err := p.ORM.WithContext(ctx).First(dest, conds...).Error
+		return struct{}{}, err
+	})
+}
+
+// GORMUpdateAsync asynchronously updates records using GORM.
+func (p *PostgresManager) GORMUpdateAsync(ctx context.Context, model interface{}, updates interface{}, conds ...interface{}) *AsyncResult[struct{}] {
+	return ExecuteAsync(ctx, func(ctx context.Context) (struct{}, error) {
+		err := p.ORM.WithContext(ctx).Model(model).Where(conds[0], conds[1:]...).Updates(updates).Error
+		return struct{}{}, err
+	})
+}
+
+// GORMDeleteAsync asynchronously deletes records using GORM.
+func (p *PostgresManager) GORMDeleteAsync(ctx context.Context, value interface{}, conds ...interface{}) *AsyncResult[struct{}] {
+	return ExecuteAsync(ctx, func(ctx context.Context) (struct{}, error) {
+		err := p.ORM.WithContext(ctx).Delete(value, conds...).Error
+		return struct{}{}, err
+	})
+}
+
+// Batch Operations
+
+// ExecuteBatchAsync asynchronously executes multiple queries.
+func (p *PostgresManager) ExecuteBatchAsync(ctx context.Context, queries []string, args [][]interface{}) *BatchAsyncResult[sql.Result] {
+	if len(queries) != len(args) {
+		// Create a batch result with an error
+		result := NewBatchAsyncResult[sql.Result](len(queries))
+		for i := range result.Results {
+			result.Results[i].Complete(nil, fmt.Errorf("queries and args length mismatch"))
+		}
+		result.Complete()
+		return result
+	}
+
+	operations := make([]AsyncOperation[sql.Result], len(queries))
+	for i, query := range queries {
+		query, args := query, args[i] // Capture loop variables
+		operations[i] = func(ctx context.Context) (sql.Result, error) {
+			return p.Exec(ctx, query, args...)
+		}
+	}
+
+	return ExecuteBatchAsync(ctx, operations)
+}
+
+// Worker Pool Operations
+
+// SubmitAsyncJob submits an async job to the worker pool.
+func (p *PostgresManager) SubmitAsyncJob(job func()) {
+	if p.Pool != nil {
+		p.Pool.Submit(job)
+	} else {
+		// Fallback to direct execution if pool not available
+		go job()
+	}
+}
+
+// Close closes the Postgres manager and its worker pool.
+func (p *PostgresManager) Close() error {
+	if p.Pool != nil {
+		p.Pool.Close()
+	}
+	if p.DB != nil {
+		return p.DB.Close()
+	}
+	return nil
 }

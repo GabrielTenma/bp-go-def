@@ -104,7 +104,7 @@ mkdir -p "$DIST_DIR"
 
 # 4. Build
 echo -e "${B_PURPLE}[4/5]${RESET} ${P_CYAN}Building Go binary...${RESET}"
-go build -o "$DIST_DIR/$APP_NAME" "$MAIN_PATH"
+go build -ldflags="-s -w" -o "$DIST_DIR/$APP_NAME" "$MAIN_PATH"
 if [ $? -ne 0 ]; then
     echo -e "   ${B_RED}x Build FAILED! Exit code: $?${RESET}"
     exit $?

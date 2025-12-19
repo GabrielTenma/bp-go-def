@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"test-go/pkg/utils"
 	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -20,6 +21,7 @@ type LiveConfig struct {
 	Port        string
 	MonitorPort string
 	Env         string
+	OnShutdown  func() // Callback function to trigger shutdown
 }
 
 // LogEntry represents a log entry
@@ -62,7 +64,7 @@ var (
 			Foreground(lipgloss.Color("#95ffafff"))
 
 	liveDimStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#44475A"))
+			Foreground(lipgloss.Color("#626262ff"))
 
 	liveLogBoxStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
@@ -152,6 +154,14 @@ func (m *LiveModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "q", "esc", "ctrl+c":
 			m.quitting = true
+			// Call the shutdown callback if provided
+			if m.config.OnShutdown != nil {
+				m.config.OnShutdown()
+			}
+
+			utils.ClearScreen()
+			fmt.Println("Exit requested shutting down..")
+			os.Exit(1) // force!
 			return m, tea.Quit
 		}
 
@@ -191,8 +201,8 @@ func (m *LiveModel) View() string {
 
 	// Sticky Banner
 	if m.config.Banner != "" {
-		b.WriteString("\n")
-		b.WriteString("\n")
+		// b.WriteString("\n")
+		// b.WriteString("\n")
 		b.WriteString(liveBannerStyle.Render(m.config.Banner))
 		b.WriteString("\n")
 	}
@@ -223,11 +233,11 @@ func (m *LiveModel) View() string {
 	b.WriteString("\n\n")
 
 	// Looping progress bar - single cyan color
-	progressBar := loopingProgressFrames[m.frame]
-	progressStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(liveProgressColor))
-	b.WriteString("  ")
-	b.WriteString(progressStyle.Render(progressBar))
-	b.WriteString("\n\n")
+	// progressBar := loopingProgressFrames[m.frame]
+	// progressStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(liveProgressColor))
+	// b.WriteString("  ")
+	// b.WriteString(progressStyle.Render(progressBar))
+	// b.WriteString("\n\n")
 
 	// Logs section
 	logsContent := m.renderLogs()

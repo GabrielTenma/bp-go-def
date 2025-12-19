@@ -102,7 +102,7 @@ USER nonroot:nonroot
 # Run the application
 CMD ["/main"]
 
-# Production stage
+# Production stage (Alpine - ~50MB)
 FROM alpine:latest AS prod
 
 # Install ca-certificates for HTTPS
@@ -112,6 +112,59 @@ WORKDIR /root/
 
 # Copy the binary from builder stage
 COPY --from=builder /app/main .
+
+# Copy web assets for monitoring
+COPY web/ ./web/
+
+# Configure for Docker environment
+ENV APP_QUIET_STARTUP=false
+ENV APP_ENABLE_TUI=false
+
+# Expose ports for main API server and monitoring server
+EXPOSE 8080 9090
+
+# Run the application
+CMD ["./main"]
+
+# Slim production stage (Ubuntu minimal - ~30-40MB, more secure than Alpine)
+FROM ubuntu:24.04 AS prod-slim
+
+WORKDIR /root/
+
+# Install minimal runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy the binary from builder stage
+COPY --from=builder /app/main .
+
+# Copy web assets for monitoring
+COPY web/ ./web/
+
+# Configure for Docker environment
+ENV APP_QUIET_STARTUP=false
+ENV APP_ENABLE_TUI=false
+
+# Expose ports for main API server and monitoring server
+EXPOSE 8080 9090
+
+# Run the application
+CMD ["./main"]
+
+# Minimal production stage (BusyBox - ~10-20MB)
+FROM busybox:1.36-glibc AS prod-minimal
+
+WORKDIR /root/
+
+# Copy the binary from builder stage
+COPY --from=builder /app/main .
+
+# Copy web assets for monitoring
+COPY web/ ./web/
+
+# Copy CA certificates for HTTPS
+COPY --from=alpine:latest /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 # Configure for Docker environment
 ENV APP_QUIET_STARTUP=false

@@ -1,6 +1,37 @@
 @echo off
 cls
 
+:: Check if build script exists
+if not exist "scripts\build.bat" (
+    echo %B_RED%Error: build.bat not found in scripts\ directory%RESET%
+    pause
+    exit /b 1
+)
+
+:: Check if Go is installed
+go version >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    echo %B_RED%Error: Go is not installed or not in PATH%RESET%
+    echo %WHITE%Please install Go from https://golang.org/dl/%RESET%
+    pause
+    exit /b 1
+)
+
+:: Check Go version (minimum 1.24)
+for /f "tokens=3" %%i in ('go version') do set go_ver=%%i
+set go_ver=%go_ver:go=%
+for /f "tokens=1,2 delims=." %%a in ("%go_ver%") do (
+    set major=%%a
+    set minor=%%b
+)
+if %major% gtr 1 goto version_ok
+if %major% equ 1 if %minor% geq 24 goto version_ok
+echo %B_RED%Error: Go version %go_ver% is too old. Minimum required is 1.24%RESET%
+echo %WHITE%Please upgrade Go from https://golang.org/dl/%RESET%
+pause
+exit /b 1
+:version_ok
+
 setlocal EnableDelayedExpansion
 set "CONFIG_FILE=config.yaml"
 set "BACKUP_FILE=config.yaml.backup"
@@ -72,18 +103,21 @@ set "value=%~2"
 :: Escape quotes in value
 set "value=%value:"=""%"
 
-:: Use PowerShell for YAML manipulation if available
-powershell -Command "exit 0" >nul 2>&1
-if %ERRORLEVEL% EQU 0 (
-    powershell -Command "(Get-Content '%CONFIG_FILE%') | ForEach-Object { $_ -replace '^(%key%):.*', '%key%: \"%value%\"' } | Set-Content '%CONFIG_FILE%.tmp'"
-    if exist "%CONFIG_FILE%.tmp" (
-        move /y "%CONFIG_FILE%.tmp" "%CONFIG_FILE%" >nul
-        echo Configuration updated: %key%
+:: Use CMD to update
+if exist "%CONFIG_FILE%.tmp" del "%CONFIG_FILE%.tmp"
+for /f "tokens=*" %%i in (%CONFIG_FILE%) do (
+    echo %%i | findstr /b "%key%:" >nul 2>&1
+    if !errorlevel! neq 0 (
+        echo %%i >> "%CONFIG_FILE%.tmp"
     ) else (
-        echo Warning: Could not update %key% in %CONFIG_FILE%
+        echo %key%: "%value%" >> "%CONFIG_FILE%.tmp"
     )
+)
+if exist "%CONFIG_FILE%.tmp" (
+    move /y "%CONFIG_FILE%.tmp" "%CONFIG_FILE%" >nul 2>&1
+    echo Configuration updated: %key%
 ) else (
-    echo Warning: PowerShell not available for config updates. Please manually update %key% in %CONFIG_FILE%
+    echo Warning: Could not update %key% in %CONFIG_FILE%
 )
 goto :eof
 
@@ -93,17 +127,21 @@ setlocal
 set "key=%~1"
 set "value=%~2"
 
-powershell -Command "exit 0" >nul 2>&1
-if %ERRORLEVEL% EQU 0 (
-    powershell -Command "(Get-Content '%CONFIG_FILE%') | ForEach-Object { $_ -replace '^(%key%):.*', '%key%: %value%' } | Set-Content '%CONFIG_FILE%.tmp'"
-    if exist "%CONFIG_FILE%.tmp" (
-        move /y "%CONFIG_FILE%.tmp" "%CONFIG_FILE%" >nul
-        echo Configuration updated: %key%
+:: Use CMD to update
+if exist "%CONFIG_FILE%.tmp" del "%CONFIG_FILE%.tmp"
+for /f "tokens=*" %%i in (%CONFIG_FILE%) do (
+    echo %%i | findstr /b "%key%:" >nul 2>&1
+    if !errorlevel! neq 0 (
+        echo %%i >> "%CONFIG_FILE%.tmp"
     ) else (
-        echo Warning: Could not update %key% in %CONFIG_FILE%
+        echo %key%: %value% >> "%CONFIG_FILE%.tmp"
     )
+)
+if exist "%CONFIG_FILE%.tmp" (
+    move /y "%CONFIG_FILE%.tmp" "%CONFIG_FILE%" >nul 2>&1
+    echo Configuration updated: %key%
 ) else (
-    echo Warning: PowerShell not available for config updates. Please manually update %key% in %CONFIG_FILE%
+    echo Warning: Could not update %key% in %CONFIG_FILE%
 )
 goto :eof
 
@@ -305,7 +343,7 @@ echo.
 echo %B_CYAN%Backup created:%RESET% %B_WHITE%%BACKUP_FILE%%RESET%
 echo %B_CYAN%Configuration:%RESET% %B_WHITE%%CONFIG_FILE%%RESET%
 echo.
-echo %B_GREEN%Happy coding! :)%RESET%
+echo %B_GREEN%Happy coding!%RESET%
 echo.
 
 pause

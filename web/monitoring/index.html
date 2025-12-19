@@ -955,7 +955,6 @@
                     </div>
                 </div>
 
-                <!-- Postgres Tab & Kafka Tab (Simplified for brevity, structure remains similar to previous but wrapped in p-8 container) -->
                 <!-- Postgres Tab -->
                 <div x-show="activeTab === 'postgres'" class="space-y-6"
                     x-transition:enter="transition ease-out duration-300"
@@ -1247,6 +1246,233 @@
                                                 <tr>
                                                     <td colspan="4" class="p-8 text-center text-muted-foreground">No
                                                         active queries found</td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- MongoDB Tab -->
+                <div x-show="activeTab === 'mongo'" class="space-y-6"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-4"
+                    x-transition:enter-end="opacity-100 translate-y-0">
+
+                    <template x-if="!infraStatus.mongo">
+                        <div class="p-12 text-center text-muted-foreground rounded-md border border-dashed">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"
+                                stroke-linejoin="round" class="mx-auto mb-4 opacity-50">
+                                <path d="M17.6 9.5C17.6 14.1944 13.8 18 9.1 18C4.4 18 0.6 14.1944 0.6 9.5C0.6 4.80558 4.4 1 9.1 1C13.8 1 17.6 4.80558 17.6 9.5Z"></path>
+                                <path d="M12.1 9.5C12.1 11.9853 10 14 7.55 14C5.1 14 3 11.9853 3 9.5C3 7.01469 5.1 5 7.55 5C10 5 12.1 7.01469 12.1 9.5Z"></path>
+                                <path d="M7.55 9.5V14"></path>
+                                <path d="M7.55 5V9.5"></path>
+                                <path d="M9.1 1V18"></path>
+                            </svg>
+                            <h3 class="text-lg font-medium">MongoDB is disconnected</h3>
+                            <p class="mt-1">Check your configuration and ensure the database is running.</p>
+                        </div>
+                    </template>
+
+                    <template x-if="infraStatus.mongo">
+                        <div class="space-y-6">
+                            <!-- Database Connection Selector -->
+                            <div class="rounded-md border bg-card shadow-sm p-4">
+                                <div class="flex items-center gap-4">
+                                    <div class="flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+                                            <path d="M17.6 9.5C17.6 14.1944 13.8 18 9.1 18C4.4 18 0.6 14.1944 0.6 9.5C0.6 4.80558 4.4 1 9.1 1C13.8 1 17.6 4.80558 17.6 9.5Z"></path>
+                                            <path d="M12.1 9.5C12.1 11.9853 10 14 7.55 14C5.1 14 3 11.9853 3 9.5C3 7.01469 5.1 5 7.55 5C10 5 12.1 7.01469 12.1 9.5Z"></path>
+                                            <path d="M7.55 9.5V14"></path>
+                                            <path d="M7.55 5V9.5"></path>
+                                            <path d="M9.1 1V18"></path>
+                                        </svg>
+                                        <span class="font-medium">Database Connection:</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <!-- Custom Shadcn-style Dropdown -->
+                                        <div class="relative" x-data="{ open: false }">
+                                            <button @click="open = !open" @click.outside="open = false"
+                                                class="flex items-center gap-2 h-9 px-3 text-sm font-medium border rounded-md bg-background hover:bg-accent hover:text-accent-foreground transition-colors focus:outline-none focus:ring-1 focus:ring-ring">
+                                                <span class="text-muted-foreground mr-1">Connection:</span>
+                                                <span x-text="selectedMongoConnection"></span>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="opacity-50">
+                                                    <path d="m6 9 6 6 6-6" />
+                                                </svg>
+                                            </button>
+                                            <div x-show="open" x-transition:enter="transition ease-out duration-100"
+                                                x-transition:enter-start="opacity-0 scale-95"
+                                                x-transition:enter-end="opacity-100 scale-100"
+                                                x-transition:leave="transition ease-in duration-75"
+                                                x-transition:leave-start="opacity-100 scale-100"
+                                                x-transition:leave-end="opacity-0 scale-95"
+                                                class="absolute top-full left-0 mt-1 w-48 rounded-md border bg-popover text-popover-foreground shadow-md z-[100] p-1"
+                                                style="display: none;">
+                                                <template x-for="conn in mongoConnections" :key="conn.name">
+                                                    <div @click="changeMongoConnection(conn.name); open = false"
+                                                        class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-xs outline-none hover:bg-accent hover:text-accent-foreground">
+                                                        <span x-show="conn.name === selectedMongoConnection" class="absolute right-2 text-xs">✓</span>
+                                                        <div class="flex items-center gap-2">
+                                                            <div class="w-2 h-2 rounded-full" :class="conn.status.connected ? 'bg-green-500' : 'bg-red-500'"></div>
+                                                            <span x-text="conn.name"></span>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+
+                                        <button @click="fetchMongoConnections()" class="h-9 px-3 text-sm bg-secondary hover:bg-secondary/80 rounded-md transition-colors">
+                                            Refresh
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Info Cards -->
+                            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                                <div class="rounded-xl border bg-card text-card-foreground shadow p-6">
+                                    <div class="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <h3 class="tracking-tight text-sm font-medium">Database</h3>
+                                        <div class="text-primary">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round">
+                                                <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                                                <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+                                                <path d="M3 5v14c0 1.66 4 3 9 3s 9-1.34 9-3V5"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="text-2xl font-bold" x-text="mongoInfo.database || 'N/A'"></div>
+                                </div>
+                                <div class="rounded-xl border bg-card text-card-foreground shadow p-6">
+                                    <div class="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <h3 class="tracking-tight text-sm font-medium">Collections</h3>
+                                        <div class="text-primary">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round">
+                                                <rect x="3" y="3" width="7" height="7"></rect>
+                                                <rect x="14" y="3" width="7" height="7"></rect>
+                                                <rect x="14" y="14" width="7" height="7"></rect>
+                                                <rect x="3" y="14" width="7" height="7"></rect>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="text-2xl font-bold" x-text="mongoInfo.collections?.length || 0"></div>
+                                    <p class="text-xs text-muted-foreground mt-1">
+                                        <template x-for="(collection, index) in mongoInfo.collections || []">
+                                            <span x-text="collection"></span><span x-show="index < (mongoInfo.collections?.length - 1 || 0)" x-text="', '"></span>
+                                        </template>
+                                    </p>
+                                </div>
+                                <div class="rounded-xl border bg-card text-card-foreground shadow p-6">
+                                    <div class="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <h3 class="tracking-tight text-sm font-medium">Documents</h3>
+                                        <div class="text-primary">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                <polyline points="14,2 14,8 20,8"></polyline>
+                                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                                <polyline points="10,9 9,9 8,9"></polyline>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="text-2xl font-bold" x-text="mongoInfo.stats?.objects || 0"></div>
+                                </div>
+                                <div class="rounded-xl border bg-card text-card-foreground shadow p-6">
+                                    <div class="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <h3 class="tracking-tight text-sm font-medium">Storage Size</h3>
+                                        <div class="text-primary">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                <polyline points="21 12 21 12"></polyline>
+                                                <rect width="20" height="8" x="2" y="4" rx="2" ry="2"></rect>
+                                                <line x1="10" y1="8" x2="14" y2="8"></line>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="text-2xl font-bold" x-text="mongoInfo.stats?.storageSize ? Math.round(mongoInfo.stats.storageSize / 1024 / 1024) + 'MB' : 'N/A'"></div>
+                                </div>
+                            </div>
+
+                            <!-- Manual Query Section -->
+                            <div class="rounded-md border bg-card shadow-sm">
+                                <div class="border-b p-4 flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+                                            <polyline points="4 17 10 11 4 5"></polyline>
+                                            <line x1="12" y1="19" x2="20" y2="19"></line>
+                                        </svg>
+                                        <h3 class="font-medium">Manual MongoDB Query</h3>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button @click="runMongoQuery" :disabled="isMongoQueryRunning"
+                                            class="h-8 px-3 text-xs bg-primary text-primary-foreground hover:bg-primary/90 rounded-md font-medium flex items-center gap-2 disabled:opacity-50 transition-colors">
+                                            <span x-show="isMongoQueryRunning" class="animate-spin">⌛</span>
+                                            <span x-text="isMongoQueryRunning ? 'Running...' : 'Run Query'"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="p-4 space-y-4">
+                                    <div class="grid gap-4 md:grid-cols-2">
+                                        <div>
+                                            <label class="text-sm font-medium mb-2 block">Collection</label>
+                                            <input type="text" x-model="mongoQuery.collection"
+                                                placeholder="collection_name"
+                                                class="w-full h-9 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
+                                        </div>
+                                        <div>
+                                            <label class="text-sm font-medium mb-2 block">Query (JSON)</label>
+                                            <textarea x-model="mongoQuery.query" rows="3"
+                                                placeholder='{"field": "value"} or {} for all'
+                                                class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 font-mono"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div x-show="mongoQueryError"
+                                    class="p-4 border-t bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 text-sm font-mono"
+                                    x-text="mongoQueryError"></div>
+                                <div x-show="mongoQueryResults" class="border-t max-h-[400px] overflow-auto">
+                                    <table class="w-full text-sm">
+                                        <thead class="bg-muted text-muted-foreground sticky top-0">
+                                            <tr>
+                                                <template x-if="mongoQueryResults && mongoQueryResults.length > 0">
+                                                    <template x-for="key in Object.keys(mongoQueryResults[0])">
+                                                        <th class="h-10 px-4 text-left font-medium" x-text="key"></th>
+                                                    </template>
+                                                </template>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <template x-if="mongoQueryResults && mongoQueryResults.length > 0">
+                                                <template x-for="(row, idx) in mongoQueryResults">
+                                                    <tr class="border-b hover:bg-muted/50 transition-colors">
+                                                        <template x-for="val in Object.values(row)">
+                                                            <td class="p-3 align-middle font-mono text-xs whitespace-nowrap"
+                                                                x-text="typeof val === 'object' ? JSON.stringify(val) : val"></td>
+                                                        </template>
+                                                    </tr>
+                                                </template>
+                                            </template>
+                                            <template x-if="mongoQueryResults && mongoQueryResults.length === 0 && !mongoQueryError">
+                                                <tr>
+                                                    <td class="p-4 text-center text-muted-foreground" :colspan="Object.keys(mongoQueryResults[0] || {}).length">Query executed
+                                                        successfully. No documents returned.</td>
                                                 </tr>
                                             </template>
                                         </tbody>

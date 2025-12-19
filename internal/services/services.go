@@ -52,3 +52,15 @@ func (r *Registry) Boot(e *echo.Echo) {
 		}
 	}
 }
+
+// BootService boots a single service (for dynamic registration)
+func (r *Registry) BootService(e *echo.Echo, s Service) {
+	if s.Enabled() {
+		api := e.Group("/api/v1")
+		r.logger.Info("Starting Service...", "service", s.Name())
+		s.RegisterRoutes(api)
+		r.logger.Info("Service Started", "service", s.Name())
+	} else {
+		r.logger.Warn("Service Skipped (Disabled via config)", "service", s.Name())
+	}
+}

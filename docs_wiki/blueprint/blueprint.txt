@@ -301,6 +301,204 @@ The TUI provides visual feedback during boot and real-time monitoring using Bubb
 - Wave animation (boot screen)
 - Pulse effects (color cycling)
 
+## 7. ASYNC INFRASTRUCTURE SYSTEM
+
+### 7.1 Overview
+
+The application implements a comprehensive async infrastructure system that ensures all database operations, caching, message queuing, and file operations run asynchronously to avoid blocking the main application thread. This implementation uses Go's goroutines, channels, and worker pools to provide non-blocking operations while maintaining thread safety.
+
+### 7.2 Simplified Service Registration
+
+The service registration system has been completely simplified to make adding new services straightforward:
+
+#### How to Add a New Service (3 Simple Steps):
+
+1. **Create your service file** in `internal/services/modules/`:
+```go
+type OrdersService struct {
+    enabled bool
+}
+
+func NewOrdersService(enabled bool) *OrdersService {
+    return &OrdersService{enabled: enabled}
+}
+
+func (s *OrdersService) Name() string { return "Orders Service" }
+func (s *OrdersService) Enabled() bool { return s.enabled }
+func (s *OrdersService) Endpoints() []string { return []string{"/orders"} }
+
+func (s *OrdersService) RegisterRoutes(g *echo.Group) {
+    sub := g.Group("/orders")
+    sub.GET("", s.listOrders)
+    sub.POST("", s.createOrder)
+}
+```
+
+2. **Add to config.yaml**:
+```yaml
+services:
+  orders: true
+```
+
+3. **Add to `internal/services/register.go`** (that's it!):
+```go
+{
+    Name: "orders",
+    Constructor: func() interface{ Service } {
+        return modules.NewOrdersService(sr.config.Services.IsEnabled("orders"))
+    },
+},
+```
+
+### 7.2 Core Components
+
+#### AsyncResult Types
+Generic `AsyncResult[T]` types handle asynchronous operations:
+```go
+type AsyncResult[T any] struct {
+    Value T
+    Error error
+    Done  chan struct{}
+}
+```
+
+#### Worker Pools
+Each infrastructure component includes a worker pool for managing concurrent operations:
+```go
+type WorkerPool struct {
+    workers  int
+    jobQueue chan func()
+    stopChan chan struct{}
+    stopped  chan struct{}
+}
+```
+
+#### Batch Operations
+Support for batching multiple operations with `BatchAsyncResult[T]` types.
+
+### 7.3 Infrastructure Managers
+
+All infrastructure components (Redis, Kafka, MinIO, PostgreSQL, MongoDB, Cron) now support async operations:
+
+#### Redis Manager
+- `SetAsync()`, `GetAsync()`, `DeleteAsync()`
+- `SetBatchAsync()`, `GetBatchAsync()`
+- Worker pool with 10 workers
+
+#### Kafka Manager
+- `PublishAsync()`, `PublishWithKeyAsync()`
+- `PublishBatchAsync()`, `ConsumeAsync()`
+- Worker pool with 5 workers
+
+#### MinIO Manager
+- `UploadFileAsync()`, `GetObjectAsync()`, `DeleteObjectAsync()`
+- `UploadBatchAsync()`, `ListObjectsAsync()`
+- Worker pool with 8 workers
+
+#### PostgreSQL Manager
+- `QueryAsync()`, `ExecAsync()`, `InsertAsync()`, `UpdateAsync()`, `DeleteAsync()`
+- GORM async operations: `GORMCreateAsync()`, `GORMFindAsync()`, `GORMUpdateAsync()`, `GORMDeleteAsync()`
+- Worker pool with 15 workers
+
+#### MongoDB Manager
+- `InsertOneAsync()`, `FindAsync()`, `UpdateOneAsync()`, `DeleteOneAsync()`
+- `InsertBatchAsync()`, `UpdateBatchAsync()`
+- Worker pool with 12 workers
+
+#### Cron Manager
+- `AddAsyncJob()`, `RunJobNow()`
+- Jobs execute in worker pool
+- Worker pool with 5 workers
+
+### 7.4 Usage Patterns
+
+#### Synchronous Usage (Wait for Result)
+```go
+result := redisManager.GetAsync(ctx, "key")
+value, err := result.Wait()
+```
+
+#### Asynchronous Usage (Fire and Forget)
+```go
+result := dbManager.GORMCreateAsync(ctx, &user)
+// Continue with other work
+// Check result later if needed
+```
+
+#### Timeout Handling
+```go
+result := kafkaManager.PublishAsync(ctx, "topic", message)
+value, err := result.WaitWithTimeout(30 * time.Second)
+```
+
+#### Batch Operations
+```go
+keys := []string{"key1", "key2", "key3"}
+result := redisManager.GetBatchAsync(ctx, keys)
+values, errors := result.WaitAll()
+```
+
+### 7.5 Performance Benefits
+
+- **Non-blocking Operations**: HTTP handlers return immediately while operations run in background
+- **Concurrent Processing**: Multiple operations run simultaneously
+- **Resource Efficiency**: Better utilization of system resources
+- **Scalability**: Batch operations and connection management
+
+### 7.6 Error Handling
+
+Async operations include comprehensive error handling:
+- Panic recovery in goroutines
+- Context cancellation support
+- Timeout handling
+- Batch operation error aggregation
+
+### 7.7 Configuration
+
+Worker pool sizes are configurable:
+```yaml
+infrastructure:
+  redis:
+    workers: 10
+  kafka:
+    workers: 5
+  minio:
+    workers: 8
+  postgres:
+    workers: 15
+  mongodb:
+    workers: 12
+  cron:
+    workers: 5
+```
+
+### 7.8 Graceful Shutdown
+
+The application implements **graceful shutdown** that properly disconnects all infrastructure components when receiving SIGTERM or SIGINT signals. This ensures clean resource cleanup and prevents data corruption.
+
+#### Signal Handling
+The application catches SIGTERM/SIGINT signals and performs orderly shutdown:
+```go
+sigChan := make(chan os.Signal, 1)
+signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+<-sigChan
+err := server.Shutdown(context.Background(), logger)
+```
+
+#### Shutdown Order
+Components are shut down in reverse order to ensure dependencies are handled correctly:
+1. **Cron Manager** - Stop scheduled jobs first
+2. **MongoDB Connections** - Close document database connections
+3. **PostgreSQL Connections** - Close relational database connections
+4. **Kafka Manager** - Stop message producers/consumers
+5. **Redis Manager** - Close cache connections last
+
+#### Benefits
+- **Data Integrity**: Prevents partial writes and corruption
+- **Resource Cleanup**: Ensures all connections are properly closed
+- **Clean Termination**: No hanging processes or zombie goroutines
+- **Kubernetes Compatibility**: Works with container orchestration systems
+
 ## 7. BUILD AND DEPLOYMENT SYSTEM
 
 ### 7.1 Build Scripts
@@ -477,6 +675,58 @@ ctx := context.Background()
 err := redis.Set(ctx, "my-key", "my-value", time.Minute*10)
 val, err := redis.Get(ctx, "my-key")
 err = redis.Delete(ctx, "my-key")
+```
+
+#### 7.2.2 MongoDB
+
+**Configuration (Multiple Connections):**
+```yaml
+mongo:
+  enabled: true
+  connections:
+    - name: "primary"
+      enabled: true
+      uri: "mongodb://localhost:27017"
+      database: "primary_db"
+
+    - name: "secondary"
+      enabled: true
+      uri: "mongodb://localhost:27018"
+      database: "secondary_db"
+```
+
+**Usage (Multiple Connections):**
+```go
+// Get specific connection
+if conn, exists := mongoManager.GetConnection("primary"); exists {
+    result, err := conn.InsertOne(ctx, "collection", document)
+}
+
+// Get all connections for multi-tenant operations
+allConnections := mongoManager.GetAllConnections()
+for tenant, db := range allConnections {
+    // Work with each tenant's database
+    cursor, err := db.Find(ctx, "collection", filter)
+}
+```
+
+**CRUD Operations:**
+```go
+// Insert operations
+result, err := mongoManager.InsertOne(ctx, "collection", document)
+result, err := mongoManager.InsertMany(ctx, "collection", documents)
+
+// Query operations
+cursor, err := mongoManager.Find(ctx, "collection", filter)
+singleResult := mongoManager.FindOne(ctx, "collection", filter)
+
+// Update operations
+result, err := mongoManager.UpdateOne(ctx, "collection", filter, update)
+result, err := mongoManager.UpdateMany(ctx, "collection", filter, update)
+
+// Delete operations
+result, err := mongoManager.DeleteOne(ctx, "collection", filter)
+result, err := mongoManager.DeleteMany(ctx, "collection", filter)
 ```
 
 ### 7.2 Postgres

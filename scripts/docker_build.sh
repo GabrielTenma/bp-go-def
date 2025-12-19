@@ -61,11 +61,11 @@ fi
 
 # Validate target
 case "$TARGET" in
-    "all"|"test"|"dev"|"prod"|"ultra-prod"|"ultra-all"|"ultra-dev"|"ultra-test")
+    "all"|"test"|"dev"|"prod"|"prod-slim"|"prod-minimal"|"ultra-prod"|"ultra-all"|"ultra-dev"|"ultra-test")
         ;;
     *)
         echo -e "   ${B_RED}x Invalid target: ${TARGET}${RESET}"
-        echo -e "   ${B_CYAN}Valid targets: all, test, dev, prod, ultra-prod, ultra-all, ultra-dev, ultra-test${RESET}"
+        echo -e "   ${B_CYAN}Valid targets: all, test, dev, prod, prod-slim, prod-minimal, ultra-prod, ultra-all, ultra-dev, ultra-test${RESET}"
         exit 1
         ;;
 esac
@@ -144,6 +144,30 @@ if [ "$TARGET" = "prod" ] || [ "$TARGET" = "all" ]; then
     STEP=$((STEP + 1))
 fi
 
+# 4. Build Slim Production Stage
+if [ "$TARGET" = "prod-slim" ]; then
+    echo -e "${B_PURPLE}[$STEP/$TOTAL_STEPS]${RESET} ${P_CYAN}Building slim production image...${RESET}"
+    if docker build --target prod-slim -t "${IMAGE_NAME}:slim" .; then
+        echo -e "   ${B_GREEN}+ Slim production image built:${RESET} ${B_WHITE}${IMAGE_NAME}:slim${RESET}"
+    else
+        echo -e "   ${B_RED}x Slim production build failed${RESET}"
+        exit 1
+    fi
+    STEP=$((STEP + 1))
+fi
+
+# 4. Build Minimal Production Stage
+if [ "$TARGET" = "prod-minimal" ]; then
+    echo -e "${B_PURPLE}[$STEP/$TOTAL_STEPS]${RESET} ${P_CYAN}Building minimal production image...${RESET}"
+    if docker build --target prod-minimal -t "${IMAGE_NAME}:minimal" .; then
+        echo -e "   ${B_GREEN}+ Minimal production image built:${RESET} ${B_WHITE}${IMAGE_NAME}:minimal${RESET}"
+    else
+        echo -e "   ${B_RED}x Minimal production build failed${RESET}"
+        exit 1
+    fi
+    STEP=$((STEP + 1))
+fi
+
 # 4. Build Ultra Production Stage (for ultra-all)
 if [ "$TARGET" = "ultra-all" ]; then
     echo -e "${B_PURPLE}[$STEP/$TOTAL_STEPS]${RESET} ${P_CYAN}Building ultra production image...${RESET}"
@@ -189,6 +213,12 @@ if [ "$TARGET" = "dev" ] || [ "$TARGET" = "all" ] || [ "$TARGET" = "ultra-dev" ]
 fi
 if [ "$TARGET" = "prod" ] || [ "$TARGET" = "all" ]; then
     echo -e "   ${B_WHITE}${IMAGE_NAME}:latest${RESET}  ${GRAY}(production)${RESET}"
+fi
+if [ "$TARGET" = "prod-slim" ]; then
+    echo -e "   ${B_WHITE}${IMAGE_NAME}:slim${RESET}    ${GRAY}(slim-production)${RESET}"
+fi
+if [ "$TARGET" = "prod-minimal" ]; then
+    echo -e "   ${B_WHITE}${IMAGE_NAME}:minimal${RESET} ${GRAY}(minimal-production)${RESET}"
 fi
 if [ "$TARGET" = "ultra-prod" ]; then
     echo -e "   ${B_WHITE}${IMAGE_NAME}:ultra${RESET}    ${GRAY}(ultra-production)${RESET}"

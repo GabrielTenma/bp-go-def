@@ -1,7 +1,9 @@
 package modules
 
 import (
+	"context"
 	"strconv"
+
 	"test-go/pkg/infrastructure"
 	"test-go/pkg/logger"
 	"test-go/pkg/response"
@@ -56,10 +58,16 @@ func (s *ServiceD) RegisterRoutes(g *echo.Group) {
 
 func (s *ServiceD) listTasks(c echo.Context) error {
 	var tasks []Task
-	result := s.db.ORM.Find(&tasks)
-	if result.Error != nil {
-		return response.InternalServerError(c, result.Error.Error())
+
+	// Use async GORM operation to avoid blocking main thread
+	result := s.db.GORMFindAsync(context.Background(), &tasks)
+
+	// Wait for the async operation to complete
+	_, err := result.Wait()
+	if err != nil {
+		return response.InternalServerError(c, err.Error())
 	}
+
 	return response.Success(c, tasks)
 }
 
@@ -69,8 +77,13 @@ func (s *ServiceD) createTask(c echo.Context) error {
 		return response.BadRequest(c, "Invalid input")
 	}
 
-	if result := s.db.ORM.Create(task); result.Error != nil {
-		return response.InternalServerError(c, result.Error.Error())
+	// Use async GORM operation to avoid blocking main thread
+	result := s.db.GORMCreateAsync(context.Background(), task)
+
+	// Wait for the async operation to complete
+	_, err := result.Wait()
+	if err != nil {
+		return response.InternalServerError(c, err.Error())
 	}
 
 	return response.Created(c, task)
@@ -79,7 +92,11 @@ func (s *ServiceD) createTask(c echo.Context) error {
 func (s *ServiceD) updateTask(c echo.Context) error {
 	id, _ := strconv.Atoi(c.Param("id"))
 	var task Task
-	if result := s.db.ORM.First(&task, id); result.Error != nil {
+
+	// First check if task exists using async operation
+	findResult := s.db.GORMFirstAsync(context.Background(), &task, id)
+	_, err := findResult.Wait()
+	if err != nil {
 		return response.NotFound(c, "Task not found")
 	}
 
@@ -87,14 +104,28 @@ func (s *ServiceD) updateTask(c echo.Context) error {
 		return response.BadRequest(c, "Invalid input")
 	}
 
-	s.db.ORM.Save(&task)
+	// Use async GORM update operation
+	updateResult := s.db.GORMUpdateAsync(context.Background(), &task, task, "id = ?", id)
+	_, err = updateResult.Wait()
+	if err != nil {
+		return response.InternalServerError(c, err.Error())
+	}
+
 	return response.Success(c, task)
 }
 
 func (s *ServiceD) deleteTask(c echo.Context) error {
 	id, _ := strconv.Atoi(c.Param("id"))
-	if result := s.db.ORM.Delete(&Task{}, id); result.Error != nil {
-		return response.InternalServerError(c, result.Error.Error())
+	var task Task
+
+	// Use async GORM delete operation
+	result := s.db.GORMDeleteAsync(context.Background(), &task, "id = ?", id)
+
+	// Wait for the async operation to complete
+	_, err := result.Wait()
+	if err != nil {
+		return response.InternalServerError(c, err.Error())
 	}
+
 	return response.Success(c, nil, "Task deleted")
 }

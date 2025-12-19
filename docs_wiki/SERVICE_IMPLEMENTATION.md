@@ -346,20 +346,75 @@ func (s *InventoryService) Enabled() bool {
 
 ## Registering the Service
 
-### Step 2: Register in server.go
+### Step 2: Add to Service List (That's It!)
 
-Open `internal/server/server.go` and add your service in the `Start()` method:
+Adding a new service is now incredibly simple. Just add your service to the list in `internal/services/register.go`:
 
 ```go
-// Add Services here - use IsEnabled() for dynamic config lookup
-registry.Register(modules.NewServiceA(s.config.Services.IsEnabled("service_a")))
-registry.Register(modules.NewServiceB(s.config.Services.IsEnabled("service_b")))
-registry.Register(modules.NewServiceC(s.config.Services.IsEnabled("service_c")))
-registry.Register(modules.NewServiceD(s.postgresManager, s.config.Services.IsEnabled("service_d")))
+{
+    Name: "orders",
+    Constructor: func() interface{ Service } {
+        return modules.NewOrdersService(sr.config.Services.IsEnabled("orders"))
+    },
+},
+```
 
-// Add your new service
-registry.Register(modules.NewOrdersService(s.config.Services.IsEnabled("orders")))
-registry.Register(modules.NewInventoryService(s.postgresManager, s.redisManager, s.config.Services.IsEnabled("inventory")))
+### How the Simplified System Works
+
+The registration system has been completely redesigned for simplicity:
+
+#### 1. **Clean Service List**
+All services are defined in a simple array - no complex dependency detection or goroutines:
+
+```go
+services := []ServiceDefinition{
+    {
+        Name: "service_a",
+        Constructor: func() interface{ Service } {
+            return modules.NewServiceA(sr.config.Services.IsEnabled("service_a"))
+        },
+    },
+    // Add your new service here - that's it!
+    {
+        Name: "your_service",
+        Constructor: func() interface{ Service } {
+            return modules.NewYourService(sr.config.Services.IsEnabled("your_service"))
+        },
+    },
+}
+```
+
+#### 2. **Synchronous Registration**
+Services are registered and booted immediately:
+
+```go
+// Register and boot all services
+for _, svc := range services {
+    service := svc.Constructor()
+    registry.Register(service)
+    sr.logger.Info("Registered service", "service", svc.Name)
+}
+
+registry.Boot(echo)
+sr.logger.Info("All services registered and booted successfully")
+```
+
+### Server Integration (Clean and Simple)
+
+The server integration is now straightforward:
+
+```go
+// internal/server/server.go - Simple service registration
+serviceRegistrar := services.NewServiceRegistrar(
+    s.config, s.logger,
+    s.redisManager, s.kafkaManager, s.postgresManager,
+    s.postgresConnectionManager, s.mongoManager,
+    s.mongoConnectionManager, s.cronManager,
+)
+
+// Register all services (simple and straightforward)
+serviceRegistrar.RegisterAllServices(registry, s.echo)
+s.logger.Info("All services registered successfully, ready to start monitoring")
 ```
 
 ### Service Key Convention

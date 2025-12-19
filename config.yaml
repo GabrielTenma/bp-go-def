@@ -18,6 +18,7 @@ services:
   service_d: false
   service_e: false
   service_f: true
+  service_g: true
 
 auth:
   type: "apikey"
@@ -57,13 +58,26 @@ postgres:
       dbname: "postgres"
       sslmode: "disable"
 
+mongo:
+  enabled: true
+  connections:
+    - name: "primary"
+      enabled: true
+      uri: "mongodb://localhost:27017"
+      database: "primary_db"
+
+    - name: "secondary"
+      enabled: true
+      uri: "mongodb://localhost:27018"
+      database: "secondary_db"
+
 monitoring:
   enabled: true
   port: "9090"
   password: "admin"
-  obfuscate_api: true
+  obfuscate_api: false
   title: "GoBP Admin"
-  subtitle: "My Kisah Emuach ❤️"
+  subtitle: "John Doe Company ❤️"
   max_photo_size_mb: 2
   upload_dir: "web/monitoring/uploads"
   

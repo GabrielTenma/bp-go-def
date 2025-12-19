@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/exec"
 	"runtime"
 	"time"
 
@@ -123,4 +124,62 @@ func GetNetworkInfo() (map[string]string, error) {
 		"hostname": hostname,
 		"ip":       ip,
 	}, nil
+}
+
+// ClearScreen clears the terminal screen (cross-platform)
+func ClearScreen() {
+	var cmd *exec.Cmd
+
+	switch runtime.GOOS {
+	case "windows":
+		// Windows: use cmd /c cls
+		cmd = exec.Command("cmd", "/c", "cls")
+	default:
+		// Linux, macOS, and others: use clear command
+		cmd = exec.Command("clear")
+	}
+
+	cmd.Stdout = os.Stdout
+	cmd.Run()
+}
+
+// CheckPortAvailability checks if the required ports are available before starting the application
+func CheckPortAvailability(serverPort, monitoringPort string, monitoringEnabled bool) error {
+	// Check server port
+	if err := CheckPort(serverPort); err != nil {
+		return fmt.Errorf("server port %s is already in use: %v", serverPort, err)
+	}
+
+	// Check monitoring port if enabled
+	if monitoringEnabled {
+		if err := CheckPort(monitoringPort); err != nil {
+			return fmt.Errorf("monitoring port %s is already in use: %v", monitoringPort, err)
+		}
+	}
+
+	return nil
+}
+
+// CheckPort checks if a specific port is available
+func CheckPort(port string) error {
+	// Try to listen on the port
+	listener, err := net.Listen("tcp", ":"+port)
+	if err != nil {
+		return err
+	}
+	defer listener.Close()
+	return nil
+}
+
+// ShutdownChan is a global shutdown channel for TUI communication
+var ShutdownChan = make(chan struct{})
+
+// TriggerShutdown sends a shutdown signal to the main thread
+func TriggerShutdown() {
+	select {
+	case ShutdownChan <- struct{}{}:
+		// Successfully sent shutdown signal
+	default:
+		// Channel is full or closed, ignore
+	}
 }

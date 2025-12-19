@@ -34,6 +34,8 @@ func Start(
 	redis *infrastructure.RedisManager,
 	postgres *infrastructure.PostgresManager,
 	postgresConnectionManager *infrastructure.PostgresConnectionManager,
+	mongo *infrastructure.MongoManager,
+	mongoConnectionManager *infrastructure.MongoConnectionManager,
 	kafka *infrastructure.KafkaManager,
 	cron *infrastructure.CronManager,
 	services []ServiceInfo,
@@ -68,7 +70,7 @@ func Start(
 	// Initialize Infrastructure Managers
 	minioMgr, err := infrastructure.NewMinIOManager(appConfig.Monitoring.MinIO)
 	if err != nil {
-		log.Warn("Failed to connect to MinIO", "error", err)
+		log.Error("Failed to connect to MinIO", err)
 	} else {
 		log.Info("MinIO Manager initialized")
 	}
@@ -120,6 +122,8 @@ func Start(
 		redis:                     redis,
 		postgres:                  postgres,
 		postgresConnectionManager: postgresConnectionManager,
+		mongo:                     mongo,
+		mongoConnectionManager:    mongoConnectionManager,
 		kafka:                     kafka,
 		cron:                      cron,
 		services:                  services,

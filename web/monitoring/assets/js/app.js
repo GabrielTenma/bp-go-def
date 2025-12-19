@@ -139,6 +139,7 @@ function app() {
                 items: [
                     { id: 'redis', label: 'Redis', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>' },
                     { id: 'postgres', label: 'Postgres', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20"></path><path d="M12 2v20"></path><path d="M20 20a1 1 0 1 0 2 0a1 1 0 1 0-2 0"></path><path d="M4 20a1 1 0 1 0 2 0a1 1 0 1 0-2 0"></path><path d="M20 4a1 1 0 1 0 2 0a1 1 0 1 0-2 0"></path><path d="M4 4a1 1 0 1 0 2 0a1 1 0 1 0-2 0"></path></svg>' },
+                    { id: 'mongo', label: 'MongoDB', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.6 9.5C17.6 14.1944 13.8 18 9.1 18C4.4 18 0.6 14.1944 0.6 9.5C0.6 4.80558 4.4 1 9.1 1C13.8 1 17.6 4.80558 17.6 9.5Z"></path><path d="M12.1 9.5C12.1 11.9853 10 14 7.55 14C5.1 14 3 11.9853 3 9.5C3 7.01469 5.1 5 7.55 5C10 5 12.1 7.01469 12.1 9.5Z"></path><path d="M7.55 9.5V14"></path><path d="M7.55 5V9.5"></path><path d="M9.1 1V18"></path></svg>' },
                     { id: 'kafka', label: 'Kafka', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>' },
                     { id: 'storage', label: 'Storage', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="21 12 21 12"></polyline><rect width="20" height="8" x="2" y="4" rx="2" ry="2"></rect><line x1="10" y1="8" x2="14" y2="8"></line></svg>' },
                     { id: 'system', label: 'System', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>' },
@@ -168,6 +169,7 @@ function app() {
             { id: 'endpoints', label: 'Endpoints', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>' },
             { id: 'redis', label: 'Redis', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>' },
             { id: 'postgres', label: 'Postgres', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20"></path><path d="M12 2v20"></path><path d="M20 20a1 1 0 1 0 2 0a1 1 0 1 0-2 0"></path><path d="M4 20a1 1 0 1 0 2 0a1 1 0 1 0-2 0"></path><path d="M20 4a1 1 0 1 0 2 0a1 1 0 1 0-2 0"></path><path d="M4 4a1 1 0 1 0 2 0a1 1 0 1 0-2 0"></path></svg>' },
+            { id: 'mongo', label: 'MongoDB', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.6 9.5C17.6 14.1944 13.8 18 9.1 18C4.4 18 0.6 14.1944 0.6 9.5C0.6 4.80558 4.4 1 9.1 1C13.8 1 17.6 4.80558 17.6 9.5Z"></path><path d="M12.1 9.5C12.1 11.9853 10 14 7.55 14C5.1 14 3 11.9853 3 9.5C3 7.01469 5.1 5 7.55 5C10 5 12.1 7.01469 12.1 9.5Z"></path><path d="M7.55 9.5V14"></path><path d="M7.55 5V9.5"></path><path d="M9.1 1V18"></path></svg>' },
             { id: 'kafka', label: 'Kafka', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>' },
             { id: 'storage', label: 'Storage', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="21 12 21 12"></polyline><rect width="20" height="8" x="2" y="4" rx="2" ry="2"></rect><line x1="10" y1="8" x2="14" y2="8"></line></svg>' },
             { id: 'system', label: 'System', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>' },
@@ -227,6 +229,14 @@ function app() {
         queryResults: null,
         queryError: null,
         isQueryRunning: false,
+        mongo: {},
+        mongoConnections: [], // New: List of all MongoDB connections
+        selectedMongoConnection: 'default', // New: Currently selected connection
+        mongoInfo: {},
+        mongoQuery: { collection: '', query: '{}' },
+        mongoQueryResults: null,
+        mongoQueryError: null,
+        isMongoQueryRunning: false,
         kafka: {},
         cronJobs: [],
 
@@ -388,6 +398,10 @@ function app() {
                             this.stopPgRefresh();
                             this.pgRefreshActive = false;
                         }
+                    }
+                    if (val === 'mongo') {
+                        this.fetchMongoConnections();
+                        this.fetchMongoInfo();
                     }
                     if (val === 'kafka') this.fetchKafka();
                     if (val === 'cron') this.fetchCronJobs();
@@ -631,12 +645,14 @@ function app() {
                 this.serviceCount = this.services.filter(s => s.active).length;
 
                 // Infrastructure
-                // Backend returns keys: redis, postgres, kafka, minio(storage), external
+                // Backend returns keys: redis, postgres, kafka, minio(storage), mongo, external
                 // We map them to infraStatus for simple TRUE/FALSE checks or specific logic
                 const hasConfiguredPostgres = data.postgres && data.postgres.connections && Object.keys(data.postgres.connections).length > 0;
+                const hasConfiguredMongo = data.mongo && data.mongo.connections && Object.keys(data.mongo.connections).length > 0;
                 const infra = {
                     redis: data.redis && data.redis.connected,
                     postgres: hasConfiguredPostgres,
+                    mongo: hasConfiguredMongo || (data.mongo && data.mongo.connections), // Show MongoDB tab if configured, even if not connected
                     kafka: data.kafka && data.kafka.connected,
                     minio: data.storage && data.storage.connected,
                     external: data.external && data.external.length > 0
@@ -925,6 +941,102 @@ function app() {
             await this.fetchPgInfo();
             await this.fetchPgQueries();
             this.showToast(`Switched to PostgreSQL connection: ${connectionName}`, 'info');
+        },
+
+        async fetchMongoConnections() {
+            try {
+                const res = await fetch('/api/status', { headers: this.getHeaders() });
+                const response = await res.json();
+                const data = response.data || {};
+
+                // Check if mongo data contains connections object
+                if (data.mongo && data.mongo.connections && typeof data.mongo.connections === 'object') {
+                    // Extract connections from the connections object
+                    const connections = Object.keys(data.mongo.connections).map(connName => ({
+                        name: connName,
+                        status: data.mongo.connections[connName]
+                    }));
+
+                    if (connections.length > 0) {
+                        this.mongoConnections = connections;
+                        // Keep current selection if it's still valid, otherwise set to first connection
+                        const currentValid = connections.some(conn => conn.name === this.selectedMongoConnection);
+                        if (!currentValid) {
+                            this.selectedMongoConnection = connections[0].name || 'default';
+                        }
+                    } else {
+                        this.mongoConnections = [];
+                        this.selectedMongoConnection = 'default';
+                    }
+                } else {
+                    this.mongoConnections = [];
+                }
+            } catch (e) {
+                console.error("Failed to fetch MongoDB connections", e);
+                this.mongoConnections = [];
+            }
+        },
+
+        async changeMongoConnection(connectionName) {
+            this.selectedMongoConnection = connectionName;
+            // Refresh MongoDB data for the selected connection
+            await this.fetchMongoInfo();
+            this.showToast(`Switched to MongoDB connection: ${connectionName}`, 'info');
+        },
+
+        async fetchMongoInfo() {
+            try {
+                const res = await fetch(`/api/mongo/info?connection=${encodeURIComponent(this.selectedMongoConnection)}`, { headers: this.getHeaders() });
+                const response = await res.json();
+                this.mongoInfo = response.data || {};
+            } catch (e) {
+                this.mongoInfo = {};
+            }
+        },
+
+        async runMongoQuery() {
+            console.log('🔍 DEBUG: runMongoQuery called');
+            console.log('📝 Current mongoQuery:', this.mongoQuery);
+
+            this.isMongoQueryRunning = true;
+            this.mongoQueryError = null;
+            this.mongoQueryResults = null;
+
+            try {
+                // Parse the query string to JSON
+                let queryObj;
+                try {
+                    queryObj = JSON.parse(this.mongoQuery.query);
+                } catch (parseErr) {
+                    throw new Error('Invalid JSON query: ' + parseErr.message);
+                }
+
+                const res = await fetch(`/api/mongo/query?connection=${encodeURIComponent(this.selectedMongoConnection)}`, {
+                    method: 'POST',
+                    headers: this.getHeaders(),
+                    body: JSON.stringify({
+                        collection: this.mongoQuery.collection,
+                        query: queryObj
+                    })
+                });
+
+                const response = await res.json();
+                const data = response.data;
+
+                if (!res.ok) {
+                    this.mongoQueryError = response.error?.message || response.message || 'Query failed';
+                } else {
+                    this.mongoQueryResults = data;
+                    // Show toast for empty results
+                    if (Array.isArray(data) && data.length === 0) {
+                        this.showToast('Query executed successfully, but returned no documents.', 'info');
+                    }
+                }
+            } catch (err) {
+                this.mongoQueryError = "Network error: " + err.message;
+            } finally {
+                this.isMongoQueryRunning = false;
+            }
         },
 
         async fetchKafka() {

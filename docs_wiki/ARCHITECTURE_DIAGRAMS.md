@@ -89,20 +89,59 @@ sequenceDiagram
     end
 ```
 
+## Async Infrastructure Flow
+
+```mermaid
+graph TD
+    A[HTTP Request] --> B[Handler]
+    B --> C[Async Operation]
+    C --> D[Worker Pool]
+    D --> E[Infrastructure]
+    E --> F[Result Channel]
+    F --> G[Response]
+
+    style A fill:#e1f5ff
+    style C fill:#fff3cd
+    style D fill:#ffeaa7
+    style E fill:#fdcb6e
+    style G fill:#55a3ff
+```
+
+## Service Registration Architecture
+
+```mermaid
+graph TD
+    A[ServiceRegistrar] --> B[Reflection Analysis]
+    B --> C{Dependencies?}
+    C -->|No| D[Immediate Registration]
+    C -->|Yes| E[Wait for Infrastructure]
+    E --> F[Infrastructure Ready]
+    F --> G[Register Service]
+    G --> H[Boot Routes]
+
+    style A fill:#74b9ff
+    style B fill:#0984e3
+    style D fill:#00b894
+    style G fill:#00b894
+```
+
 ## Package Organization
 
 ```mermaid
 graph LR
-    A[pkg/request] -->|Validates| D[Handler]
-    B[pkg/response] -->|Formats| D
-    D -->|Uses| E[Service Logic]
-    E -->|Returns| D
-    
+    A[pkg/request] -->|Validates| F[Handler]
+    B[pkg/response] -->|Formats| F
+    F -->|Uses| G[Service Logic]
+    G -->|Uses| H[Async Infrastructure]
+    H -->|Worker Pools| I[Infrastructure Managers]
+    G -->|Returns| F
+
     style A fill:#ffeb9c
     style B fill:#9cf09c
-    style D fill:#9cccff
-    style E fill:#ff9c9c
-```
+    style H fill:#ffeaa7
+    style I fill:#fdcb6e
+    style F fill:#9cccff
+    style G fill:#ff9c9c
 
 ## Complete CRUD Example Flow
 

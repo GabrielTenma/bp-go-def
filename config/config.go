@@ -16,6 +16,8 @@ type Config struct {
 	Kafka               KafkaConfig         `mapstructure:"kafka"`
 	Postgres            PostgresConfig      `mapstructure:"postgres"`
 	PostgresMultiConfig PostgresMultiConfig `mapstructure:"postgres"`
+	Mongo               MongoConfig         `mapstructure:"mongo"`
+	MongoMultiConfig    MongoMultiConfig    `mapstructure:"mongo"`
 	Monitoring          MonitoringConfig    `mapstructure:"monitoring"`
 	Cron                CronConfig          `mapstructure:"cron"`
 	Encryption          EncryptionConfig    `mapstructure:"encryption"`
@@ -81,11 +83,6 @@ type ServerConfig struct {
 }
 
 // ServicesConfig is a dynamic map of service names to their enabled status.
-// Add new services directly in config.yaml without modifying this type.
-// Example: services:
-//
-//	service_a: true
-//	service_b: false
 type ServicesConfig map[string]bool
 
 // IsEnabled checks if a service is enabled. Returns true by default if not specified.
@@ -141,6 +138,24 @@ type PostgresMultiConfig struct {
 	Connections []PostgresConnectionConfig `mapstructure:"connections"`
 }
 
+type MongoConfig struct {
+	Enabled  bool   `mapstructure:"enabled"`
+	URI      string `mapstructure:"uri"`
+	Database string `mapstructure:"database"`
+}
+
+type MongoConnectionConfig struct {
+	Name     string `mapstructure:"name"`
+	Enabled  bool   `mapstructure:"enabled"`
+	URI      string `mapstructure:"uri"`
+	Database string `mapstructure:"database"`
+}
+
+type MongoMultiConfig struct {
+	Enabled     bool                    `mapstructure:"enabled"`
+	Connections []MongoConnectionConfig `mapstructure:"connections"`
+}
+
 func LoadConfig() (*Config, error) {
 	viper.SetConfigName("config") // name of config file (without extension)
 	viper.SetConfigType("yaml")   // REQUIRED if the config file does not have the extension in the name
@@ -165,6 +180,7 @@ func LoadConfig() (*Config, error) {
 	viper.SetDefault("redis.enabled", false)
 	viper.SetDefault("kafka.enabled", false)
 	viper.SetDefault("postgres.enabled", false)
+	viper.SetDefault("mongo.enabled", false)
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
@@ -197,6 +213,26 @@ func LoadConfig() (*Config, error) {
 					Password: cfg.Postgres.Password,
 					DBName:   cfg.Postgres.DBName,
 					SSLMode:  cfg.Postgres.SSLMode,
+				},
+			},
+		}
+	}
+
+	// Handle MongoDB configuration - both single and multi-connection
+	// Check if multi-connection format is provided (has connections array)
+	if len(cfg.MongoMultiConfig.Connections) > 0 {
+		// Multi-connection format is provided, use it
+		cfg.MongoMultiConfig.Enabled = true
+	} else if cfg.Mongo.Enabled {
+		// Single connection format provided, convert to multi-connection format
+		cfg.MongoMultiConfig = MongoMultiConfig{
+			Enabled: true,
+			Connections: []MongoConnectionConfig{
+				{
+					Name:     "default",
+					Enabled:  true,
+					URI:      cfg.Mongo.URI,
+					Database: cfg.Mongo.Database,
 				},
 			},
 		}

@@ -55,7 +55,7 @@ func NewServiceF(
 }
 
 func (s *ServiceF) Name() string        { return "Service F (Multi-Tenant Orders - GORM)" }
-func (s *ServiceF) Enabled() bool       { return s.enabled && s.postgresConnectionManager != nil }
+func (s *ServiceF) Enabled() bool       { return s.enabled }
 func (s *ServiceF) Endpoints() []string { return []string{"/orders/{tenant}", "/orders/{tenant}/{id}"} }
 
 func (s *ServiceF) RegisterRoutes(g *echo.Group) {

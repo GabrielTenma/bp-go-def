@@ -105,7 +105,7 @@ if not exist "%DIST_DIR%" mkdir "%DIST_DIR%"
 
 REM 4. Build
 echo %B_PURPLE%[4/5]%RESET% %P_CYAN%Building Go binary...%RESET%
-go build -o "%DIST_DIR%\%APP_NAME%" %MAIN_PATH%
+go build -ldflags="-s -w" -o "%DIST_DIR%\%APP_NAME%" %MAIN_PATH%
 if %ERRORLEVEL% NEQ 0 (
     echo    %B_RED%x Build FAILED! Exit code: %ERRORLEVEL%%RESET%
     exit /b %ERRORLEVEL%

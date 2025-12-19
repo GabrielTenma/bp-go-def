@@ -6,6 +6,27 @@
 # Clear the terminal screen
 clear
 
+# Check if build script exists
+if [ ! -f "./scripts/build.sh" ]; then
+    echo -e "${B_RED}Error: build.sh not found in scripts/ directory${RESET}"
+    exit 1
+fi
+
+# Check if Go is installed
+if ! command -v go >/dev/null 2>&1; then
+    echo -e "${B_RED}Error: Go is not installed or not in PATH${RESET}"
+    echo -e "${WHITE}Please install Go from https://golang.org/dl/${RESET}"
+    exit 1
+fi
+
+# Check Go version (minimum 1.24)
+go_version=$(go version | awk '{print $3}' | sed 's/go//')
+if [ "$(printf '%s\n' "$go_version" "1.24" | sort -V | head -n1)" = "$go_version" ]; then
+    echo -e "${B_RED}Error: Go version $go_version is too old. Minimum required is 1.24${RESET}"
+    echo -e "${WHITE}Please upgrade Go from https://golang.org/dl/${RESET}"
+    exit 1
+fi
+
 # Define ANSI Colors
 RESET="\033[0m"
 BOLD="\033[1m"
@@ -105,27 +126,27 @@ update_config_bool() {
 # Function to show warning
 show_warning() {
     local message="$1"
-    echo -e "${B_YELLOW}⚠️  WARNING:${RESET} ${B_WHITE}$message${RESET}"
+    echo -e "${B_YELLOW}WARNING:${RESET} ${B_WHITE}$message${RESET}"
     echo ""
 }
 
 # Function to show info
 show_info() {
     local message="$1"
-    echo -e "${B_CYAN}ℹ️  INFO:${RESET} ${WHITE}$message${RESET}"
+    echo -e "${B_CYAN}INFO:${RESET} ${WHITE}$message${RESET}"
     echo ""
 }
 
 # Function to show success
 show_success() {
     local message="$1"
-    echo -e "${B_GREEN}✅ SUCCESS:${RESET} ${WHITE}$message${RESET}"
+    echo -e "${B_GREEN}SUCCESS:${RESET} ${WHITE}$message${RESET}"
     echo ""
 }
 
 # Check if config.yaml exists
 if [ ! -f "config.yaml" ]; then
-    echo -e "${B_RED}❌ Error: config.yaml not found in current directory${RESET}"
+    echo -e "${B_RED}Error: config.yaml not found in current directory${RESET}"
     echo -e "${WHITE}Please run this script from the project root directory.${RESET}"
     exit 1
 fi
@@ -144,7 +165,7 @@ echo -e "${GRAY}----------------------------------------------------------------
 echo ""
 
 # Basic Application Configuration
-echo -e "${B_PURPLE}📋 BASIC APPLICATION CONFIGURATION${RESET}"
+echo -e "${B_PURPLE}BASIC APPLICATION CONFIGURATION${RESET}"
 echo ""
 
 APP_NAME=$(read_input "Enter application name" "My Fancy Go App")
@@ -155,7 +176,7 @@ MONITORING_PORT=$(read_input "Enter monitoring port" "9090")
 echo ""
 
 # Environment Settings
-echo -e "${B_PURPLE}🌍 ENVIRONMENT SETTINGS${RESET}"
+echo -e "${B_PURPLE}ENVIRONMENT SETTINGS${RESET}"
 echo ""
 
 DEBUG_MODE=$(read_yes_no "Enable debug mode?" "y")
@@ -165,7 +186,7 @@ QUIET_STARTUP=$(read_yes_no "Quiet startup (suppress console logs)?" "n")
 echo ""
 
 # Service Configuration
-echo -e "${B_PURPLE}🔧 SERVICE CONFIGURATION${RESET}"
+echo -e "${B_PURPLE}SERVICE CONFIGURATION${RESET}"
 echo ""
 
 ENABLE_MONITORING=$(read_yes_no "Enable monitoring dashboard?" "y")
@@ -174,7 +195,7 @@ ENABLE_ENCRYPTION=$(read_yes_no "Enable API encryption?" "n")
 echo ""
 
 # Infrastructure Configuration
-echo -e "${B_PURPLE}🏗️  INFRASTRUCTURE CONFIGURATION${RESET}"
+echo -e "${B_PURPLE}INFRASTRUCTURE CONFIGURATION${RESET}"
 echo ""
 
 ENABLE_REDIS=$(read_yes_no "Enable Redis?" "n")
@@ -185,7 +206,7 @@ ENABLE_MINIO=$(read_yes_no "Enable MinIO (Object Storage)?" "n")
 echo ""
 
 # Apply Configuration
-echo -e "${B_PURPLE}⚙️  APPLYING CONFIGURATION${RESET}"
+echo -e "${B_PURPLE}APPLYING CONFIGURATION${RESET}"
 echo ""
 
 # Update basic config
@@ -224,7 +245,7 @@ fi
 show_success "Configuration updated successfully!"
 
 # Security Warnings
-echo -e "${B_PURPLE}🔐 SECURITY WARNINGS${RESET}"
+echo -e "${B_PURPLE}SECURITY WARNINGS${RESET}"
 echo ""
 
 show_warning "Default credentials are configured. You MUST change these before production use:"
@@ -243,7 +264,7 @@ if [ "$ENABLE_ENCRYPTION" = "true" ]; then
 fi
 
 # Next Steps
-echo -e "${B_PURPLE}🚀 NEXT STEPS${RESET}"
+echo -e "${B_PURPLE}NEXT STEPS${RESET}"
 echo ""
 
 show_info "1. Review and customize config.yaml with your specific settings"
@@ -262,7 +283,7 @@ RUN_SETUP=$(read_yes_no "Run setup commands?" "y")
 
 if [ "$RUN_SETUP" = "true" ]; then
     echo ""
-    echo -e "${B_PURPLE}🔧 RUNNING SETUP COMMANDS${RESET}"
+    echo -e "${B_PURPLE}RUNNING SETUP COMMANDS${RESET}"
     echo ""
 
     echo -e "${P_CYAN}Running 'go mod tidy'...${RESET}"
@@ -291,7 +312,7 @@ echo ""
 echo -e "${B_CYAN}Backup created:${RESET} ${B_WHITE}config.yaml.backup${RESET}"
 echo -e "${B_CYAN}Configuration:${RESET} ${B_WHITE}config.yaml${RESET}"
 echo ""
-echo -e "${B_GREEN}Happy coding! 🎉${RESET}"
+echo -e "${B_GREEN}Happy coding!${RESET}"
 echo ""
 
 # Restore backup on error (if something went wrong)

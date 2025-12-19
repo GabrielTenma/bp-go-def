@@ -175,9 +175,11 @@ scripts\docker_build.bat "my-app" "myregistry/myapp"
 - `all`: Build all stages (test, dev, prod) - default behavior
 - `test`: Build and run tests only (2 steps)
 - `dev`: Build development image only (1 step)
-- `prod`: Build production image only (1 step)
-- `ultra-prod`: Build ultra-minimal production image only (1 step) - smallest size using Distroless
-- `ultra-all`: Build all ultra-minimal stages (ultra-test, ultra-dev, ultra-prod) - all Distroless
+- `prod`: Build production image only (1 step) - Alpine (~50MB) with full monitoring
+- `prod-slim`: Build slim production image (1 step) - Ubuntu (~30-40MB) with full monitoring
+- `prod-minimal`: Build minimal production image (1 step) - BusyBox (~10-20MB) with full monitoring
+- `ultra-prod`: Build ultra-minimal production image only (1 step) - smallest size using Distroless (~15-30MB, no monitoring)
+- `ultra-all`: Build all ultra-minimal stages (ultra-test, ultra-dev, ultra-prod)
 - `ultra-dev`: Build ultra-minimal development image (Distroless) - runs pre-built binary only
 - `ultra-test`: Build ultra-minimal test image (Distroless) - runs pre-built binary only
 
@@ -189,13 +191,13 @@ scripts\docker_build.bat "my-app" "myregistry/myapp"
 # Build only production image (fastest)
 ./scripts/docker_build.sh "myapp" "myregistry/myapp" "prod"
 
-# Build only development image
-./scripts/docker_build.sh "myapp" "myregistry/myapp" "dev"
+# Build slim production image (~30-40MB, more secure)
+./scripts/docker_build.sh "myapp" "myregistry/myapp" "prod-slim"
 
-# Run only tests
-./scripts/docker_build.sh "myapp" "myregistry/myapp" "test"
+# Build minimal production image (~10-20MB)
+./scripts/docker_build.sh "myapp" "myregistry/myapp" "prod-minimal"
 
-# Build ultra-minimal production image (smallest)
+# Build ultra-minimal production image (smallest, no monitoring)
 ./scripts/docker_build.sh "myapp" "myregistry/myapp" "ultra-prod"
 
 # Build everything with ultra-prod for production
