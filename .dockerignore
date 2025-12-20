@@ -71,3 +71,6 @@ node_modules/
 # Coverage reports
 coverage.txt
 coverage.html
+
+# Workspace
+.workspace/

@@ -60,3 +60,6 @@ __debug_bin*
 # OS specific
 Thumbs.db
 .DS_Store
+
+# Workspace
+.workspace/

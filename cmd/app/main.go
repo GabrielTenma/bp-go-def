@@ -149,13 +149,13 @@ func runWithTUI(cfg *config.Config, bannerText string, broadcaster *monitoring.L
 	// Block until signal or shutdown channel
 	select {
 	case <-sigChan:
-		// External signal (Ctrl+C)
+		liveTUI.AddLog("warn", "Shutting down...")
+		srv.Shutdown(context.Background(), l)
 	case <-utils.ShutdownChan:
-		// Internal shutdown request from TUI
+		liveTUI.AddLog("warn", "Shutting down...")
+		srv.Shutdown(context.Background(), l)
 	}
 
-	liveTUI.AddLog("warn", "Shutting down...")
-	srv.Shutdown(context.Background(), l)
 	liveTUI.Stop()
 
 	// Give a moment for cleanup and then exit

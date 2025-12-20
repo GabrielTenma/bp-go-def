@@ -5,7 +5,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"test-go/pkg/utils"
 	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -159,9 +158,9 @@ func (m *LiveModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.config.OnShutdown()
 			}
 
-			utils.ClearScreen()
-			fmt.Println("Exit requested shutting down..")
-			os.Exit(1) // force!
+			// utils.ClearScreen()
+			// fmt.Println("Exit requested shutting down..")
+			// os.Exit(1) // force!
 			return m, tea.Quit
 		}
 
