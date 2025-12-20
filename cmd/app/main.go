@@ -72,15 +72,22 @@ func runWithTUI(cfg *config.Config, bannerText string, broadcaster *monitoring.L
 		IdleSeconds: cfg.App.StartupDelay,
 	}
 
+	// Get service configurations
+	serviceConfigs := getServiceConfigs(cfg)
+
 	// Define boot sequence
 	initQueue := []tui.ServiceInit{
 		{Name: "Configuration", Enabled: true, InitFunc: nil},
-		{Name: "Redis Cache", Enabled: cfg.Redis.Enabled, InitFunc: nil},
-		{Name: "Kafka Messaging", Enabled: cfg.Kafka.Enabled, InitFunc: nil},
-		{Name: "PostgreSQL", Enabled: cfg.Postgres.Enabled, InitFunc: nil},
-		{Name: "Cron Scheduler", Enabled: cfg.Cron.Enabled, InitFunc: nil},
-		{Name: "Middleware", Enabled: true, InitFunc: nil},
 	}
+
+	// Add infrastructure services to boot queue
+	for _, svc := range serviceConfigs {
+		initQueue = append(initQueue, tui.ServiceInit{
+			Name: svc.Name, Enabled: svc.Enabled, InitFunc: nil,
+		})
+	}
+
+	initQueue = append(initQueue, tui.ServiceInit{Name: "Middleware", Enabled: true, InitFunc: nil})
 
 	// Dynamically add services from config
 	for name, enabled := range cfg.Services {
@@ -174,10 +181,12 @@ func runWithConsole(cfg *config.Config, bannerText string, broadcaster *monitori
 
 	// Log enabled services
 	l.Info("Initializing services...")
-	logServiceStatus(l, "Redis Cache", cfg.Redis.Enabled)
-	logServiceStatus(l, "Kafka Messaging", cfg.Kafka.Enabled)
-	logServiceStatus(l, "PostgreSQL", cfg.Postgres.Enabled)
-	logServiceStatus(l, "Cron Scheduler", cfg.Cron.Enabled)
+
+	// Log infrastructure services using unified config
+	serviceConfigs := getServiceConfigs(cfg)
+	for _, svc := range serviceConfigs {
+		logServiceStatus(l, svc.Name, svc.Enabled)
+	}
 
 	// Dynamically log all services from config
 	for name, enabled := range cfg.Services {
@@ -216,6 +225,26 @@ func runWithConsole(cfg *config.Config, bannerText string, broadcaster *monitori
 	// Give a moment for cleanup and then exit
 	time.Sleep(100 * time.Millisecond)
 	os.Exit(0)
+}
+
+// ServiceConfig represents a service with its name and enabled status
+type ServiceConfig struct {
+	Name    string
+	Enabled bool
+}
+
+// getServiceConfigs returns a unified list of all service configurations
+func getServiceConfigs(cfg *config.Config) []ServiceConfig {
+	return []ServiceConfig{
+		{Name: "Grafana", Enabled: cfg.Grafana.Enabled},
+		{Name: "MinIO", Enabled: cfg.Monitoring.MinIO.Enabled},
+		{Name: "Redis Cache", Enabled: cfg.Redis.Enabled},
+		{Name: "Kafka Messaging", Enabled: cfg.Kafka.Enabled},
+		{Name: "PostgreSQL", Enabled: cfg.Postgres.Enabled},
+		{Name: "MongoDB", Enabled: cfg.Mongo.Enabled},
+		{Name: "Cron Scheduler", Enabled: cfg.Cron.Enabled},
+		{Name: "External Services", Enabled: (len(cfg.Monitoring.External.Services) > 0)},
+	}
 }
 
 // logServiceStatus logs whether a service is enabled or skipped

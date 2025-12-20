@@ -42,6 +42,7 @@ func (im *InfraInitManager) StartAsyncInitialization(cfg *config.Config, logger 
 	*MinIOManager,
 	*PostgresConnectionManager,
 	*MongoConnectionManager,
+	*GrafanaManager,
 	*CronManager,
 ) {
 	var (
@@ -50,6 +51,7 @@ func (im *InfraInitManager) StartAsyncInitialization(cfg *config.Config, logger 
 		minioManager              *MinIOManager
 		postgresConnectionManager *PostgresConnectionManager
 		mongoConnectionManager    *MongoConnectionManager
+		grafanaManager            *GrafanaManager
 		cronManager               *CronManager
 	)
 
@@ -152,6 +154,17 @@ func (im *InfraInitManager) StartAsyncInitialization(cfg *config.Config, logger 
 				mongoConnectionManager = connManager
 				logger.Info("MongoDB initialized (single connection)")
 			}
+		}
+	}
+
+	// Grafana
+	if cfg.Grafana.Enabled {
+		gm, err := NewGrafanaManager(cfg.Grafana, logger)
+		if err != nil {
+			logger.Error("Failed to initialize Grafana", err)
+		} else {
+			grafanaManager = gm
+			logger.Info("Grafana initialized")
 		}
 	}
 
@@ -264,7 +277,7 @@ func (im *InfraInitManager) StartAsyncInitialization(cfg *config.Config, logger 
 	// Signal that all synchronous initialization is complete
 	close(im.doneChan)
 
-	return redisManager, kafkaManager, minioManager, postgresConnectionManager, mongoConnectionManager, cronManager
+	return redisManager, kafkaManager, minioManager, postgresConnectionManager, mongoConnectionManager, grafanaManager, cronManager
 }
 
 // updateStatus updates the initialization status of a component

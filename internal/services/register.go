@@ -25,6 +25,7 @@ type ServiceRegistrar struct {
 	postgresConnMgr *infrastructure.PostgresConnectionManager
 	mongoManager    *infrastructure.MongoManager
 	mongoConnMgr    *infrastructure.MongoConnectionManager
+	grafanaManager  *infrastructure.GrafanaManager
 	cronManager     *infrastructure.CronManager
 }
 
@@ -38,6 +39,7 @@ func NewServiceRegistrar(
 	postgresConnMgr *infrastructure.PostgresConnectionManager,
 	mongoMgr *infrastructure.MongoManager,
 	mongoConnMgr *infrastructure.MongoConnectionManager,
+	grafanaMgr *infrastructure.GrafanaManager,
 	cronMgr *infrastructure.CronManager,
 ) *ServiceRegistrar {
 	return &ServiceRegistrar{
@@ -49,6 +51,7 @@ func NewServiceRegistrar(
 		postgresConnMgr: postgresConnMgr,
 		mongoManager:    mongoMgr,
 		mongoConnMgr:    mongoConnMgr,
+		grafanaManager:  grafanaMgr,
 		cronManager:     cronMgr,
 	}
 }
@@ -151,6 +154,12 @@ func (sr *ServiceRegistrar) RegisterAllServices(registry *Registry, echo *echo.E
 			Name: "service_h",
 			Constructor: func() interface{ Service } {
 				return modules.NewServiceH(sr.config.Services.IsEnabled("service_h"), sr.logger)
+			},
+		},
+		{
+			Name: "service_i",
+			Constructor: func() interface{ Service } {
+				return modules.NewServiceI(sr.grafanaManager, sr.config.Services.IsEnabled("service_i"), sr.logger)
 			},
 		},
 

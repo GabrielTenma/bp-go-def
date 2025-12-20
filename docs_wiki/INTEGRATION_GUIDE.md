@@ -244,12 +244,11 @@ func (s *MyService) SendNotification() {
 monitoring:
   minio:
     enabled: true
-    endpoint: "localhost:9000"
-    access_key: "minioadmin"
-    secret_key: "minioadmin"
+    endpoint: "localhost:9003"
+    access_key_id: "minioadmin"
+    secret_access_key: "minioadmin"
     use_ssl: false
-    bucket: "my-bucket"
-    region: "us-east-1"
+    bucket_name: "main"
 ```
 
 ### Usage (Code)

@@ -1,5 +1,26 @@
 #!/bin/bash
 
+# Define ANSI Colors
+RESET="\033[0m"
+BOLD="\033[1m"
+DIM="\033[2m"
+UNDERLINE="\033[4m"
+
+# Fancy Pastel Palette (matching TUI colors from pkg/tui/live.go)
+P_PURPLE="\033[38;5;219m"
+B_PURPLE="\033[1;38;5;219m"
+P_CYAN="\033[38;5;117m"
+B_CYAN="\033[1;38;5;117m"
+P_GREEN="\033[38;5;46m"
+B_GREEN="\033[1;38;5;46m"
+P_YELLOW="\033[93m"
+B_YELLOW="\033[1;93m"
+P_RED="\033[91m"
+B_RED="\033[1;91m"
+GRAY="\033[38;5;242m"
+WHITE="\033[97m"
+B_WHITE="\033[1;97m"
+
 # Script to change the Go module package name
 # Usage: ./change_package.sh <new_module_name>
 

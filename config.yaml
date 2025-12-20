@@ -20,6 +20,7 @@ services:
   service_f: true
   service_g: true
   service_h: true
+  service_i: true
 
 auth:
   type: "apikey"
@@ -72,6 +73,13 @@ mongo:
       uri: "mongodb://localhost:27018"
       database: "secondary_db"
 
+grafana:
+  enabled: true
+  url: "http://localhost:3000"
+  api_key: "your-grafana-api-key"
+  username: "admin"
+  password: "admin"
+
 monitoring:
   enabled: true
   port: "9090"
@@ -85,10 +93,10 @@ monitoring:
   minio:
     enabled: true
     endpoint: "localhost:9003"
-    access_key: "minioadmin"
-    secret_key: "minioadmin"
+    access_key_id: "minioadmin"
+    secret_access_key: "minioadmin"
     use_ssl: false
-    bucket: "main"
+    bucket_name: "main"
 
   external:
     services:

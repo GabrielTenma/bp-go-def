@@ -109,10 +109,8 @@
         }
     </style>
     <link rel="stylesheet" href="assets/css/style.css">
-    <!-- Font Lexend (Google's geometric sans-serif, similar to Google Sans) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Font Lexend (Local fonts for offline support) -->
+    <link rel="stylesheet" href="assets/vendor/fonts/lexend.css">
     <script>
         // Check theme immediately to prevent FOUC
         if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -123,14 +121,14 @@
     </script>
     <script defer src="/assets/vendor/alpine.min.js"></script>
     <!-- Notyf (Local Offline) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+    <link rel="stylesheet" href="assets/vendor/notyf/notyf.min.css">
 
-    <!-- CodeMirror 5 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/yaml/yaml.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/shell/shell.min.js"></script>
+    <!-- CodeMirror 5 (Local Offline) -->
+    <link rel="stylesheet" href="assets/vendor/codemirror/codemirror.min.css">
+    <link rel="stylesheet" href="assets/vendor/codemirror/theme/dracula.min.css">
+    <script src="assets/vendor/codemirror/codemirror.min.js"></script>
+    <script src="assets/vendor/codemirror/mode/yaml.min.js"></script>
+    <script src="assets/vendor/codemirror/mode/shell.min.js"></script>
     <script src="/assets/vendor/codemirror-sql.min.js"></script>
     <style>
         .CodeMirror {

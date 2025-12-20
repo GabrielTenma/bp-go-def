@@ -15,18 +15,18 @@ set "BOLD=%ESC%[1m"
 set "DIM=%ESC%[2m"
 set "UNDERLINE=%ESC%[4m"
 
-:: Fancy Pastel Palette
-set "P_PURPLE=%ESC%[95m"
-set "B_PURPLE=%ESC%[1;95m"
-set "P_CYAN=%ESC%[96m"
-set "B_CYAN=%ESC%[1;96m"
-set "P_GREEN=%ESC%[92m"
-set "B_GREEN=%ESC%[1;92m"
+:: Fancy Pastel Palette (matching TUI colors from pkg/tui/live.go)
+set "P_PURPLE=%ESC%[38;5;219m"
+set "B_PURPLE=%ESC%[1;38;5;219m"
+set "P_CYAN=%ESC%[38;5;117m"
+set "B_CYAN=%ESC%[1;38;5;117m"
+set "P_GREEN=%ESC%[38;5;46m"
+set "B_GREEN=%ESC%[1;38;5;46m"
 set "P_YELLOW=%ESC%[93m"
 set "B_YELLOW=%ESC%[1;93m"
 set "P_RED=%ESC%[91m"
 set "B_RED=%ESC%[1;91m"
-set "GRAY=%ESC%[90m"
+set "GRAY=%ESC%[38;5;242m"
 set "WHITE=%ESC%[97m"
 set "B_WHITE=%ESC%[1;97m"
 
@@ -137,6 +137,6 @@ if exist "monitoring_users.db" (
 
 echo.
 echo %GRAY%======================================================================%RESET%
-echo  %B_PURPLE%SUCCESS!%RESET% %GREEN%Build ready at:%RESET% %UNDERLINE%%B_WHITE%%DIST_DIR%\%RESET%
+echo  %B_PURPLE%SUCCESS!%RESET% %P_GREEN%Build ready at:%RESET% %UNDERLINE%%B_WHITE%%DIST_DIR%\%RESET%
 echo %GRAY%======================================================================%RESET%
 endlocal

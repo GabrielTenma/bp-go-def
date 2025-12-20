@@ -29,6 +29,7 @@ type Server struct {
 	postgresConnectionManager *infrastructure.PostgresConnectionManager
 	mongoManager              *infrastructure.MongoManager
 	mongoConnectionManager    *infrastructure.MongoConnectionManager
+	grafanaManager            *infrastructure.GrafanaManager
 	cronManager               *infrastructure.CronManager
 	broadcaster               *monitoring.LogBroadcaster
 	infraInitManager          *infrastructure.InfraInitManager
@@ -86,7 +87,7 @@ func (s *Server) Start() error {
 
 	// 1. Start Async Infrastructure Initialization (doesn't block)
 	s.logger.Info("Starting async infrastructure initialization...")
-	s.redisManager, s.kafkaManager, _, s.postgresConnectionManager, s.mongoConnectionManager, s.cronManager =
+	s.redisManager, s.kafkaManager, _, s.postgresConnectionManager, s.mongoConnectionManager, s.grafanaManager, s.cronManager =
 		s.infraInitManager.StartAsyncInitialization(s.config, s.logger)
 
 	// Set default connections for backward compatibility
@@ -154,6 +155,7 @@ func (s *Server) Start() error {
 		s.postgresConnectionManager,
 		s.mongoManager,
 		s.mongoConnectionManager,
+		s.grafanaManager,
 		s.cronManager,
 	)
 
@@ -201,6 +203,7 @@ func (s *Server) GetStatus() map[string]interface{} {
 		"kafka":    s.config.Kafka.Enabled && s.kafkaManager != nil,
 		"postgres": (s.config.Postgres.Enabled || s.config.PostgresMultiConfig.Enabled) && (s.postgresManager != nil || s.postgresConnectionManager != nil),
 		"mongo":    (s.config.Mongo.Enabled || s.config.MongoMultiConfig.Enabled) && (s.mongoManager != nil || s.mongoConnectionManager != nil),
+		"grafana":  s.config.Grafana.Enabled && s.grafanaManager != nil,
 		"cron":     s.config.Cron.Enabled && s.cronManager != nil,
 	}
 

@@ -1,5 +1,27 @@
 @echo off
 setlocal enabledelayedexpansion
+
+:: Define ANSI Colors
+set "RESET=[0m"
+set "BOLD=[1m"
+set "DIM=[2m"
+set "UNDERLINE=[4m"
+
+:: Fancy Pastel Palette (matching TUI colors from pkg/tui/live.go)
+set "P_PURPLE=[38;5;219m"
+set "B_PURPLE=[1;38;5;219m"
+set "P_CYAN=[38;5;117m"
+set "B_CYAN=[1;38;5;117m"
+set "P_GREEN=[38;5;46m"
+set "B_GREEN=[1;38;5;46m"
+set "P_YELLOW=[93m"
+set "B_YELLOW=[1;93m"
+set "P_RED=[91m"
+set "B_RED=[1;91m"
+set "GRAY=[38;5;242m"
+set "WHITE=[97m"
+set "B_WHITE=[1;97m"
+
 REM Script to change the Go module package name
 REM Usage: change_package.bat <new_module_name>
 

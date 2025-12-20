@@ -72,6 +72,12 @@ This wiki serves as the central knowledge base for the project, covering archite
     *   Multi-tenant MongoDB operations with connection switching.
     *   CRUD operations, aggregation pipelines, and best practices.
 
+*   **[Grafana Integration](GRAFANA_INTEGRATION.md)**
+    *   Complete Grafana API integration for dashboard and data source management.
+    *   Programmatic dashboard creation, updates, and deletion.
+    *   Data source configuration and annotation support.
+    *   Async operations with retry logic and health monitoring.
+
 *   **[Docker Containerization](DOCKER_CONTAINERIZATION.md)**
     *   Multi-stage Dockerfile for development, testing, and production.
     *   Docker Compose integration with infrastructure services.

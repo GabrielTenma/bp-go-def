@@ -18,6 +18,7 @@ type Config struct {
 	PostgresMultiConfig PostgresMultiConfig `mapstructure:"postgres"`
 	Mongo               MongoConfig         `mapstructure:"mongo"`
 	MongoMultiConfig    MongoMultiConfig    `mapstructure:"mongo"`
+	Grafana             GrafanaConfig       `mapstructure:"grafana"`
 	Monitoring          MonitoringConfig    `mapstructure:"monitoring"`
 	Cron                CronConfig          `mapstructure:"cron"`
 	Encryption          EncryptionConfig    `mapstructure:"encryption"`
@@ -38,6 +39,7 @@ type MonitoringConfig struct {
 }
 
 type MinIOConfig struct {
+	Enabled         bool   `mapstructure:"enabled"`
 	Endpoint        string `mapstructure:"endpoint"`
 	AccessKeyID     string `mapstructure:"access_key_id"`
 	SecretAccessKey string `mapstructure:"secret_access_key"`
@@ -154,6 +156,14 @@ type MongoConnectionConfig struct {
 type MongoMultiConfig struct {
 	Enabled     bool                    `mapstructure:"enabled"`
 	Connections []MongoConnectionConfig `mapstructure:"connections"`
+}
+
+type GrafanaConfig struct {
+	Enabled  bool   `mapstructure:"enabled"`
+	URL      string `mapstructure:"url"`
+	APIKey   string `mapstructure:"api_key"`
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
 }
 
 func LoadConfig() (*Config, error) {

@@ -18,7 +18,7 @@ type MinIOManager struct {
 }
 
 func NewMinIOManager(cfg config.MinIOConfig) (*MinIOManager, error) {
-	if cfg.Endpoint == "" {
+	if !cfg.Enabled || cfg.Endpoint == "" {
 		return &MinIOManager{Connected: false}, nil
 	}
 

@@ -10,7 +10,7 @@ This project is a sophisticated Go-based boilerplate application with a modular 
 - **ORM**: GORM for database operations with auto-migration
 - **Architecture**: Modular, service-oriented with multi-tenant support
 - **UI**: Terminal User Interface (TUI) using Bubble Tea
-- **Monitoring**: Real-time system and service monitoring with web dashboard
+- **Monitoring**: Real-time system and service monitoring with fully offline web dashboard
 - **Database**: Multiple PostgreSQL connections with dynamic switching
 - **Security**: API obfuscation, comprehensive error handling, AES-256 encryption
 
@@ -309,6 +309,14 @@ The application demonstrates different service implementation patterns through s
 - **Broadcasting made easy**: Shows the power of reusable utilities
 - **Educational value**: Perfect example of clean architecture
 
+#### Service I (`internal/services/modules/service_i.go`) - Grafana Integration Service
+**Monitoring and visualization service** providing comprehensive Grafana API integration:
+- **Dashboard Management**: Create, update, retrieve, and delete Grafana dashboards
+- **Data Source Configuration**: Set up Prometheus, InfluxDB, and other data sources
+- **Annotation Support**: Add timeline annotations for events and deployments
+- **Health Monitoring**: Real-time Grafana instance status and connectivity
+- **API Endpoints**: `/api/v1/grafana/*` - Complete Grafana API integration
+
 #### Broadcast Utility (`pkg/utils/broadcast.go`) - Reusable Infrastructure
 **Extracted broadcasting component** for maximum reusability:
 
@@ -339,12 +347,26 @@ type ServiceH struct {
 // Cons: Minimal - just use the utility
 ```
 
+**Infrastructure Integration Pattern (Service I)**
+```go
+// Infrastructure-focused service
+type ServiceI struct {
+    grafanaManager *infrastructure.GrafanaManager  // External service integration
+    enabled        bool
+    logger         *logger.Logger
+}
+
+// Pros: Full API integration, async operations, comprehensive error handling
+// Cons: More complex implementation, external dependencies
+```
+
 #### API Endpoints
 
 | Service | Purpose | API Prefix | Implementation |
 |---------|---------|------------|----------------|
 | **Service G** | MongoDB multi-tenant | `/products/{tenant}/` | Database operations |
 | **Service H** | Event streaming | `/events/` | Clean utility usage |
+| **Service I** | Grafana integration | `/grafana/` | External API integration |
 
 #### MongoDB Multi-Tenant Operations (Service G)
 - `GET /api/v1/products/{tenant}` - List tenant products
@@ -420,6 +442,43 @@ services:
     },
 },
 ```
+
+#### Unified Service Configuration System
+
+The application now uses a **unified service configuration system** that eliminates code duplication between TUI boot sequences and console logging. This system provides a single source of truth for all infrastructure service configurations.
+
+**Key Components:**
+- **`getServiceConfigs()` function**: Returns unified list of service configurations
+- **Single data structure**: Used by both TUI and console modes
+- **DRY principle**: No more duplicated service lists across the codebase
+
+**Implementation:**
+```go
+// Unified service configuration
+type ServiceConfig struct {
+    Name    string
+    Enabled bool
+}
+
+// Single source of truth for all services
+func getServiceConfigs(cfg *config.Config) []ServiceConfig {
+    return []ServiceConfig{
+        {Name: "Grafana", Enabled: cfg.Grafana.Enabled},
+        {Name: "MinIO", Enabled: cfg.Monitoring.MinIO.Enabled},
+        {Name: "Redis Cache", Enabled: cfg.Redis.Enabled},
+        {Name: "Kafka Messaging", Enabled: cfg.Kafka.Enabled},
+        {Name: "PostgreSQL", Enabled: cfg.Postgres.Enabled},
+        {Name: "MongoDB", Enabled: cfg.Mongo.Enabled},
+        {Name: "Cron Scheduler", Enabled: cfg.Cron.Enabled},
+    }
+}
+```
+
+**Benefits:**
+- **Maintainability**: Single place to update service names and configurations
+- **Consistency**: TUI and console modes use identical service lists
+- **Type Safety**: Structured `ServiceConfig` type prevents errors
+- **Future-Proof**: Easy to add new services in one location
 
 ### 7.2 Core Components
 
@@ -672,7 +731,7 @@ The project includes comprehensive Docker containerization with multi-stage buil
 - **Jenkins Pipeline**: Containerized build and deployment pipelines
 - **Registry Support**: Push to Docker registries and artifact repositories
 
-### 7.2 Package Name Change Scripts
+### 7.3 Package Name Change Scripts
 
 The project includes automated scripts for changing the Go module package name across the entire codebase. These scripts are essential when renaming or refactoring the project module.
 
@@ -1020,7 +1079,7 @@ bp-go-def/
 - **API Obfuscation**: Base64 encoding for data privacy
 - **Real-time Monitoring**: System and service health dashboard with web interface
 - **Terminal UI**: Interactive boot sequence and dashboard
-- **Infrastructure Integrations**: Redis, Postgres, Kafka, MinIO, Cron
+- **Infrastructure Integrations**: Redis, Postgres, Kafka, MinIO, Grafana, Cron
 
 ### 10.2 Technical Highlights
 
