@@ -645,12 +645,20 @@ The project includes comprehensive build scripts for automated compilation, back
 - **Pure CMD Implementation**: Windows script uses only built-in CMD commands (no PowerShell dependency)
 
 **Build Process:**
-1. **Timestamp Generation**: Creates `YYYYMMDD_HHMMSS` format timestamps
-2. **Process Management**: Stops running application instances using `pgrep`/`pkill` (Unix) or `tasklist`/`taskkill` (Windows)
-3. **Backup Creation**: Moves old binaries, configs, databases, and web assets to timestamped directories
-4. **Archive Compression**: Compresses backup folders using `zip` (Unix) or `tar` (Windows)
-5. **Build Execution**: Compiles Go application with `go build`
-6. **Asset Copying**: Copies required files to build directory
+1. **Tool Installation**: Automatically checks and installs required tools (`goversioninfo`, `garble`)
+2. **User Choice**: Interactive prompt to enable/disable code obfuscation with `garble`
+3. **Timestamp Generation**: Creates `YYYYMMDD_HHMMSS` format timestamps
+4. **Process Management**: Stops running application instances using `pgrep`/`pkill` (Unix) or `tasklist`/`taskkill` (Windows)
+5. **Backup Creation**: Moves old binaries, configs, databases, and web assets to timestamped directories
+6. **Archive Compression**: Compresses backup folders using `zip` (Unix) or `tar` (Windows)
+7. **Build Execution**: Compiles Go application with `go build` or `garble build` based on user choice
+8. **Asset Copying**: Copies required files to build directory
+
+**Enhanced Features:**
+- **Code Obfuscation**: Optional `garble` build for production security
+- **Automatic Tool Management**: Installs required Go tools automatically
+- **Interactive Prompts**: User choice for obfuscation with 10-second timeout
+- **Cross-Platform Compatibility**: Native implementations for Unix/Linux/macOS and Windows
 
 **Unix/Linux/macOS Script (`scripts/build.sh`):**
 ```bash
