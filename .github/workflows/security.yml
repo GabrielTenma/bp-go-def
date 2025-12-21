@@ -148,14 +148,14 @@ jobs:
         run: |
           cd .security-reports || exit 0
           CURRENT_EPOCH=$(date +%s)
-          FIFTEEN_DAYS=1296000
+          THREE_DAYS=259200
 
           for file in scan_*_*.md; do
             if [ -f "$file" ]; then
               FILE_EPOCH=$(echo $file | grep -oP '\d{10}(?=\.md)')
               if [ ! -z "$FILE_EPOCH" ]; then
                 AGE=$((CURRENT_EPOCH - FILE_EPOCH))
-                if [ $AGE -gt $FIFTEEN_DAYS ]; then
+                if [ $AGE -gt $THREE_DAYS ]; then
                   echo "Deleting old report: $file (age: $((AGE/86400)) days)"
                   rm -f "$file"
                   DATETIME=$(echo $file | grep -oP '\d{8}_\d{6}')

@@ -66,27 +66,38 @@ go run cmd/app/main.go
 ## Project Structure
 
 ```
-.
-├── cmd/app/              # Application entry point
-├── config/               # Configuration logic
-├── docs_wiki/            # Documentation
-├── internal/
-│   ├── middleware/       # Auth & security middleware
-│   ├── monitoring/       # Web monitoring dashboard
-│   ├── server/           # Main server logic
-│   └── services/         # Modular service implementations
-├── pkg/
-│   ├── infrastructure/   # Redis, Postgres, Kafka, etc.
-│   ├── logger/           # Rich console logging
-│   ├── tui/              # Terminal User Interface
-│   └── utils/            # System utilities
-├── web/monitoring/       # Monitoring web UI
-└── config.yaml           # Main configuration
+bp-go-def/
+├── .github/                 # GitHub Actions CI/CD workflows
+│   └── workflows/          # Automated testing and deployment
+├── cmd/                     # Application entry points
+│   └── app/                # Main application executable
+├── config/                  # Configuration management
+├── docs_wiki/              # Comprehensive project documentation
+│   └── blueprint/          # Project architecture analysis
+├── internal/                # Private application packages
+│   ├── middleware/         # HTTP middleware (auth, security)
+│   ├── monitoring/         # Web monitoring dashboard backend
+│   ├── server/             # HTTP server setup and routing
+│   └── services/           # Modular business services
+│       └── modules/        # Individual service implementations
+├── pkg/                    # Public reusable packages
+│   ├── infrastructure/     # External service integrations
+│   ├── logger/             # Structured logging utilities
+│   ├── request/            # Request validation and binding
+│   ├── response/           # Standardized API responses
+│   ├── tui/                # Terminal User Interface components
+│   └── utils/              # General utility functions
+├── scripts/                # Build and utility scripts
+└── web/                    # Web interface assets
+    └── monitoring/         # Monitoring dashboard frontend
+        └── assets/         # Static web assets
+            ├── css/        # Stylesheets
+            └── js/         # JavaScript files
 ```
 
 ## License
 
-MIT
+Apache License Version 2.0: [LICENSE](LICENSE)
 
 ---
 

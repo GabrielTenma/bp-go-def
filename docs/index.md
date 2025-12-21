@@ -1,14 +1,14 @@
 ---
-layout: default
-title: Go Echo Boilerplate - Production-Ready Golang Framework
-description: A powerful Go boilerplate with Echo framework, monitoring dashboard, TUI, and complete infrastructure integrations
+layout: page
+title: Home
+description: Welcome to the Go Echo Boilerplate documentation
 ---
 
 # Go Echo Boilerplate
 
-A robust, production-ready Go application boilerplate built with [Echo](https://echo.labstack.com/). Designed for modularity, developer experience, and comprehensive monitoring with user management.
+A robust, production-ready Go application boilerplate built with [Echo](https://echo.labstack.com/). Features modular architecture, comprehensive monitoring, and built-in infrastructure support.
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
 ![Go Version](https://img.shields.io/badge/go-1.21%2B-00ADD8.svg)
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)
 
