@@ -87,6 +87,7 @@ func Start(
 
 	// Middleware
 	e.Use(middleware.Recover())
+	e.Use(middleware.Gzip()) // Enable GZIP compression for all responses
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:  []string{"*"},
 		AllowHeaders:  []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, "X-Correlation-ID"},

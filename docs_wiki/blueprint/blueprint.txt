@@ -125,7 +125,22 @@ pagination.GetPerPage()   // Returns per_page (default: 10, max: 100)
 pagination.GetOffset()    // Calculates offset for DB queries
 ```
 
-## 4. SECURITY FEATURES
+## 4. PERFORMANCE & SECURITY FEATURES
+
+### 4.1 GZIP Compression
+
+**Purpose:** Reduce response payload sizes and improve transfer speeds
+
+**Implementation:**
+- **Main API Server**: Automatic GZIP compression for all HTTP responses in `internal/server/server.go`
+- **Monitoring Web UI**: GZIP compression enabled for all responses in `internal/monitoring/server.go`
+- **Default Behavior**: GZIP is enabled by default for all endpoints without configuration
+- **Performance Impact**: Typically reduces response sizes by 60-80% for text-based content (JSON, HTML, CSS, JS)
+
+**Browser Support**: Modern browsers automatically decompress GZIP responses
+**Content Types**: Automatically compresses text-based responses, skips binary content
+
+## 5. SECURITY FEATURES
 
 ### 4.1 API Obfuscation
 

@@ -17,6 +17,7 @@ import (
 	"test-go/pkg/utils"
 
 	"github.com/labstack/echo/v4"
+	echoMiddleware "github.com/labstack/echo/v4/middleware"
 )
 
 type Server struct {
@@ -39,6 +40,9 @@ func New(cfg *config.Config, l *logger.Logger, b *monitoring.LogBroadcaster) *Se
 	e := echo.New()
 	e.HideBanner = true
 	e.HidePort = true
+
+	// Enable GZIP compression for all responses
+	e.Use(echoMiddleware.Gzip())
 
 	// Custom HTTP Error Handler for JSON responses
 	e.HTTPErrorHandler = func(err error, c echo.Context) {

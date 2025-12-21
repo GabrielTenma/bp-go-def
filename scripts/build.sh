@@ -43,15 +43,11 @@ echo -e "${B_PURPLE}[0/6]${RESET} ${P_CYAN}Checking required tools...${RESET}"
 
 # Check goversioninfo
 if ! command -v goversioninfo &> /dev/null; then
-    echo -e "   ${B_YELLOW}! goversioninfo not found. Installing...${RESET}"
-    go install github.com/josephspurrier/goversioninfo/cmd/goversioninfo@latest
-    if [ $? -ne 0 ]; then
-        echo -e "   ${B_RED}x Failed to install goversioninfo${RESET}"
-        exit 1
-    fi
-    echo -e "   ${B_GREEN}+ goversioninfo installed${RESET}"
+    echo -e "   ${B_YELLOW}! goversioninfo not found. Skipping version info generation.${RESET}"
+    USE_GOVERSIONINFO=false
 else
     echo -e "   ${B_GREEN}+ goversioninfo found${RESET}"
+    USE_GOVERSIONINFO=true
 fi
 
 # Check garble
@@ -135,6 +131,7 @@ if [ -d "$BACKUP_PATH" ]; then
     cd "$BACKUP_ROOT" || exit 1
     zip -r "${TIMESTAMP}.zip" "$TIMESTAMP"
     rm -rf "$TIMESTAMP"
+    cd - >/dev/null || exit 1  # Return to previous directory
     echo -e "   ${B_GREEN}+ Backup archived:${RESET} ${B_WHITE}${BACKUP_ROOT}/${TIMESTAMP}.zip${RESET}"
 else
     echo -e "   ${GRAY}+ No backup created. Skipping archive.${RESET}"
@@ -145,7 +142,11 @@ mkdir -p "$DIST_DIR"
 
 # 4. Build
 echo -e "${B_PURPLE}[4/6]${RESET} ${P_CYAN}Building Go binary...${RESET}"
-goversioninfo -platform-specific
+if [ "$USE_GOVERSIONINFO" = true ]; then
+    goversioninfo -platform-specific
+else
+    echo -e "   ${GRAY}+ Skipping goversioninfo (not available)${RESET}"
+fi
 if [ "$USE_GARBLE" = true ]; then
     garble build -ldflags="-s -w" -o "$DIST_DIR/$APP_NAME" "$MAIN_PATH"
 else
