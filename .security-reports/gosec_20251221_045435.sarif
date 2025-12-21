@@ -12,13 +12,13 @@
 								},
 								"region": {
 									"endColumn": 14,
-									"endLine": 43,
+									"endLine": 44,
 									"snippet": {
 										"text": "pid := int32(os.Getpid())"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 14,
-									"startLine": 43
+									"startLine": 44
 								}
 							}
 						}
@@ -92,13 +92,13 @@
 								},
 								"region": {
 									"endColumn": 12,
-									"endLine": 31,
+									"endLine": 30,
 									"snippet": {
 										"text": "f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 12,
-									"startLine": 31
+									"startLine": 30
 								}
 							}
 						}
@@ -146,13 +146,13 @@
 								},
 								"region": {
 									"endColumn": 9,
-									"endLine": 17,
+									"endLine": 16,
 									"snippet": {
-										"text": "return ioutil.ReadFile(path)"
+										"text": "return os.ReadFile(path)"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 9,
-									"startLine": 17
+									"startLine": 16
 								}
 							}
 						}
@@ -254,13 +254,13 @@
 								},
 								"region": {
 									"endColumn": 18,
-									"endLine": 300,
+									"endLine": 503,
 									"snippet": {
 										"text": "content, err := os.ReadFile(path)"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 18,
-									"startLine": 300
+									"startLine": 503
 								}
 							}
 						}
@@ -280,13 +280,13 @@
 								},
 								"region": {
 									"endColumn": 12,
-									"endLine": 31,
+									"endLine": 30,
 									"snippet": {
 										"text": "f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 12,
-									"startLine": 31
+									"startLine": 30
 								}
 							}
 						}
@@ -358,13 +358,13 @@
 								},
 								"region": {
 									"endColumn": 9,
-									"endLine": 12,
+									"endLine": 11,
 									"snippet": {
-										"text": "return ioutil.WriteFile(path, content, 0644)"
+										"text": "return os.WriteFile(path, content, 0644)"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 9,
-									"startLine": 12
+									"startLine": 11
 								}
 							}
 						}
@@ -385,13 +385,13 @@
 								},
 								"region": {
 									"endColumn": 8,
-									"endLine": 369,
+									"endLine": 572,
 									"snippet": {
 										"text": "err = os.WriteFile(backupName, input, 0644)"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 8,
-									"startLine": 369
+									"startLine": 572
 								}
 							}
 						}
@@ -412,13 +412,13 @@
 								},
 								"region": {
 									"endColumn": 9,
-									"endLine": 354,
+									"endLine": 557,
 									"snippet": {
 										"text": "err := os.WriteFile(\"config.yaml\", []byte(req.Content), 0644)"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 9,
-									"startLine": 354
+									"startLine": 557
 								}
 							}
 						}
@@ -439,13 +439,13 @@
 								},
 								"region": {
 									"endColumn": 9,
-									"endLine": 328,
+									"endLine": 531,
 									"snippet": {
 										"text": "err := os.WriteFile(path, []byte(req.Content), 0644)"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 9,
-									"startLine": 328
+									"startLine": 531
 								}
 							}
 						}
@@ -462,17 +462,43 @@
 						{
 							"physicalLocation": {
 								"artifactLocation": {
+									"uri": "pkg/utils/system.go"
+								},
+								"region": {
+									"endColumn": 2,
+									"endLine": 143,
+									"snippet": {
+										"text": "cmd.Run()"
+									},
+									"sourceLanguage": "go",
+									"startColumn": 2,
+									"startLine": 143
+								}
+							}
+						}
+					],
+					"message": {
+						"text": "Errors unhandled"
+					},
+					"ruleId": "G104"
+				},
+				{
+					"level": "warning",
+					"locations": [
+						{
+							"physicalLocation": {
+								"artifactLocation": {
 									"uri": "pkg/tui/live.go"
 								},
 								"region": {
 									"endColumn": 3,
-									"endLine": 349,
+									"endLine": 361,
 									"snippet": {
 										"text": "t.program.Run()"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 3,
-									"startLine": 349
+									"startLine": 361
 								}
 							}
 						}
@@ -566,6 +592,58 @@
 						{
 							"physicalLocation": {
 								"artifactLocation": {
+									"uri": "pkg/infrastructure/mongo.go"
+								},
+								"region": {
+									"endColumn": 3,
+									"endLine": 307,
+									"snippet": {
+										"text": "serverStatus.Decode(\u0026serverInfo)"
+									},
+									"sourceLanguage": "go",
+									"startColumn": 3,
+									"startLine": 307
+								}
+							}
+						}
+					],
+					"message": {
+						"text": "Errors unhandled"
+					},
+					"ruleId": "G104"
+				},
+				{
+					"level": "warning",
+					"locations": [
+						{
+							"physicalLocation": {
+								"artifactLocation": {
+									"uri": "pkg/infrastructure/mongo.go"
+								},
+								"region": {
+									"endColumn": 3,
+									"endLine": 60,
+									"snippet": {
+										"text": "client.Disconnect(context.Background())"
+									},
+									"sourceLanguage": "go",
+									"startColumn": 3,
+									"startLine": 60
+								}
+							}
+						}
+					],
+					"message": {
+						"text": "Errors unhandled"
+					},
+					"ruleId": "G104"
+				},
+				{
+					"level": "warning",
+					"locations": [
+						{
+							"physicalLocation": {
+								"artifactLocation": {
 									"uri": "pkg/infrastructure/http_monitor.go"
 								},
 								"region": {
@@ -592,17 +670,43 @@
 						{
 							"physicalLocation": {
 								"artifactLocation": {
+									"uri": "internal/services/modules/service_h.go"
+								},
+								"region": {
+									"endColumn": 2,
+									"endLine": 159,
+									"snippet": {
+										"text": "s.sendSSEEvent(c, initialEvent)"
+									},
+									"sourceLanguage": "go",
+									"startColumn": 2,
+									"startLine": 159
+								}
+							}
+						}
+					],
+					"message": {
+						"text": "Errors unhandled"
+					},
+					"ruleId": "G104"
+				},
+				{
+					"level": "warning",
+					"locations": [
+						{
+							"physicalLocation": {
+								"artifactLocation": {
 									"uri": "internal/server/server.go"
 								},
 								"region": {
 									"endColumn": 3,
-									"endLine": 66,
+									"endLine": 73,
 									"snippet": {
 										"text": "response.InternalServerError(c, \"An unexpected error occurred\")"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 3,
-									"startLine": 66
+									"startLine": 73
 								}
 							}
 						}
@@ -622,13 +726,13 @@
 								},
 								"region": {
 									"endColumn": 4,
-									"endLine": 61,
+									"endLine": 68,
 									"snippet": {
 										"text": "response.Error(c, code, \"HTTP_ERROR\", message)"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 4,
-									"startLine": 61
+									"startLine": 68
 								}
 							}
 						}
@@ -648,13 +752,13 @@
 								},
 								"region": {
 									"endColumn": 5,
-									"endLine": 51,
+									"endLine": 58,
 									"snippet": {
 										"text": "response.Error(c, code, \"ENDPOINT_NOT_FOUND\", message, map[string]interface{}{\n\"path\":   c.Request().URL.Path,\n\"method\": c.Request().Method,\n})\n"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 5,
-									"startLine": 48
+									"startLine": 55
 								}
 							}
 						}
@@ -726,13 +830,13 @@
 								},
 								"region": {
 									"endColumn": 2,
-									"endLine": 112,
+									"endLine": 113,
 									"snippet": {
 										"text": "r.ResponseWriter.Write(r.Body.Bytes())"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 2,
-									"startLine": 112
+									"startLine": 113
 								}
 							}
 						}
@@ -752,13 +856,13 @@
 								},
 								"region": {
 									"endColumn": 5,
-									"endLine": 84,
+									"endLine": 85,
 									"snippet": {
 										"text": "recorder.ResponseWriter.Write(encodedBytes)"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 5,
-									"startLine": 84
+									"startLine": 85
 								}
 							}
 						}
@@ -778,13 +882,65 @@
 								},
 								"region": {
 									"endColumn": 4,
-									"endLine": 154,
+									"endLine": 159,
 									"snippet": {
 										"text": "h.broadcaster.Write([]byte(logLine))"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 4,
-									"startLine": 154
+									"startLine": 159
+								}
+							}
+						}
+					],
+					"message": {
+						"text": "Errors unhandled"
+					},
+					"ruleId": "G104"
+				},
+				{
+					"level": "warning",
+					"locations": [
+						{
+							"physicalLocation": {
+								"artifactLocation": {
+									"uri": "internal/middleware/encryption.go"
+								},
+								"region": {
+									"endColumn": 2,
+									"endLine": 190,
+									"snippet": {
+										"text": "r.ResponseWriter.Write(r.Body.Bytes())"
+									},
+									"sourceLanguage": "go",
+									"startColumn": 2,
+									"startLine": 190
+								}
+							}
+						}
+					],
+					"message": {
+						"text": "Errors unhandled"
+					},
+					"ruleId": "G104"
+				},
+				{
+					"level": "warning",
+					"locations": [
+						{
+							"physicalLocation": {
+								"artifactLocation": {
+									"uri": "internal/middleware/encryption.go"
+								},
+								"region": {
+									"endColumn": 3,
+									"endLine": 164,
+									"snippet": {
+										"text": "recorder.ResponseWriter.Write([]byte(encrypted))"
+									},
+									"sourceLanguage": "go",
+									"startColumn": 3,
+									"startLine": 164
 								}
 							}
 						}
@@ -830,13 +986,65 @@
 								},
 								"region": {
 									"endColumn": 2,
-									"endLine": 33,
+									"endLine": 223,
 									"snippet": {
-										"text": "cmd.Run()"
+										"text": "srv.Shutdown(context.Background(), l)"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 2,
-									"startLine": 33
+									"startLine": 223
+								}
+							}
+						}
+					],
+					"message": {
+						"text": "Errors unhandled"
+					},
+					"ruleId": "G104"
+				},
+				{
+					"level": "warning",
+					"locations": [
+						{
+							"physicalLocation": {
+								"artifactLocation": {
+									"uri": "cmd/app/main.go"
+								},
+								"region": {
+									"endColumn": 3,
+									"endLine": 156,
+									"snippet": {
+										"text": "srv.Shutdown(context.Background(), l)"
+									},
+									"sourceLanguage": "go",
+									"startColumn": 3,
+									"startLine": 156
+								}
+							}
+						}
+					],
+					"message": {
+						"text": "Errors unhandled"
+					},
+					"ruleId": "G104"
+				},
+				{
+					"level": "warning",
+					"locations": [
+						{
+							"physicalLocation": {
+								"artifactLocation": {
+									"uri": "cmd/app/main.go"
+								},
+								"region": {
+									"endColumn": 3,
+									"endLine": 153,
+									"snippet": {
+										"text": "srv.Shutdown(context.Background(), l)"
+									},
+									"sourceLanguage": "go",
+									"startColumn": 3,
+									"startLine": 153
 								}
 							}
 						}
