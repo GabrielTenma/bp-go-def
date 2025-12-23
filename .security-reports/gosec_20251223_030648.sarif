@@ -492,13 +492,13 @@
 								},
 								"region": {
 									"endColumn": 3,
-									"endLine": 362,
+									"endLine": 361,
 									"snippet": {
 										"text": "t.program.Run()"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 3,
-									"startLine": 362
+									"startLine": 361
 								}
 							}
 						}
@@ -670,17 +670,43 @@
 						{
 							"physicalLocation": {
 								"artifactLocation": {
+									"uri": "internal/services/modules/service_h.go"
+								},
+								"region": {
+									"endColumn": 2,
+									"endLine": 159,
+									"snippet": {
+										"text": "s.sendSSEEvent(c, initialEvent)"
+									},
+									"sourceLanguage": "go",
+									"startColumn": 2,
+									"startLine": 159
+								}
+							}
+						}
+					],
+					"message": {
+						"text": "Errors unhandled"
+					},
+					"ruleId": "G104"
+				},
+				{
+					"level": "warning",
+					"locations": [
+						{
+							"physicalLocation": {
+								"artifactLocation": {
 									"uri": "internal/server/server.go"
 								},
 								"region": {
 									"endColumn": 3,
-									"endLine": 72,
+									"endLine": 77,
 									"snippet": {
 										"text": "response.InternalServerError(c, \"An unexpected error occurred\")"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 3,
-									"startLine": 72
+									"startLine": 77
 								}
 							}
 						}
@@ -700,13 +726,13 @@
 								},
 								"region": {
 									"endColumn": 4,
-									"endLine": 67,
+									"endLine": 72,
 									"snippet": {
 										"text": "response.Error(c, code, \"HTTP_ERROR\", message)"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 4,
-									"startLine": 67
+									"startLine": 72
 								}
 							}
 						}
@@ -726,13 +752,13 @@
 								},
 								"region": {
 									"endColumn": 5,
-									"endLine": 57,
+									"endLine": 62,
 									"snippet": {
 										"text": "response.Error(c, code, \"ENDPOINT_NOT_FOUND\", message, map[string]interface{}{\n\"path\":   c.Request().URL.Path,\n\"method\": c.Request().Method,\n})\n"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 5,
-									"startLine": 54
+									"startLine": 59
 								}
 							}
 						}
@@ -960,13 +986,13 @@
 								},
 								"region": {
 									"endColumn": 2,
-									"endLine": 214,
+									"endLine": 223,
 									"snippet": {
 										"text": "srv.Shutdown(context.Background(), l)"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 2,
-									"startLine": 214
+									"startLine": 223
 								}
 							}
 						}
@@ -985,14 +1011,40 @@
 									"uri": "cmd/app/main.go"
 								},
 								"region": {
-									"endColumn": 2,
-									"endLine": 151,
+									"endColumn": 3,
+									"endLine": 156,
 									"snippet": {
 										"text": "srv.Shutdown(context.Background(), l)"
 									},
 									"sourceLanguage": "go",
-									"startColumn": 2,
-									"startLine": 151
+									"startColumn": 3,
+									"startLine": 156
+								}
+							}
+						}
+					],
+					"message": {
+						"text": "Errors unhandled"
+					},
+					"ruleId": "G104"
+				},
+				{
+					"level": "warning",
+					"locations": [
+						{
+							"physicalLocation": {
+								"artifactLocation": {
+									"uri": "cmd/app/main.go"
+								},
+								"region": {
+									"endColumn": 3,
+									"endLine": 153,
+									"snippet": {
+										"text": "srv.Shutdown(context.Background(), l)"
+									},
+									"sourceLanguage": "go",
+									"startColumn": 3,
+									"startLine": 153
 								}
 							}
 						}
