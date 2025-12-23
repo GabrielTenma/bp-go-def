@@ -40,16 +40,20 @@ echo   %P_PURPLE%c(")(")%RESET%
 echo %GRAY%----------------------------------------------------------------------%RESET%
 
 REM 0. Check required tools
-echo %B_PURPLE%[1/6]%RESET% %P_CYAN%Checking required tools...%RESET%
+echo %B_PURPLE%[0/6]%RESET% %P_CYAN%Checking required tools...%RESET%
 
 REM Check goversioninfo
 where goversioninfo >nul 2>nul
 if %errorlevel% neq 0 (
-    echo    %B_YELLOW%! goversioninfo not found. Skipping version info generation.%RESET%
-    set "USE_GOVERSIONINFO=false"
+    echo    %B_YELLOW%! goversioninfo not found. Installing...%RESET%
+    go install github.com/josephspurrier/goversioninfo/cmd/goversioninfo@latest
+    if errorlevel 1 (
+        echo    %B_RED%x Failed to install goversioninfo%RESET%
+        exit /b 1
+    )
+    echo    %B_GREEN%+ goversioninfo installed%RESET%
 ) else (
     echo    %B_GREEN%+ goversioninfo found%RESET%
-    set "USE_GOVERSIONINFO=true"
 )
 
 REM Check garble
@@ -57,7 +61,7 @@ where garble >nul 2>nul
 if %errorlevel% neq 0 (
     echo    %B_YELLOW%! garble not found. Installing...%RESET%
     go install mvdan.cc/garble@latest
-    if !errorlevel! neq 0 (
+    if errorlevel 1 (
         echo    %B_RED%x Failed to install garble%RESET%
         exit /b 1
     )
@@ -86,7 +90,7 @@ set "BACKUP_ROOT=%DIST_DIR%\backups"
 set "BACKUP_PATH=%BACKUP_ROOT%\%TIMESTAMP%"
 
 REM 2. Stop running process
-echo %B_PURPLE%[2/6]%RESET% %P_CYAN%Checking for running process...%RESET%
+echo %B_PURPLE%[1/6]%RESET% %P_CYAN%Checking for running process...%RESET%
 tasklist /FI "IMAGENAME eq %APP_NAME%" 2>NUL | find /I /N "%APP_NAME%">NUL
 if "%ERRORLEVEL%"=="0" (
     echo    %B_YELLOW%! App is running. Stopping...%RESET%
@@ -143,11 +147,7 @@ if not exist "%DIST_DIR%" mkdir "%DIST_DIR%"
 
 REM 4. Build
 echo %B_PURPLE%[5/6]%RESET% %P_CYAN%Building Go binary...%RESET%
-if "%USE_GOVERSIONINFO%"=="true" (
-    goversioninfo -platform-specific
-) else (
-    echo    %GRAY%+ Skipping goversioninfo (not available)%RESET%
-)
+goversioninfo -platform-specific
 if "%USE_GARBLE%"=="true" (
     garble build -ldflags="-s -w" -o "%DIST_DIR%\%APP_NAME%" %MAIN_PATH%
 ) else (

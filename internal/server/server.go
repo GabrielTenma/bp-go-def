@@ -226,11 +226,22 @@ func (s *Server) GetStatus() map[string]interface{} {
 func (s *Server) Shutdown(ctx context.Context, logger *logger.Logger) error {
 	logger.Info("Starting graceful shutdown of infrastructure...")
 
-	// Force shutdown when more 20s
+	// Force shutdown when more 10s
 	go func() {
-		logger.Warn("Maximum shutdown time is 20s, force shutdown when timeout.")
-		time.Sleep(20 * time.Second)
-		logger.Fatal("Graceful shutdown timed out, force shutdown.", nil)
+		warnTimeout := "Maximum shutdown time is 20s, force shutdown when timeout."
+		warnForce := "Graceful shutdown timed out, force shutdown."
+		duration := 10 * time.Second
+
+		if logger != nil {
+			logger.Warn(warnTimeout)
+			time.Sleep(duration)
+			logger.Fatal(warnForce, nil)
+		}
+
+		fmt.Println(warnTimeout)
+		time.Sleep(duration)
+		os.Exit(1)
+
 	}()
 
 	// Stop async initialization manager
